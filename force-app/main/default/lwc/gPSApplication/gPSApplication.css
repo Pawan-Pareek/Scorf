@@ -1,0 +1,260 @@
+.main-container {
+    padding: 2rem;
+}
+
+/* ADD these styles to your gpsApplication.css file */
+
+.file-list {
+    margin-top: 1rem;
+    padding-left: 0;
+    list-style: none;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    background: #F8FAFB;
+    margin-bottom: 0.5rem;
+    transition: box-shadow 0.2s;
+    box-shadow: 0 1px 3px #e3e6e8;
+}
+
+.file-item:hover {
+    box-shadow: 0 2px 8px #c8d0d8;
+    background: #eef2f5;
+}
+
+.file-name {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #1b263c;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-icon {
+    margin-right: 0.75rem;
+}
+
+.delete-button {
+    --slds-c-button-color-background: transparent;
+    --slds-c-button-color-background-hover: #FBE9E7;
+    --slds-c-icon-color-foreground: #D32F2F;
+    margin-left: 0.25rem;
+    transition: background 0.2s;
+}
+
+/* .application-container{
+    margin: 50px;
+} */
+.image-container {
+    width: 100%;
+    height: 35vh;
+    /* display: flex;
+    align-items: center;
+    justify-content: center; */
+    overflow: hidden;
+    position: relative;
+}
+.image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-top-left-radius:1.5rem;
+    border-top-right-radius:1.5rem; 
+}
+.overlap-card {
+    max-width: 1200px; /* Or whatever you prefer */
+    margin: -100px auto 0 auto; /* Negative margin to overlap the image */
+    position: relative;
+    z-index: 2;
+    /* Optional: */
+    box-shadow: 0 10px 32px 0 rgba(0,0,0,0.12);
+    border-radius: 1rem;
+    background: white;
+    /* Add padding-top if you want a gap from the top (reduce overlap if needed) */
+    /* padding-top: 30px; */
+}
+.slds-card {
+    box-shadow: none;
+    border-radius: 1rem;
+}
+
+/* .slds-card__header .slds-grid{
+    padding: 0px!important;
+    margin: 0px!important;
+} */
+
+.slds-section {
+    border: 1px solid #d8dde6;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+}
+/* .slds-card__body{
+    margin: 0px!important;
+    padding: 0PX !important;
+} */
+.step-progress-container{
+    padding: 0px!important;
+}
+.slds-card__body{
+    padding: -1px!important;
+}
+
+.slds-section__title {
+    background-color: #f3f3f3;
+    border-bottom: 1px solid #d8dde6;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    font-size: 1.125rem;
+    margin: 0;
+}
+
+.slds-section__content {
+    padding: 1rem;
+}
+
+.slds-form_stacked .slds-form-element {
+    margin-bottom: 0.75rem;
+}
+
+.slds-grid {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.slds-gutters {
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+}
+
+.slds-gutters > .slds-col {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
+
+.slds-size_1-of-2 {
+    width: 50%;
+}
+
+.slds-size_1-of-1 {
+    width: 100%;
+}
+
+.slds-m-top_large {
+    margin-top: 1.5rem;
+}
+
+.slds-text-align_center {
+    text-align: center;
+}
+
+.step-progress-container {
+    margin-bottom: 2rem;
+    padding: 1rem 0;
+}
+
+.step-progress {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.step-progress::before {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #e5e5e5;
+    z-index: 1;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #e5e5e5;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    border: 2px solid #e5e5e5;
+}
+
+.step-label {
+    font-size: 0.875rem;
+    text-align: center;
+    color: #666;
+    max-width: 80px;
+}
+
+.step.active .step-number {
+    background-color: #1B5F99;
+    color: white;
+    border-color: #1B5F99;
+}
+
+.step.active .step-label {
+    color: #1B5F99;
+    font-weight: 600;
+}
+
+.step.completed .step-number {
+    background-color: #1B5F99;
+    color: white;
+    border-color: #1B5F99;
+}
+
+.step.completed .step-label {
+    color: #1B5F99;
+}
+
+/* Tablet screens */
+@media (max-width: 768px) {
+    .image-container {
+        height: 25vh;
+    }
+    .overlap-card {
+        margin: -70px 1rem 0 1rem;
+        max-width: 95%;
+        border-radius: 0.75rem;
+        box-shadow: 0 6px 20px 0 rgba(0,0,0,0.1);
+    }
+}
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .step-label {
+        font-size: 0.75rem;
+        max-width: 60px;
+    }
+    
+    .step-number {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .slds-size_1-of-2 {
+        width: 100%;
+    }
+}

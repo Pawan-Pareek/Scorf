@@ -1,0 +1,53 @@
+<template>
+
+    <div class="home-container">
+      
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="header">
+            <div class="user-profile">
+                <div class="profile-avatar">
+                    <lightning-icon icon-name="utility:user" size="large"></lightning-icon>
+                </div>
+                <div class="profile-info">
+                    <div class="profile-name">{userInfo.name}</div>
+                    <div class="profile-email">{userInfo.email}</div>
+                    <div class="profile-phone">{userInfo.MobilePhone}</div>
+                </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <template for:each={processedMenuItems} for:item="item">
+                    <div key={item.key} 
+                         data-key={item.key} 
+                         onclick={handleMenuClick}>
+                        <div class={item.navItemClass}>
+                            <lightning-icon icon-name={item.icon} size="small" class="nav-icon"></lightning-icon>
+                            <span class="nav-label">{item.label}</span>
+                        </div>
+                    </div>
+                </template>
+            </nav>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <template if:true={isDashboardSelected}>
+                <c-dashboard-component></c-dashboard-component>
+            </template>
+            <template if:true={isProjectsSelected}>
+                <c-project-component></c-project-component>
+            </template>
+            <template if:true={isLetterSelected}>
+                <c-letter-of-intent></c-letter-of-intent>
+            </template>
+            <template if:true={isReportsSelected}>
+                <c-reports></c-reports>
+            </template>
+            <template if:true={isCloseoutSelected}>
+                <c-close-out-package></c-close-out-package>
+            </template>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,261 @@
+<template>
+    <div class="slds-form slds-form_stacked">
+        <!-- Organization Information Section -->
+        <div class="slds-section slds-is-open">
+            <h3 class="slds-section__title">
+                <span class="slds-truncate slds-p-horizontal_small" title="Organization Information">
+                    Organization Information
+                </span>
+            </h3>
+            <div class="slds-section__content">
+                <div class="slds-grid slds-gutters slds-wrap">
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox name="RequestType__c" label="Request Type"
+                            value={applicationData.RequestType__c} placeholder="Select Request Type"
+                            options={requestTypeOptions} data-field="RequestType__c"
+                            onchange={handleInputChange} required>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox name="DoesEntityApproveLineItems__c" label="Does Entity Approve Line Items"
+                            value={applicationData.DoesEntityApproveLineItems__c} placeholder="Select Option"
+                            options={entityApproveOptions} data-field="DoesEntityApproveLineItems__c"
+                            onchange={handleInputChange}>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox name="ApplicationStatus__c" label="Application Status"
+                            value={applicationData.ApplicationStatus__c} placeholder="Select Status"
+                            options={applicationStatusOptions} data-field="ApplicationStatus__c"
+                            onchange={handleInputChange}>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="NameOfPersonCompletingForm__c" label="Name of Person Completing Form"
+                            value={applicationData.NameOfPersonCompletingForm__c}
+                            data-field="NameOfPersonCompletingForm__c" onchange={handleInputChange} required>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="SCEISVendorNumber__c" label="SCEIS Vendor Number"
+                            value={applicationData.SCEISVendorNumber__c} data-field="SCEISVendorNumber__c"
+                            onchange={handleInputChange}>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox name="EntityType__c" label="Entity Type"
+                            value={applicationData.EntityType__c} placeholder="Select Entity Type"
+                            options={entityTypeOptions} data-field="EntityType__c" onchange={handleInputChange}>
+                        </lightning-combobox>
+                    </div>
+                    <template if:true={showOtherEntityType}>
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input name="PleaseSpecifyOtherEntityType__c" label="Please Specify Other Entity Type"
+                                value={applicationData.PleaseSpecifyOtherEntityType__c}
+                                data-field="PleaseSpecifyOtherEntityType__c" onchange={handleInputChange}>
+                            </lightning-input>
+                        </div>
+                    </template>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox name="CollaboratingWithOtherGPSEntity__c" label="Collaborating With Other GPS Entity"
+                            value={applicationData.CollaboratingWithOtherGPSEntity__c} placeholder="Select Option"
+                            options={collaboratingOptions} data-field="CollaboratingWithOtherGPSEntity__c"
+                            onchange={handleInputChange}>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox name="Please_select_the_appropriate_county__c" label="Please Select The Appropriate County"
+                            value={applicationData.Please_select_the_appropriate_county__c} placeholder="Select County"
+                            options={countyOptions} data-field="Please_select_the_appropriate_county__c"
+                            onchange={handleInputChange} multiple>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox name="IsEntityAnSCBellwetherPlaintiff__c" label="Is Entity An SC Bellwether Plaintiff"
+                            value={applicationData.IsEntityAnSCBellwetherPlaintiff__c} placeholder="Select Option"
+                            options={bellwetherOptions} data-field="IsEntityAnSCBellwetherPlaintiff__c"
+                            onchange={handleInputChange}>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox name="WasEntityALitigatingSubdivision__c" label="Was Entity A Litigating Subdivision"
+                            value={applicationData.WasEntityALitigatingSubdivision__c} placeholder="Select Option"
+                            options={litigatingOptions} data-field="WasEntityALitigatingSubdivision__c"
+                            onchange={handleInputChange}>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox name="Any_Potential_Conflict_with_SC_Recovery__c" label="Any Potential Conflict With SC Recovery"
+                            value={applicationData.Any_Potential_Conflict_with_SC_Recovery__c} placeholder="Select Option"
+                            options={conflictOptions} data-field="Any_Potential_Conflict_with_SC_Recovery__c"
+                            onchange={handleInputChange}>
+                        </lightning-combobox>
+                    </div>
+
+                    <!-- Upload file fields -->
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-card>
+                            <lightning-file-upload label="Upload File" record-id={recordId}
+                                onuploadfinished={handleUploadFinished} multiple>
+                            </lightning-file-upload>
+
+                            <template if:true={uploadedFiles.length}>
+                                <ul class="file-list">
+                                    <template for:each={uploadedFiles} for:item="file">
+                                        <li key={file.id} class="file-item">
+                                            <span class="file-name">{file.name}</span>
+                                            <lightning-button-icon class="delete-button" icon-name="utility:delete"
+                                                alternative-text="Delete" title="Delete File" onclick={handleDelete}
+                                                data-id={file.id}>
+                                            </lightning-button-icon>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </template>
+                        </lightning-card>
+                    </div>
+
+                    <div class="slds-col slds-size_1-of-1">
+                        <lightning-textarea name="IdentifyTheBoardMemberAndRelation__c" label="Identify The Board Member And Relation"
+                            value={applicationData.IdentifyTheBoardMemberAndRelation__c}
+                            data-field="IdentifyTheBoardMemberAndRelation__c" onchange={handleInputChange}>
+                        </lightning-textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Remit To Section -->
+        <div class="slds-section slds-is-open slds-m-top_large">
+            <h3 class="slds-section__title">
+                <span class="slds-truncate slds-p-horizontal_small" title="Payment Remit To (As Per SCEIS)">
+                    Payment Remit To (As Per SCEIS)
+                </span>
+            </h3>
+            <div class="slds-section__content">
+                <div class="slds-grid slds-gutters slds-wrap">
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="PaymentRemitToAddressLine1__c" label="Address Line 1"
+                            value={applicationData.PaymentRemitToAddressLine1__c}
+                            data-field="PaymentRemitToAddressLine1__c" onchange={handleInputChange} required>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="PaymentRemitToAddressLine2__c" label="Address Line 2"
+                            value={applicationData.PaymentRemitToAddressLine2__c}
+                            data-field="PaymentRemitToAddressLine2__c" onchange={handleInputChange}>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="PaymentRemitToCity__c" label="City"
+                            value={applicationData.PaymentRemitToCity__c} data-field="PaymentRemitToCity__c"
+                            onchange={handleInputChange} required>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox name="PaymentRemitToState__c" label="State"
+                            value={applicationData.PaymentRemitToState__c} placeholder="Select State"
+                            options={paymentStateOptions} data-field="PaymentRemitToState__c"
+                            onchange={handleInputChange} required>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="PaymentRemitToZip__c" label="Zip" value={applicationData.PaymentRemitToZip__c}
+                            data-field="PaymentRemitToZip__c" onchange={handleInputChange} required>
+                        </lightning-input>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Political Subdivision Address Section -->
+        <div class="slds-section slds-is-open slds-m-top_large">
+            <h3 class="slds-section__title">
+                <span class="slds-truncate slds-p-horizontal_small" title="Political Subdivision Address">
+                    Political Subdivision Address
+                </span>
+            </h3>
+            <div class="slds-section__content">
+                <div class="slds-grid slds-gutters slds-wrap">
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="AddressLine1__c" label="Address Line 1"
+                            value={applicationData.AddressLine1__c} data-field="AddressLine1__c"
+                            onchange={handleInputChange} required>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="AddressLine2__c" label="Address Line 2"
+                            value={applicationData.AddressLine2__c} data-field="AddressLine2__c"
+                            onchange={handleInputChange}>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="City__c" label="City" value={applicationData.City__c}
+                            data-field="City__c" onchange={handleInputChange} required>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox name="State__c" label="State" value={applicationData.State__c}
+                            placeholder="Select State" options={stateOptions} data-field="State__c"
+                            onchange={handleInputChange} required>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="Zip__c" label="Zip" value={applicationData.Zip__c}
+                            data-field="Zip__c" onchange={handleInputChange} required>
+                        </lightning-input>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Point of Contact Section -->
+        <div class="slds-section slds-is-open slds-m-top_large">
+            <h3 class="slds-section__title">
+                <span class="slds-truncate slds-p-horizontal_small" title="Project Point of Contact">
+                    Project Point of Contact
+                </span>
+            </h3>
+            <div class="slds-section__content">
+                <div class="slds-grid slds-gutters slds-wrap">
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="ProgramManagerName__c" label="Program Manager Name"
+                            value={applicationData.ProgramManagerName__c} data-field="ProgramManagerName__c"
+                            onchange={handleInputChange} required>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="FiscalManagerTitle__c" label="Fiscal Manager Name"
+                            value={applicationData.FiscalManagerTitle__c} data-field="FiscalManagerTitle__c"
+                            onchange={handleInputChange} required>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="ProgramManagerEmail__c" label="Program Manager Email" type="email"
+                            value={applicationData.ProgramManagerEmail__c} data-field="ProgramManagerEmail__c"
+                            onchange={handleInputChange} required>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="FiscalManagerEmail__c" label="Fiscal Manager Email" type="email"
+                            value={applicationData.FiscalManagerEmail__c} data-field="FiscalManagerEmail__c"
+                            onchange={handleInputChange} required>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="ProgramManagerPhoneNumber__c" label="Program Manager Phone Number" type="tel"
+                            value={applicationData.ProgramManagerPhoneNumber__c}
+                            data-field="ProgramManagerPhoneNumber__c" onchange={handleInputChange} required>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input name="FiscalManagerPhoneNumber__c" label="Fiscal Manager Phone Number" type="tel"
+                            value={applicationData.FiscalManagerPhoneNumber__c}
+                            data-field="FiscalManagerPhoneNumber__c" onchange={handleInputChange} required>
+                        </lightning-input>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

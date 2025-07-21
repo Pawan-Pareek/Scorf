@@ -1,0 +1,126 @@
+<template>
+    <div class="main-container">
+        <div class="gps-logo-container slds-align_absolute-center slds-m-bottom_medium image-container">
+            <img src={logoUrl} alt="GPS Logo" />
+        </div>
+
+        <div class="overlap-card">
+            <lightning-card class="application-container">
+                <div class="slds-p-around_medium">
+                    
+                    <!-- Error State -->
+                    <template if:true={hasError}>
+                        <div class="slds-notify slds-notify_alert slds-theme_error slds-m-bottom_medium">
+                            <h2 class="slds-text-heading_small">Error Loading Application</h2>
+                            <p>{errorMessage}</p>
+                            <lightning-button 
+                                variant="neutral" 
+                                label="Retry" 
+                                onclick={retryLoad}
+                                class="slds-m-top_small">
+                            </lightning-button>
+                        </div>
+                    </template>
+
+                    <!-- Loading State -->
+                    <template if:true={showSpinner}>
+                        <div class="slds-align_absolute-center slds-m-vertical_large">
+                            <lightning-spinner alternative-text="Loading application..." size="large"></lightning-spinner>
+                            <p class="slds-m-top_small slds-text-align_center">Loading application form...</p>
+                        </div>
+                    </template>
+
+                    <!-- Main Content -->
+                    <template if:true={showContent}>
+                        <!-- Step Progress Indicator -->
+                        <div class="step-progress-container">
+                            <div class="step-progress">
+                                <template for:each={steps} for:item="step">
+                                    <div key={step.number} class={step.cssClass}>
+                                        <span class="step-number">{step.number}</span>
+                                        <span class="step-label">{step.label}</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Step 1: Organization Information -->
+                        <template if:true={isStep1}>
+                            <c-organization-information 
+                                data-step="1"
+                                application-data={step1Data}
+                                picklist-values={picklistValues}
+                                record-id={recordId}
+                                ondatachange={handleDataChange}>
+                            </c-organization-information>
+                        </template>
+
+                        <!-- Step 2: Technical Proposal -->
+                        <template if:true={isStep2}>
+                            <c-technical-proposal 
+                                data-step="2"
+                                application-data={step2Data}
+                                picklist-values={picklistValues}
+                                record-id={recordId}
+                                ondatachange={handleDataChange}>
+                            </c-technical-proposal>
+                        </template>
+
+                        <!-- Step 3: Abatement Strategies -->
+                        <template if:true={isStep3}>
+                            <c-abatement-strategies 
+                                data-step="3"
+                                application-data={step3Data}
+                                picklist-values={picklistValues}
+                                record-id={recordId}
+                                ondatachange={handleDataChange}>
+                            </c-abatement-strategies>
+                        </template>
+
+                        <!-- Step 4: Budget Information -->
+                        <template if:true={isStep4}>
+                            <c-budget-information 
+                                data-step="4"
+                                application-data={step4Data}
+                                picklist-values={picklistValues}
+                                record-id={recordId}
+                                ondatachange={handleDataChange}>
+                            </c-budget-information>
+                        </template>
+
+                        <!-- Navigation Buttons -->
+                        <div class="slds-m-top_large slds-text-align_center">
+                            <template if:false={isFirstStep}>
+                                <lightning-button 
+                                    variant="neutral" 
+                                    label="Previous" 
+                                    onclick={handlePrevious}
+                                    class="slds-m-right_small"
+                                    disabled={isLoading}>
+                                </lightning-button>
+                            </template>
+
+                            <template if:false={isLastStep}>
+                                <lightning-button 
+                                    variant="brand" 
+                                    label="Next" 
+                                    onclick={handleNext}
+                                    disabled={isLoading}>
+                                </lightning-button>
+                            </template>
+
+                            <template if:true={isLastStep}>
+                                <lightning-button 
+                                    variant="brand" 
+                                    label="Save Application" 
+                                    onclick={handleSave}
+                                    disabled={isLoading}>
+                                </lightning-button>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </lightning-card>
+        </div>
+    </div>
+</template>

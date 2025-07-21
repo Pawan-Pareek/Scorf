@@ -1,0 +1,218 @@
+<template>
+    <div class="slds-card">
+        <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span class="slds-text-heading_medium">Core Abatement Strategy</span>
+                    </h2>
+                </div>
+            </header>
+        </div>
+
+        <div class="slds-card__body slds-card__body_inner">
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+                <div class="slds-align_absolute-center slds-p-around_large">
+                    <lightning-spinner alternative-text="Loading strategies..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <!-- Error State -->
+            <template if:true={hasError}>
+                <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+                    <span class="slds-assistive-text">Error</span>
+                    <h2>{errorMessage}</h2>
+                    <lightning-button 
+                        label="Retry" 
+                        onclick={loadPicklistData} 
+                        class="slds-m-top_small">
+                    </lightning-button>
+                </div>
+            </template>
+
+            <!-- Main Content -->
+            <template if:false={isLoading}>
+                <template if:false={hasError}>
+                    
+                    <!-- Core Strategies Selection -->
+                    <div class="slds-form-element slds-m-bottom_large">
+                        <label class="slds-form-element__label slds-text-heading_small">
+                            <span class="slds-required">*</span>
+                            Select Core Strategies
+                        </label>
+                        <div class="slds-form-element__control">
+                            <lightning-dual-listbox
+                                name="coreStrategies"
+                                label="Core Strategies"
+                                variant="label-hidden"
+                                source-label="Available Strategies"
+                                selected-label="Selected Strategies"
+                                options={coreStrategiesOptions}
+                                value={coreStrategiesValue}
+                                onchange={handleCoreStrategyChange}
+                                min="0"
+                                max="10"
+                                required>
+                            </lightning-dual-listbox>
+                        </div>
+                    </div>
+
+                    <!-- Strategy Details Section -->
+                    <template if:true={expandedStrategiesList.length}>
+                        <div class="strategy-details-section slds-m-top_large">
+                            <h3 class="slds-text-heading_small slds-m-bottom_medium">Strategy Details</h3>
+                            
+                            <template for:each={expandedStrategiesList} for:item="strategy">
+                                <div key={strategy} class="strategy-item slds-m-bottom_medium">
+                                    
+                                    <!-- Strategy Header -->
+                                    <div class="strategy-header slds-border slds-p-around_small" 
+                                         style="background-color: #f3f3f3; border-left: 4px solid #1589ee;">
+                                        <button 
+                                            class="slds-button slds-button_reset slds-text-link slds-text-heading_small" 
+                                            data-strategy={strategy}
+                                            onclick={toggleStrategy}
+                                            style="width: 100%; text-align: left;">
+                                            <lightning-icon 
+                                                icon-name={expandedIcon} 
+                                                size="x-small" 
+                                                class="slds-m-right_x-small">
+                                            </lightning-icon>
+                                            {strategy}
+                                        </button>
+                                    </div>
+
+                                    <!-- Strategy Sub-Items (Expanded Content) -->
+                                    <template if:true={strategy}>
+                                        <div class="strategy-subitems slds-border slds-border_top-0 slds-p-around_small"
+                                             style="background-color: #fafafa;">
+                                            
+                                            <!-- Sub-strategy example for demonstration -->
+                                            <template if:true={strategy}>
+                                                <div class="sub-strategy-item slds-p-left_medium slds-m-bottom_small">
+                                                    <div class="slds-media">
+                                                        <div class="slds-media__figure">
+                                                            <span class="strategy-number slds-badge slds-theme_info">
+                                                                {strategy}.1
+                                                            </span>
+                                                        </div>
+                                                        <div class="slds-media__body">
+                                                            <p class="slds-text-body_regular">
+                                                                Expand training for first responders, schools, community support groups, and families.
+                                                            </p>
+                                                            
+                                                            <!-- Action buttons -->
+                                                            <div class="slds-m-top_small">
+                                                                <lightning-button 
+                                                                    label="Clear" 
+                                                                    variant="neutral" 
+                                                                    size="small"
+                                                                    class="slds-m-right_x-small">
+                                                                </lightning-button>
+                                                                <lightning-icon 
+                                                                    icon-name="utility:edit" 
+                                                                    size="x-small" 
+                                                                    class="slds-button slds-button_icon slds-button_icon-border-filled">
+                                                                </lightning-icon>
+                                                            </div>
+
+                                                            <!-- Strategy details form -->
+                                                            <div class="strategy-form slds-m-top_medium slds-grid slds-wrap">
+                                                                <div class="slds-col slds-size_1-of-2 slds-p-right_small">
+                                                                    <lightning-input 
+                                                                        label="Budget Amount" 
+                                                                        type="currency" 
+                                                                        value="$10.00"
+                                                                        required>
+                                                                    </lightning-input>
+                                                                </div>
+                                                                
+                                                                <div class="slds-col slds-size_1-of-2 slds-p-left_small">
+                                                                    <lightning-combobox 
+                                                                        label="Initial or Continuation"
+                                                                        value="Continuation"
+                                                                        options={continuationOptions}
+                                                                        required>
+                                                                    </lightning-combobox>
+                                                                </div>
+
+                                                                <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                                                                    <lightning-textarea 
+                                                                        label="Budget Narrative"
+                                                                        placeholder="Enter budget narrative..."
+                                                                        value="qwer"
+                                                                        required>
+                                                                    </lightning-textarea>
+                                                                </div>
+
+                                                                <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                                                                    <lightning-textarea 
+                                                                        label="Implementation Plan"
+                                                                        placeholder="Enter implementation plan..."
+                                                                        value="test"
+                                                                        required>
+                                                                    </lightning-textarea>
+                                                                </div>
+
+                                                                <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                                                                    <lightning-textarea 
+                                                                        label="Outcome Measures"
+                                                                        placeholder="Enter outcome measures..."
+                                                                        value="test"
+                                                                        required>
+                                                                    </lightning-textarea>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Core Abatement Strategies Selection (only show if core strategies are selected) -->
+                    <template if:true={showAbatementStrategies}>
+                        <div class="slds-form-element slds-m-top_large">
+                            <label class="slds-form-element__label slds-text-heading_small">
+                                Related Abatement Strategies
+                            </label>
+                            <div class="slds-form-element__control">
+                                <lightning-dual-listbox
+                                    name="abatementStrategies"
+                                    label="Core Abatement Strategies"
+                                    variant="label-hidden"
+                                    source-label="Available Abatement Strategies"
+                                    selected-label="Selected Abatement Strategies"
+                                    options={availableAbatementStrategies}
+                                    value={abatementStrategiesValue}
+                                    onchange={handleAbatementStrategyChange}
+                                    min="0"
+                                    max="20">
+                                </lightning-dual-listbox>
+                            </div>
+                            <div class="slds-form-element__help">
+                                These options are filtered based on your core strategy selections
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Debug Info (remove in production) -->
+                    <template if:true={selectedCoreStrategies.length}>
+                        <div class="slds-box slds-theme_shade slds-m-top_large">
+                            <h4 class="slds-text-heading_small">Debug Information</h4>
+                            <p><strong>Selected Core Strategies:</strong> {selectedCoreStrategies}</p>
+                            <p><strong>Selected Abatement Strategies:</strong> {selectedAbatementStrategies}</p>
+                            <p><strong>Available Abatement Count:</strong> {availableAbatementStrategies.length}</p>
+                        </div>
+                    </template>
+                    
+                </template>
+            </template>
+        </div>
+    </div>
+</template>

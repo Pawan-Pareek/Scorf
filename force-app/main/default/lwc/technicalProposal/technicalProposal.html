@@ -1,0 +1,34 @@
+<template>
+    <lightning-card title="Technical Proposal - Step 2">
+        <div class="slds-p-around_medium">
+            <lightning-input
+                name="PartnerName__c"
+                label="Partner Name"
+                value={formData.PartnerName__c}
+                onchange={handleInputChange}
+                required>
+            </lightning-input>
+            <lightning-textarea
+                name="GeographicAreaPopulationPoverty__c"
+                label="Geographic Area, Population, Poverty"
+                value={formData.GeographicAreaPopulationPoverty__c}
+                onchange={handleInputChange}
+                required>
+            </lightning-textarea>
+            <lightning-textarea
+                name="Outline_Existing_Efforts_and_New_Expansi__c"
+                label="Existing Efforts & Expansion"
+                value={formData.Outline_Existing_Efforts_and_New_Expansi__c}
+                onchange={handleInputChange}
+                required>
+            </lightning-textarea>
+            <lightning-textarea
+                name="Describe_Current_Budget_and_Funding_Sour__c"
+                label="Budget & Funding Sources"
+                value={formData.Describe_Current_Budget_and_Funding_Sour__c}
+                onchange={handleInputChange}
+                required>
+            </lightning-textarea>
+        </div>
+    </lightning-card>
+</template>
