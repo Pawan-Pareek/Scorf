@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>EntityType__c</fullName>
+    <label>Entity Type</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Medical Treatment Provider</fullName>
+                <default>false</default>
+                <label>Medical Treatment Provider</label>
+            </value>
+            <value>
+                <fullName>Mental Health Treatment Provider</fullName>
+                <default>false</default>
+                <label>Mental Health Treatment Provider</label>
+            </value>
+            <value>
+                <fullName>Educational Provider</fullName>
+                <default>false</default>
+                <label>Educational Provider</label>
+            </value>
+            <value>
+                <fullName>State Agency</fullName>
+                <default>false</default>
+                <label>State Agency</label>
+            </value>
+            <value>
+                <fullName>County or Political Subdivision</fullName>
+                <default>false</default>
+                <label>County or Political Subdivision</label>
+            </value>
+            <value>
+                <fullName>Nonprofit Organization</fullName>
+                <default>false</default>
+                <label>Nonprofit Organization</label>
+            </value>
+            <value>
+                <fullName>Other</fullName>
+                <default>false</default>
+                <label>Other</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Core_Abatement_Strategies__c</fullName>
+    <label>Core Abatement Strategies</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>MultiselectPicklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>A.1: Expand training for first responders, schools, community support groups, and families.</fullName>
+                <default>false</default>
+                <label>A.1: Expand training for first responders, schools, community support groups, and families.</label>
+            </value>
+            <value>
+                <fullName>A.2: Increase distribution to individuals who are uninsured or whose insurance does not cover the needed service</fullName>
+                <default>false</default>
+                <label>A.2: Increase distribution to individuals who are uninsured or whose insurance does not cover the needed service</label>
+            </value>
+            <value>
+                <fullName>B.1: Increase distribution of MAT to individuals who are uninsured or whose insurance does not cover the needed service</fullName>
+                <default>false</default>
+                <label>B.1: Increase distribution of MAT to individuals who are uninsured or whose insurance does not cover the needed service</label>
+            </value>
+            <value>
+                <fullName>B.2: Provide education to school-based and youth-focused programs that discourage or prevent misuse</fullName>
+                <default>false</default>
+                <label>B.2: Provide education to school-based and youth-focused programs that discourage or prevent misuse</label>
+            </value>
+            <value>
+                <fullName>B.3: Provide MAT education and awareness training to healthcare providers, EMTs, law enforcement, and other first responders</fullName>
+                <default>false</default>
+                <label>B.3: Provide MAT education and awareness training to healthcare providers, EMTs, law enforcement, and other first responders</label>
+            </value>
+            <value>
+                <fullName>B.4: Provide treatment and recovery support services, including residential and inpatient treatment, intensive outpatient treatment, outpatient therapy or counseling, and recovery housing.</fullName>
+                <default>false</default>
+                <label>B.4: Provide treatment and recovery support services, including residential and inpatient treatment, intensive outpatient treatment, outpatient therapy or counseling, and recovery housing.</label>
+            </value>
+            <value>
+                <fullName>C.1: Expand Screening, Brief Intervention, and Referral to Treatment (SBIRT) services to non-Medicaid eligible or uninsured pregnant women</fullName>
+                <default>false</default>
+                <label>C.1: Expand Screening, Brief Intervention, and Referral to Treatment (SBIRT) services to non-Medicaid eligible or uninsured pregnant women</label>
+            </value>
+            <value>
+                <fullName>C.2: Expand comprehensive evidence-based treatment and recovery services for women with co-occurring Opioid Use Disorder (OUD) and other Substance Use Disorder (SUD)/Mental Health disorders for uninsured individuals for up to 12 months postpartum</fullName>
+                <default>false</default>
+                <label>C.2: Expand comprehensive evidence-based treatment and recovery services for women with co-occurring Opioid Use Disorder (OUD) and other Substance Use Disorder (SUD)/Mental Health disorders for uninsured individuals for up to 12 months postpartum</label>
+            </value>
+            <value>
+                <fullName>C.3: Provide comprehensive wrap-around services to individuals with OUD, including housing, transportation, job placement/training, and childcare</fullName>
+                <default>false</default>
+                <label>C.3: Provide comprehensive wrap-around services to individuals with OUD, including housing, transportation, job placement/training, and childcare</label>
+            </value>
+            <value>
+                <fullName>D.1: Expand comprehensive evidence-based and recovery support for NAS babies</fullName>
+                <default>false</default>
+                <label>D.1: Expand comprehensive evidence-based and recovery support for NAS babies</label>
+            </value>
+            <value>
+                <fullName>D.2: Expand services for a better continuum of care with infant-need dyad</fullName>
+                <default>false</default>
+                <label>D.2: Expand services for a better continuum of care with infant-need dyad</label>
+            </value>
+            <value>
+                <fullName>D.3: Expand long-term treatment and services for medical monitoring of NAS babies and their families</fullName>
+                <default>false</default>
+                <label>D.3: Expand long-term treatment and services for medical monitoring of NAS babies and their families</label>
+            </value>
+            <value>
+                <fullName>E.1: Expand services, such as navigators and on-call teams to begin MAT in hospital emergency departments</fullName>
+                <default>false</default>
+                <label>E.1: Expand services, such as navigators and on-call teams to begin MAT in hospital emergency departments</label>
+            </value>
+            <value>
+                <fullName>E.2: Expand warm hand-off services to transition to recovery services</fullName>
+                <default>false</default>
+                <label>E.2: Expand warm hand-off services to transition to recovery services</label>
+            </value>
+            <value>
+                <fullName>E.3: Broaden the scope of recovery services to include co-occurring SUD or mental health conditions</fullName>
+                <default>false</default>
+                <label>E.3: Broaden the scope of recovery services to include co-occurring SUD or mental health conditions</label>
+            </value>
+            <value>
+                <fullName>E.4: Provide comprehensive wrap-around services to individuals in recovery, including housing, transportation, job placement/training, and childcare</fullName>
+                <default>false</default>
+                <label>E.4: Provide comprehensive wrap-around services to individuals in recovery, including housing, transportation, job placement/training, and childcare</label>
+            </value>
+            <value>
+                <fullName>E.5: Hire additional social workers or other behavioral health workers to facilitate the expansions of warm handoff programs and recovery services</fullName>
+                <default>false</default>
+                <label>E.5: Hire additional social workers or other behavioral health workers to facilitate the expansions of warm handoff programs and recovery services</label>
+            </value>
+            <value>
+                <fullName>F.1: Provide evidence-based treatment and recovery support, including MAT for persons with OUD and co-occurring SUD/MH disorders within and transitioning out of the criminal justice system</fullName>
+                <default>false</default>
+                <label>F.1: Provide evidence-based treatment and recovery support, including MAT for persons with OUD and co-occurring SUD/MH disorders within and transitioning out of the criminal justice system</label>
+            </value>
+            <value>
+                <fullName>F.2: Increase funding for jails to provide treatment to inmates with OUD</fullName>
+                <default>false</default>
+                <label>F.2: Increase funding for jails to provide treatment to inmates with OUD</label>
+            </value>
+            <value>
+                <fullName>G.1: Funding for media campaigns to prevent opioid use (similar to the FDA’s “Real Cost” campaign to prevent youth from misusing tobacco)</fullName>
+                <default>false</default>
+                <label>G.1: Funding for media campaigns to prevent opioid use (similar to the FDA’s “Real Cost” campaign to prevent youth from misusing tobacco)</label>
+            </value>
+            <value>
+                <fullName>G.2: Funding for evidence-based prevention programs in schools</fullName>
+                <default>false</default>
+                <label>G.2: Funding for evidence-based prevention programs in schools</label>
+            </value>
+            <value>
+                <fullName>G.3: Funding for medical provider education and outreach regarding best prescribing practices for opioids consistent with the 2016 CDC guidelines, including providers at hospitals (academic detailing)</fullName>
+                <default>false</default>
+                <label>G.3: Funding for medical provider education and outreach regarding best prescribing practices for opioids consistent with the 2016 CDC guidelines, including providers at hospitals (academic detailing)</label>
+            </value>
+            <value>
+                <fullName>G.4: Funding for community drug disposal programs</fullName>
+                <default>false</default>
+                <label>G.4: Funding for community drug disposal programs</label>
+            </value>
+            <value>
+                <fullName>G.5: Funding and training for first responders to participate in pre-arrest diversion programs, post-overdose response teams, or similar strategies that connect at-risk individuals to behavioral health services and supports</fullName>
+                <default>false</default>
+                <label>G.5: Funding and training for first responders to participate in pre-arrest diversion programs, post-overdose response teams, or similar strategies that connect at-risk individuals to behavioral health services and supports</label>
+            </value>
+            <value>
+                <fullName>H.1: Provide comprehensive syringe services programs with more wrap-around services, including linkage to OUD treatment, access to sterile syringes, and linkage to care and treatment of infectious diseases</fullName>
+                <default>false</default>
+                <label>H.1: Provide comprehensive syringe services programs with more wrap-around services, including linkage to OUD treatment, access to sterile syringes, and linkage to care and treatment of infectious diseases</label>
+            </value>
+            <value>
+                <fullName>I.1: Evidence-Based Data Collection and Research Analyzing the Effectiveness of the Abatement Strategies within the State</fullName>
+                <default>false</default>
+                <label>I.1: Evidence-Based Data Collection and Research Analyzing the Effectiveness of the Abatement Strategies within the State</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <visibleLines>4</visibleLines>
+</CustomField>

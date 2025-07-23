@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>C1</label>
+    <protected>false</protected>
+    <values>
+        <field>FullDescription__c</field>
+        <value xsi:type="xsd:string">C.1 Ensure that health care providers are screening for OUD and other risk factors and know how to appropriately counsel and treat (or refer if necessary) a patient for OUD treatment</value>
+    </values>
+    <values>
+        <field>ShortValue_c__c</field>
+        <value xsi:type="xsd:string">C.1 Ensure providers screen for OUD and refer or treat accordingly.</value>
+    </values>
+</CustomMetadata>

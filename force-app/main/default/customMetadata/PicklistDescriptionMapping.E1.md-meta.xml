@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>E1</label>
+    <protected>false</protected>
+    <values>
+        <field>FullDescription__c</field>
+        <value xsi:type="xsd:string">E.1 Support evidence-based or evidence-informed treatment, including MAT, recovery services and supports, and prevention services for pregnant women  or women who could become pregnant  who have OUD and any co-occurring SUD/MH conditions, and other measures to educate and provide support to families affected by Neonatal Abstinence Syndrome</value>
+    </values>
+    <values>
+        <field>ShortValue_c__c</field>
+        <value xsi:type="xsd:string">E.1 Provide MAT and other supports for pregnant women and families affected by Neonatal Abstinence Syndrome (NAS).</value>
+    </values>
+</CustomMetadata>

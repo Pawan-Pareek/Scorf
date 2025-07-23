@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>C2</label>
+    <protected>false</protected>
+    <values>
+        <field>FullDescription__c</field>
+        <value xsi:type="xsd:string">C.2 Fund SBIRT programs to reduce the transition from use to disorders, including SBIRT services to pregnant women who are uninsured or not eligible for Medicaid</value>
+    </values>
+    <values>
+        <field>ShortValue_c__c</field>
+        <value xsi:type="xsd:string">C.2 Fund SBIRT services including for uninsured pregnant women.</value>
+    </values>
+</CustomMetadata>

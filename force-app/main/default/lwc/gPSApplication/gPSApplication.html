@@ -73,6 +73,8 @@
                                 application-data={step3Data}
                                 picklist-values={picklistValues}
                                 record-id={recordId}
+                                strategy-line-resources-data={strategyLineResourcesData}
+                                onstrategylineresourceschange={handleStrategyLineResourcesChange}
                                 ondatachange={handleDataChange}>
                             </c-abatement-strategies>
                         </template>
@@ -115,6 +117,16 @@
                                     label="Save Application" 
                                     onclick={handleSave}
                                     disabled={isLoading}>
+                                </lightning-button>
+                            </template>
+
+                            <!-- Add Partner button, only visible in step 3 -->
+                            <template if:true={isStep3}>
+                                <lightning-button 
+                                    variant="neutral" 
+                                    label="Add Partner" 
+                                    onclick={handleAddPartner}
+                                    class="slds-m-top_small">
                                 </lightning-button>
                             </template>
                         </div>

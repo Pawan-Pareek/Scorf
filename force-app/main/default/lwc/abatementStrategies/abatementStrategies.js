@@ -1,327 +1,804 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-
-// Import Apex methods
-import getCoreStrategiesPicklist from '@salesforce/apex/GPSApplicationController.getCoreStrategiesPicklist';
-import getCoreAbatementStrategiesPicklist from '@salesforce/apex/GPSApplicationController.getCoreAbatementStrategiesPicklist';
+import getAbatementPicklistValues from '@salesforce/apex/GPSApplicationController.getAbatementPicklistValues';
+//import saveAbatementStrategies from '@salesforce/apex/GPSApplicationController.saveAbatementStrategies';
+import getAbatementStrategiesRecord from '@salesforce/apex/GPSApplicationController.getAbatementStrategiesRecord';
 
 export default class AbatementStrategies extends LightningElement {
     @api applicationData = {};
     @api picklistValues = {};
     @api recordId;
+    // Removed: @api strategyLineResourcesData;
+    @api strategyLineResourcesData;
 
-    @track coreStrategiesOptions = [];
-    @track coreAbatementStrategiesOptions = [];
-    @track availableAbatementStrategies = [];
+    @track coreStrategies = [];
+    @track mappedAbatementStrategies = {};
     @track selectedCoreStrategies = [];
     @track selectedAbatementStrategies = [];
     @track expandedStrategies = new Set();
-    @track strategySubItems = {};
-    @track isLoading = true;
+    @track isLoading = false;
     @track hasError = false;
     @track errorMessage = '';
 
-    // Strategy mapping - maps core strategies to their corresponding abatement strategies
-    @track strategyMapping = {
-        'A': 'A', // Core strategies starting with A map to abatement strategies starting with A
-        'B': 'B',
-        'C': 'C',
-        'D': 'D',
-        'E': 'E',
-        'F': 'F',
-        'G': 'G',
-        'H': 'H'
+    // Track component data
+    @track componentData = {
+        coreStrategies: [],
+        abatementStrategies: []
     };
 
-    connectedCallback() {
-        console.log('Abatement Strategies Component Connected');
-        this.loadPicklistData();
+    @track strategyLineResourcesData = {};
+    @track abatementOptionDataMap = {};
+
+    @track personnelData = {}; // { abatementValue: [personnelRows] }
+    @track budgetData = {};
+
+    @track personnelRows = [
+        { id: Date.now(), PersonnelName__c: '', PersonnelPosition__c: '', PersonnelKeyStaffAnnualSalary__c: '', PersonnelLevelOfEffort__c: '', PersonnelTotalChargedToAward__c: '' }
+    ];
+
+    @api
+    handleAddPartnerFromParent() {
+        // Handle Add Partner action from parent
+        this.handleAddPartner();
     }
 
-    // Load picklist data from Apex
+    connectedCallback() {
+        this.loadPicklistData();
+        if (this.recordId) {
+            this.loadExistingData();
+        }
+        // Listen for addpartner event from parent as fallback
+        this.template?.addEventListener?.('addpartner', this.handleAddPartner.bind(this));
+    }
+
+    handleAddPartner() {
+        // Notify internally or perform any logic needed
+        // For demonstration, show a toast
+        this.showToast('Info', 'Add Partner button clicked', 'info');
+        // You can add your custom logic here
+        // Optionally, dispatch a custom event for further handling
+        this.dispatchEvent(new CustomEvent('partneradded'));
+    }
+
+
+    
+    @wire(getAbatementPicklistValues)
+    wiredPicklistData({ error, data }) {
+        if (data && data.success) {
+            this.coreStrategies = data.coreStrategies;
+            this.mappedAbatementStrategies = data.mappedAbatementStrategies;
+            this.hasError = false;
+        } else if (error || (data && !data.success)) {
+            console.error('Error loading picklist data:', error || data.error);
+            this.hasError = true;
+            this.errorMessage = error?.body?.message || data?.error || 'Failed to load form data';
+            this.showToast('Error', this.errorMessage, 'error');
+        }
+    }
+
     loadPicklistData() {
         this.isLoading = true;
+        getAbatementPicklistValues()
+            .then(result => {
+                if (result.success) {
+                    this.coreStrategies = result.coreStrategies;
+                    this.mappedAbatementStrategies = result.mappedAbatementStrategies;
+                } else {
+                    this.handleError('Failed to load picklist data', result.error);
+                }
+                this.isLoading = false;
+            })
+            .catch(error => {
+                console.error('Error loading picklist data:', error);
+                this.handleError('Failed to load form data', error);
+                this.isLoading = false;
+            });
+    }
+
+    loadExistingData() {
+        if (!this.recordId) return;
         
-        Promise.all([
-            getCoreStrategiesPicklist(),
-            getCoreAbatementStrategiesPicklist()
-        ])
-        .then(([coreStrategies, coreAbatement]) => {
-            console.log('Core Strategies loaded:', coreStrategies);
-            console.log('Core Abatement Strategies loaded:', coreAbatement);
-            
-            this.coreStrategiesOptions = coreStrategies || [];
-            this.coreAbatementStrategiesOptions = coreAbatement || [];
-            
-            // Initialize data if available
-            if (this.applicationData) {
-                this.initializeExistingData();
-            }
-            
-            this.isLoading = false;
-        })
-        .catch(error => {
-            console.error('Error loading picklist data:', error);
-            this.handleError('Failed to load strategy options', error);
-        });
-    }
-
-    // Initialize existing data from applicationData
-    initializeExistingData() {
-        try {
-            if (this.applicationData.CoreStrategies__c) {
-                this.selectedCoreStrategies = this.applicationData.CoreStrategies__c.split(';');
-            }
-            
-            if (this.applicationData.Core_Abatement_Strategies__c) {
-                this.selectedAbatementStrategies = this.applicationData.Core_Abatement_Strategies__c.split(';');
-            }
-
-            // Expand strategies that have selections
-            this.selectedCoreStrategies.forEach(strategy => {
-                const strategyValue = strategy.trim();
-                if (strategyValue) {
-                    this.expandedStrategies.add(strategyValue);
-                    this.updateAvailableAbatementStrategies(strategyValue);
+        getAbatementStrategiesRecord({ recordId: this.recordId })
+            .then(result => {
+                if (result.success && result.record) {
+                    const record = result.record;
+                    this.selectedCoreStrategies = record.CoreStrategies__c || [];
+                    this.selectedAbatementStrategies = record.Core_Abatement_Strategies__c || [];
+                    
+                    // Expand strategies that have selections
+                    this.selectedCoreStrategies.forEach(strategy => {
+                        // Extract letter from strategy value (e.g., "A: Something" -> "A")
+                        const letter = this.extractStrategyLetter(strategy);
+                        this.expandedStrategies.add(letter);
+                    });
+                    
+                    this.updateComponentData();
                 }
+            })
+            .catch(error => {
+                console.error('Error loading existing data:', error);
             });
-
-        } catch (error) {
-            console.error('Error initializing existing data:', error);
-        }
     }
 
-    // Handle core strategy selection
-    handleCoreStrategyChange(event) {
-        try {
-            const selectedValues = event.detail.value || [];
-            console.log('Core strategies selected:', selectedValues);
-            
-            this.selectedCoreStrategies = selectedValues;
-            
-            // Update expanded strategies
-            this.expandedStrategies.clear();
-            selectedValues.forEach(strategy => {
-                this.expandedStrategies.add(strategy);
-                this.updateAvailableAbatementStrategies(strategy);
-            });
-
-            // Filter abatement strategies to only show relevant ones
-            this.filterAbatementStrategies();
-            
-            // Notify parent component
-            this.notifyParent();
-            
-        } catch (error) {
-            console.error('Error handling core strategy change:', error);
-            this.showToast('Error', 'Failed to update core strategies', 'error');
+    // Personnel Methods
+    handlePersonnelInputChange(event) {
+        const abatementValue = event.target.dataset.abatement;
+        const idx = parseInt(event.target.dataset.index, 10);
+        const field = event.target.dataset.field;
+        const value = event.target.value;
+        
+        if (!abatementValue || idx === undefined || !field) {
+            console.error('Missing required data attributes');
+            return;
         }
+    
+        // Initialize personnel data if it doesn't exist
+        if (!this.personnelData[abatementValue]) {
+            this.personnelData[abatementValue] = [];
+        }
+    
+        // Ensure the personnel record exists at the index
+        if (!this.personnelData[abatementValue][idx]) {
+            this.personnelData[abatementValue][idx] = this.createEmptyPersonnelRecord();
+        }
+    
+        // Update the specific field
+        this.personnelData[abatementValue][idx][field] = value;
+        
+        // Force reactivity by creating a new object
+        this.personnelData = { ...this.personnelData };
+        
+        // Emit change event
+        this.emitAbatementDataChange();
     }
 
-    // Handle abatement strategy selection
-    handleAbatementStrategyChange(event) {
-        try {
-            const selectedValues = event.detail.value || [];
-            console.log('Abatement strategies selected:', selectedValues);
-            
-            this.selectedAbatementStrategies = selectedValues;
-            
-            // Notify parent component
-            this.notifyParent();
-            
-        } catch (error) {
-            console.error('Error handling abatement strategy change:', error);
-            this.showToast('Error', 'Failed to update abatement strategies', 'error');
-        }
+handleBudgetInputChange(event) {
+    const abatementValue = event.target.dataset.abatement;
+    const field = event.target.dataset.field || event.target.name;
+    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+    const index = parseInt(event.target.dataset.index, 10);
+
+    if (!abatementValue || index === undefined || index < 0) {
+        console.error('Invalid budget input change parameters');
+        return;
     }
 
-    // Update available abatement strategies based on selected core strategy
-    updateAvailableAbatementStrategies(coreStrategy) {
-        try {
-            if (!coreStrategy) return;
-            
-            // Get the first character of the core strategy to match with abatement strategies
-            const firstChar = coreStrategy.charAt(0).toUpperCase();
-            
-            // Filter abatement strategies that start with the same character
-            const matchingStrategies = this.coreAbatementStrategiesOptions.filter(strategy => 
-                strategy.value.charAt(0).toUpperCase() === firstChar
-            );
-            
-            console.log(`Matching strategies for ${coreStrategy}:`, matchingStrategies);
-            
-            // Store the mapping for this strategy
-            this.strategySubItems[coreStrategy] = matchingStrategies;
-            
-        } catch (error) {
-            console.error('Error updating available abatement strategies:', error);
-        }
+    // Get current budget data for this abatement option
+    const currentBudgetData = this.budgetData[abatementValue] || [];
+    
+    // Create a copy of the budget array
+    const updatedBudgetData = [...currentBudgetData];
+    
+    // Ensure the record exists at the specified index
+    if (!updatedBudgetData[index]) {
+        updatedBudgetData[index] = this.createEmptyBudgetRecord();
+    }
+    
+    // Update the specific field
+    updatedBudgetData[index] = {
+        ...updatedBudgetData[index],
+        [field]: value
+    };
+    
+    // Update the budget data
+    this.budgetData = {
+        ...this.budgetData,
+        [abatementValue]: updatedBudgetData
+    };
+    
+    this.emitAbatementDataChange();
+}
+
+addPersonnelRow(event) {
+    const abatementValue = event.currentTarget.dataset.abatement;
+    
+    if (!abatementValue) {
+        console.error('No abatement value found for personnel row addition');
+        this.showToast('Error', 'Unable to add personnel row', 'error');
+        return;
+    }
+    
+    // Initialize personnel data if it doesn't exist
+    if (!this.personnelData[abatementValue]) {
+        this.personnelData[abatementValue] = [];
+    }
+    
+    // Create new personnel record
+    const newPersonnelRecord = this.createEmptyPersonnelRecord();
+    
+    // Add to the array
+    this.personnelData[abatementValue] = [
+        ...this.personnelData[abatementValue],
+        newPersonnelRecord
+    ];
+    
+    // Force reactivity
+    this.personnelData = { ...this.personnelData };
+    
+    // Emit change event
+    this.emitAbatementDataChange();
+    
+    // Show success message
+    this.showToast('Success', 'Personnel row added successfully', 'success');
+}
+
+
+addBudgetRow(event) {
+    const abatementValue = event.currentTarget.dataset.abatement;
+    
+    if (!abatementValue) {
+        console.error('No abatement value found for budget row addition');
+        return;
+    }
+    
+    // Get current budget data for this abatement option
+    const currentBudgetData = this.budgetData[abatementValue] || [];
+    
+    // Create new budget record with unique ID
+    const newBudgetRecord = this.createEmptyBudgetRecord();
+    
+    // Add to the array
+    const updatedBudgetData = [...currentBudgetData, newBudgetRecord];
+    
+    // Update the budget data
+    this.budgetData = {
+        ...this.budgetData,
+        [abatementValue]: updatedBudgetData
+    };
+    
+    this.emitAbatementDataChange();
+}
+
+deletePersonnelRow(event) {
+    const abatementValue = event.currentTarget.dataset.abatement;
+    const idx = parseInt(event.currentTarget.dataset.index, 10);
+    
+    if (!abatementValue || idx === undefined || idx < 0) {
+        console.error('Invalid parameters for personnel row deletion');
+        return;
+    }
+    
+    if (!this.personnelData[abatementValue] || idx >= this.personnelData[abatementValue].length) {
+        console.error('Personnel row not found');
+        return;
+    }
+    
+    // Remove the personnel record at the specified index
+    const updatedPersonnelData = this.personnelData[abatementValue].filter((_, index) => index !== idx);
+    
+    // Update the personnel data
+    if (updatedPersonnelData.length === 0) {
+        // If no records left, remove the key entirely
+        const newPersonnelData = { ...this.personnelData };
+        delete newPersonnelData[abatementValue];
+        this.personnelData = newPersonnelData;
+    } else {
+        this.personnelData = {
+            ...this.personnelData,
+            [abatementValue]: updatedPersonnelData
+        };
+    }
+    
+    // Emit change event
+    this.emitAbatementDataChange();
+    
+    // Show success message
+    this.showToast('Success', 'Personnel row deleted successfully', 'success');
+}
+
+deleteBudgetRow(event) {
+    const abatementValue = event.currentTarget.dataset.abatement;
+    const index = parseInt(event.currentTarget.dataset.index, 10);
+    
+    if (!abatementValue || index === undefined || index < 0) {
+        console.error('Invalid parameters for budget row deletion');
+        return;
+    }
+    
+    // Get current budget data
+    const currentBudgetData = this.budgetData[abatementValue] || [];
+    
+    if (index >= currentBudgetData.length) {
+        console.error('Index out of bounds for budget deletion');
+        return;
+    }
+    
+    // Remove the record at the specified index
+    const updatedBudgetData = currentBudgetData.filter((_, i) => i !== index);
+    
+    // Update the budget data
+    if (updatedBudgetData.length === 0) {
+        // If no records left, remove the key entirely
+        const newBudgetData = { ...this.budgetData };
+        delete newBudgetData[abatementValue];
+        this.budgetData = newBudgetData;
+    } else {
+        this.budgetData = {
+            ...this.budgetData,
+            [abatementValue]: updatedBudgetData
+        };
+    }
+    
+    this.emitAbatementDataChange();
+}
+
+
+// Helper Methods
+createEmptyPersonnelRecord() {
+    return {
+        id: this.generateUniqueId(),
+        PersonnelName__c: '',
+        PersonnelPosition__c: '',
+        PersonnelKeyStaffAnnualSalary__c: '',
+        PersonnelLevelOfEffort__c: '',
+        PersonnelTotalChargedToAward__c: ''
+    };
+}
+createEmptyBudgetRecord() {
+    return {
+        id: this.generateUniqueId(),
+        BudgetItem__c: '',
+        BudgetPurpose__c: '',
+        BudgetCalculation__c: '',
+        BudgetTotalChargedToAward__c: ''
+    };
+}
+    // Helper method to extract letter from strategy value
+    extractStrategyLetter(value) {
+        if (!value) return '';
+        const match = value.match(/^([A-Z])/);
+        return match ? match[1] : '';
     }
 
-    // Filter abatement strategies based on selected core strategies
-    filterAbatementStrategies() {
-        try {
-            let filteredStrategies = [];
-            
-            this.selectedCoreStrategies.forEach(coreStrategy => {
-                const firstChar = coreStrategy.charAt(0).toUpperCase();
-                const matchingStrategies = this.coreAbatementStrategiesOptions.filter(strategy => 
-                    strategy.value.charAt(0).toUpperCase() === firstChar
-                );
-                filteredStrategies = filteredStrategies.concat(matchingStrategies);
-            });
-            
-            // Remove duplicates
-            this.availableAbatementStrategies = filteredStrategies.filter((strategy, index, self) =>
-                index === self.findIndex(s => s.value === strategy.value)
-            );
-            
-            console.log('Filtered abatement strategies:', this.availableAbatementStrategies);
-            
-            // Remove selected abatement strategies that are no longer available
-            this.selectedAbatementStrategies = this.selectedAbatementStrategies.filter(selected => 
-                this.availableAbatementStrategies.some(available => available.value === selected)
-            );
-            
-        } catch (error) {
-            console.error('Error filtering abatement strategies:', error);
-        }
+    // Helper method to extract number from sub-strategy value
+    extractSubStrategyNumber(value) {
+        if (!value) return '';
+        // Extract pattern like "A.1", "B.2", etc.
+        const match = value.match(/^[A-Z]\.(\d+)/);
+        return match ? match[1] : '';
     }
 
-    // Toggle strategy expansion
-    toggleStrategy(event) {
-        try {
-            const strategyValue = event.currentTarget.dataset.strategy;
-            console.log('Toggling strategy:', strategyValue);
-            
-            if (this.expandedStrategies.has(strategyValue)) {
-                this.expandedStrategies.delete(strategyValue);
-            } else {
-                this.expandedStrategies.add(strategyValue);
-                this.updateAvailableAbatementStrategies(strategyValue);
-            }
-            
-            // Force re-render
-            this.expandedStrategies = new Set(this.expandedStrategies);
-            
-        } catch (error) {
-            console.error('Error toggling strategy:', error);
-        }
-    }
-
-    // Notify parent component of data changes
-    notifyParent() {
-        try {
-            const stepData = {
-                CoreStrategies__c: this.selectedCoreStrategies.join(';'),
-                Core_Abatement_Strategies__c: this.selectedAbatementStrategies.join(';')
+    // Replace your existing processedCoreStrategies getter with this updated version
+// Updated processedCoreStrategies getter with better data handling
+get processedCoreStrategies() {
+    return this.coreStrategies.map((strategy, coreIdx) => {
+        const strategyLetter = this.extractStrategyLetter(strategy.value);
+        const isExpanded = this.expandedStrategies.has(strategyLetter);
+        const abatementOptions = this.mappedAbatementStrategies[strategy.value] || [];
+        const selectedCount = this.getSelectedAbatementCount(strategy.value);
+        
+        // Add selection state, extract numbers, and add persistedData for each abatement option
+        const processedAbatementOptions = abatementOptions.map((option, abateIdx) => {
+            const isSelected = this.selectedAbatementStrategies.includes(option.value);
+            return {
+                ...option,
+                isSelected: isSelected,
+                subNumber: this.extractSubStrategyNumber(option.value) || (abateIdx + 1),
+                // Always include persisted data if it exists, regardless of selection
+                persistedData: this.strategyLineResourcesData && this.strategyLineResourcesData[option.value]
+                    ? { ...this.strategyLineResourcesData[option.value] }
+                    : {},
+                personnelRows: isSelected ? (this.personnelData[option.value] || []) : [],
+                budgetRows: isSelected ? (this.budgetData[option.value] || []) : []
             };
-            
-            console.log('Notifying parent with abatement strategy data:', stepData);
-            
-            const dataChangeEvent = new CustomEvent('datachange', {
-                detail: {
-                    stepData: stepData,
-                    stepType: 'abatementStrategy'
-                }
-            });
-            
-            this.dispatchEvent(dataChangeEvent);
-            
-        } catch (error) {
-            console.error('Error notifying parent:', error);
-        }
-    }
-
-    // Public method to validate the step
-    @api
-    validateStep() {
-        try {
-            // Add validation logic here
-            if (this.selectedCoreStrategies.length === 0) {
-                this.showToast('Validation Error', 'Please select at least one core strategy', 'error');
-                return false;
-            }
-            
-            return true;
-        } catch (error) {
-            console.error('Error validating step:', error);
-            return false;
-        }
-    }
-
-    // Public method to get current data
-    @api
-    getData() {
+        });
+        
         return {
+            ...strategy,
+            strategyLetter: strategyLetter || String.fromCharCode(65 + coreIdx),
+            isExpanded: isExpanded,
+            abatementOptions: processedAbatementOptions,
+            hasAbatementOptions: abatementOptions.length > 0,
+            selectedAbatementCount: selectedCount,
+            iconName: isExpanded ? 'utility:chevronup' : 'utility:chevrondown',
+            hasSelections: selectedCount > 0 ? 'strategy-item has-selections slds-m-bottom_medium' : 'strategy-item slds-m-bottom_medium'
+        };
+    });
+}
+
+
+    getSelectedAbatementCount(coreStrategyValue) {
+        const abatementOptions = this.mappedAbatementStrategies[coreStrategyValue] || [];
+        return abatementOptions.filter(option => 
+            this.selectedAbatementStrategies.includes(option.value)
+        ).length;
+    }
+
+    handleCoreStrategyToggle(event) {
+        const strategyValue = event.currentTarget.dataset.strategy;
+        const strategyLetter = this.extractStrategyLetter(strategyValue);
+        
+        if (this.expandedStrategies.has(strategyLetter)) {
+            this.expandedStrategies.delete(strategyLetter);
+        } else {
+            this.expandedStrategies.add(strategyLetter);
+        }
+        
+        // Force reactivity
+        this.expandedStrategies = new Set(this.expandedStrategies);
+    }
+
+    handleAbatementStrategyChange(event) {
+        const strategyValue = event.currentTarget.dataset.strategy;
+        const isChecked = event.target.checked;
+
+        // Find the parent core strategy for this abatement option
+        let parentCoreStrategy = null;
+        for (const coreStrategy in this.mappedAbatementStrategies) {
+            if (this.mappedAbatementStrategies[coreStrategy].some(opt => opt.value === strategyValue)) {
+                parentCoreStrategy = coreStrategy;
+                break;
+            }
+        }
+        if (parentCoreStrategy) {
+            const letter = this.extractStrategyLetter(parentCoreStrategy);
+            this.expandedStrategies.add(letter);
+            // Force reactivity
+            this.expandedStrategies = new Set(this.expandedStrategies);
+        }
+
+        if (isChecked) {
+            if (!this.selectedAbatementStrategies.includes(strategyValue)) {
+                this.selectedAbatementStrategies.push(strategyValue);
+            }
+            // Ensure parent core strategy is selected
+            if (parentCoreStrategy && !this.selectedCoreStrategies.includes(parentCoreStrategy)) {
+                this.selectedCoreStrategies.push(parentCoreStrategy);
+            }
+        } else {
+            this.selectedAbatementStrategies = this.selectedAbatementStrategies.filter(
+                item => item !== strategyValue
+            );
+            // Do NOT clear data here. Data will only be cleared by handleClearAbatementOption.
+            // If no sub-strategies remain selected for this core, remove it from selectedCoreStrategies
+            const abatementOptions = this.mappedAbatementStrategies[parentCoreStrategy] || [];
+            const anySelected = abatementOptions.some(opt => this.selectedAbatementStrategies.includes(opt.value));
+            if (parentCoreStrategy && !anySelected) {
+                this.selectedCoreStrategies = this.selectedCoreStrategies.filter(item => item !== parentCoreStrategy);
+            }
+        }
+
+        this.updateComponentData();
+        this.emitAbatementDataChange(); // Notify parent of all changes
+    }
+
+    handleClearStrategy(event) {
+        const coreStrategyValue = event.currentTarget.dataset.strategy;
+        const abatementOptions = this.mappedAbatementStrategies[coreStrategyValue] || [];
+        const optionsToClear = abatementOptions.map(opt => opt.value);
+    
+        // Remove all selected abatement strategies for this core strategy
+        this.selectedAbatementStrategies = this.selectedAbatementStrategies.filter(
+            item => !optionsToClear.includes(item)
+        );
+    
+        // Remove all associated strategy line item data
+        const updatedResources = { ...this.strategyLineResourcesData };
+        optionsToClear.forEach(optionValue => {
+            if (updatedResources[optionValue]) {
+                delete updatedResources[optionValue];
+            }
+        });
+        this.strategyLineResourcesData = updatedResources;
+    
+        // Clear personnel and budget data for all options
+        const updatedPersonnelData = { ...this.personnelData };
+        const updatedBudgetData = { ...this.budgetData };
+    
+        optionsToClear.forEach(optionValue => {
+            if (updatedPersonnelData[optionValue]) {
+                delete updatedPersonnelData[optionValue];
+            }
+            if (updatedBudgetData[optionValue]) {
+                delete updatedBudgetData[optionValue];
+            }
+        });
+    
+        this.personnelData = updatedPersonnelData;
+        this.budgetData = updatedBudgetData;
+    
+        // Debug logs to confirm cleared state
+        console.log('After clear, strategyLineResourcesData:', JSON.stringify(this.strategyLineResourcesData, null, 2));
+        console.log('After clear, personnelData:', this.personnelData);
+        console.log('After clear, budgetData:', this.budgetData);
+    
+        // Deselect the parent core strategy since all its children are cleared
+        this.selectedCoreStrategies = this.selectedCoreStrategies.filter(item => item !== coreStrategyValue);
+        
+        this.updateComponentData();
+        this.emitAbatementDataChange();
+        
+        this.showToast('Success', 'All strategies cleared successfully', 'success');
+    }
+    
+
+    handleClearAbatementOption(event) {
+        const abatementValue = event.currentTarget.dataset.abatement;
+        
+        console.log('Clearing abatement option:', abatementValue);
+        
+        // Filter out the deselected abatement strategy
+        this.selectedAbatementStrategies = this.selectedAbatementStrategies.filter(
+            item => item !== abatementValue
+        );
+    
+        // Remove the corresponding data from strategyLineResourcesData safely
+        if (this.strategyLineResourcesData && this.strategyLineResourcesData[abatementValue]) {
+            const updatedData = { ...this.strategyLineResourcesData };
+            delete updatedData[abatementValue];
+            this.strategyLineResourcesData = updatedData;
+        }
+    
+        // Clear personnel data
+        if (this.personnelData[abatementValue]) {
+            const updatedPersonnelData = { ...this.personnelData };
+            delete updatedPersonnelData[abatementValue];
+            this.personnelData = updatedPersonnelData;
+        }
+    
+        // Clear budget data
+        if (this.budgetData[abatementValue]) {
+            const updatedBudgetData = { ...this.budgetData };
+            delete updatedBudgetData[abatementValue];
+            this.budgetData = updatedBudgetData;
+        }
+    
+        // Check if this was the last selection for the parent and deselect parent if so
+        let parentCoreStrategy = null;
+        for (const coreStrategy in this.mappedAbatementStrategies) {
+            if (this.mappedAbatementStrategies[coreStrategy].some(opt => opt.value === abatementValue)) {
+                parentCoreStrategy = coreStrategy;
+                break;
+            }
+        }
+    
+        if (parentCoreStrategy) {
+            const abatementOptions = this.mappedAbatementStrategies[parentCoreStrategy] || [];
+            const anySelected = abatementOptions.some(opt => this.selectedAbatementStrategies.includes(opt.value));
+            if (!anySelected) {
+                this.selectedCoreStrategies = this.selectedCoreStrategies.filter(item => item !== parentCoreStrategy);
+            }
+        }
+    
+        // Force template re-render by updating the processed data
+        this.updateComponentData();
+        this.emitAbatementDataChange();
+        
+        // Show success message
+        this.showToast('Success', 'Strategy cleared successfully', 'success');
+    }
+
+    isAbatementStrategySelected(strategyValue) {
+        return this.selectedAbatementStrategies.includes(strategyValue);
+    }
+
+    updateComponentData() {
+        this.componentData = {
+            coreStrategies: [...this.selectedCoreStrategies],
+            abatementStrategies: [...this.selectedAbatementStrategies],
             CoreStrategies__c: this.selectedCoreStrategies.join(';'),
             Core_Abatement_Strategies__c: this.selectedAbatementStrategies.join(';')
         };
     }
 
-    // Public method to set data
+    notifyParent() {
+        const dataChangeEvent = new CustomEvent('datachange', {
+            detail: {
+                stepData: this.componentData,
+                stepType: 'abatementStrategies'
+            }
+        });
+        this.dispatchEvent(dataChangeEvent);
+    }
+
+    // Add this method to handle input changes for the inlined strategy line resources form
+    handleStrategyLineResourceInputChange(event) {
+        const abatementValue = event.target.dataset.abatement;
+        const field = event.target.dataset.field || event.target.name;
+        const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+
+        // Get current data or initialize
+        const currentData = this.strategyLineResourcesData[abatementValue] || {
+            BudgetAmountForThePurchase__c: '',
+            IsYourStrategyInitialContinuation__c: '',
+            BudgetNarrative__c: '',
+            ImplementationPlanForTheStrategy__c: '',
+            ProvideTheOutcomeMeasures__c: '',
+            ProvideTheProcessMeasures__c: '',
+            Strategy_Value__c: abatementValue
+        };
+
+        // Update the field
+        const updatedData = {
+            ...currentData,
+            [field]: value
+        };
+        this.strategyLineResourcesData = {
+            ...this.strategyLineResourcesData,
+            [abatementValue]: updatedData
+        };
+        console.log('strategyLineResourcesData updated:', JSON.stringify(this.strategyLineResourcesData));
+        this.emitAbatementDataChange();
+    }
+
+    // Getter for initial/continuation picklist options
+    get initialContinuationOptions() {
+        if (this.picklistValues && this.picklistValues.IsYourStrategyInitialContinuation__c) {
+            return this.picklistValues.IsYourStrategyInitialContinuation__c.map(option => ({
+                label: option.label,
+                value: option.value
+            }));
+        }
+        return [
+            { label: 'Initial', value: 'Initial' },
+            { label: 'Continuation', value: 'Continuation' }
+        ];
+    }
+
+    // Emit a single datachange event upward with all abatement data
+    emitAbatementDataChange() {
+        // Send ALL data to parent, not just selected
+        const abatementData = {
+            ...this.componentData,
+            strategyLineResources: { ...this.strategyLineResourcesData }
+        };
+        const personnelData = { ...this.personnelData };
+        const budgetData = { ...this.budgetData };
+
+        // Log the data being sent to the parent
+        console.log('Emitting abatementData to parent:', JSON.stringify(abatementData));
+        console.log('Emitting personnelData to parent:', JSON.stringify(personnelData));
+        console.log('Emitting budgetData to parent:', JSON.stringify(budgetData));
+
+        const dataChangeEvent = new CustomEvent('datachange', {
+            detail: {
+                abatementStrategies: abatementData,
+                personnelData: personnelData,
+                budgetData: budgetData,
+                stepType: 'abatementStrategies'
+            }
+        });
+        this.dispatchEvent(dataChangeEvent);
+    }
+
+    // Add this handler to re-dispatch the event
+    // Remove the handleStrategyLineResourcesChange method, as it is not needed for event bubbling to the grandparent.
+
+    // Public methods for parent component
     @api
     setData(data) {
-        try {
-            if (data) {
-                this.applicationData = { ...data };
-                this.initializeExistingData();
+        if (data) {
+            // Restore selected core and abatement strategies
+            if (data.coreStrategies) {
+                this.selectedCoreStrategies = Array.isArray(data.coreStrategies) ? data.coreStrategies : data.coreStrategies.split(';');
             }
-        } catch (error) {
-            console.error('Error setting data:', error);
+            if (data.abatementStrategies) {
+                this.selectedAbatementStrategies = Array.isArray(data.abatementStrategies) ? data.abatementStrategies : data.abatementStrategies.split(';');
+            }
+            if (data.strategyLineResources) {
+                this.strategyLineResourcesData = { ...data.strategyLineResources };
+            }
+            if (data.personnelData) {
+                this.personnelData = { ...data.personnelData };
+            }
+            if (data.budgetData) {
+                this.budgetData = { ...data.budgetData };
+            }
+            this.updateComponentData();
+            // Do NOT expand anything here!
+            this.expandedStrategies = new Set();
         }
     }
 
-    // Handle errors
+    @api
+    getData() {
+        return this.componentData;
+    }
+
+    @api
+    validateStep() {
+        // Add validation logic if needed
+        return true;
+    }
+
+    /**
+     * Call this method after saving data to ensure the selected core strategy accordions are open.
+     */
+    @api
+    handleAfterSave() {
+        // Clear and update expandedStrategies to open all selected core strategies
+        this.expandedStrategies.clear();
+        this.selectedCoreStrategies.forEach(strategy => {
+            const letter = this.extractStrategyLetter(strategy);
+            this.expandedStrategies.add(letter);
+        });
+        // Force reactivity
+        this.expandedStrategies = new Set(this.expandedStrategies);
+    }
+
     handleError(message, error) {
         console.error(message, error);
         this.hasError = true;
         this.errorMessage = message;
-        this.isLoading = false;
         this.showToast('Error', message, 'error');
     }
 
-    // Show toast notifications
     showToast(title, message, variant) {
-        try {
-            const event = new ShowToastEvent({
-                title: title,
-                message: message,
-                variant: variant
-            });
-            this.dispatchEvent(event);
-        } catch (error) {
-            console.error('Error showing toast:', error);
-            console.log(`${title}: ${message}`);
+        const event = new ShowToastEvent({
+            title: title,
+            message: message,
+            variant: variant
+        });
+        this.dispatchEvent(event);
+    }
+
+    get showContent() {
+        return !this.isLoading && !this.hasError && this.coreStrategies.length > 0;
+    }
+
+    get showSpinner() {
+        return this.isLoading;
+    }
+
+    generateUniqueId() {
+    return 'id-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+}
+
+getFilteredPersonnelData() {
+    const filteredData = {};
+    this.selectedAbatementStrategies.forEach(key => {
+        if (this.personnelData[key] && this.personnelData[key].length > 0) {
+            filteredData[key] = this.personnelData[key];
         }
+    });
+    return filteredData;
+}
+
+getFilteredBudgetData() {
+    const filteredData = {};
+    this.selectedAbatementStrategies.forEach(key => {
+        if (this.budgetData[key] && this.budgetData[key].length > 0) {
+            filteredData[key] = this.budgetData[key];
+        }
+    });
+    return filteredData;
+}
+
+// Additional helper method to get personnel records for template
+getPersonnelRecords(abatementValue) {
+    return this.personnelData[abatementValue] || [];
+}
+
+// Additional helper method to get budget records for template
+getBudgetRecords(abatementValue) {
+    return this.budgetData[abatementValue] || [];
+}
+
+    // Getter to return the correct strategy line resource data for a given abatement option
+    getStrategyLineResourceData(strategyValue) {
+        return this.strategyLineResourcesData && this.strategyLineResourcesData[strategyValue]
+            ? this.strategyLineResourcesData[strategyValue]
+            : {};
     }
 
-    // Getters for template
-    get coreStrategiesValue() {
-        return this.selectedCoreStrategies;
+    // Update abatementOptionDataMap whenever strategyLineResourcesData or processedCoreStrategies changes
+    renderedCallback() {
+        const map = {};
+        this.processedCoreStrategies.forEach(strategy => {
+            (strategy.abatementOptions || []).forEach(option => {
+                map[option.value] = this.strategyLineResourcesData && this.strategyLineResourcesData[option.value]
+                    ? this.strategyLineResourcesData[option.value]
+                    : {};
+            });
+        });
+        this.abatementOptionDataMap = map;
+
+        
     }
 
-    get abatementStrategiesValue() {
-        return this.selectedAbatementStrategies;
-    }
-
-    get showAbatementStrategies() {
-        return this.availableAbatementStrategies.length > 0;
-    }
-
-    get expandedStrategiesList() {
-        return this.selectedCoreStrategies.filter(strategy => 
-            this.expandedStrategies.has(strategy)
-        );
-    }
-
-    // Check if strategy is expanded
-    isStrategyExpanded(strategyValue) {
-        return this.expandedStrategies.has(strategyValue);
-    }
-
-    // Get sub-items for a strategy
-    getStrategySubItems(strategyValue) {
-        return this.strategySubItems[strategyValue] || [];
+    // Add this public method to reset expanded state
+    @api
+    resetExpandedStrategies() {
+        this.expandedStrategies = new Set();
     }
 }

@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Please_select_the_appropriate_county__c</fullName>
+    <label>Please select the appropriate county</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>MultiselectPicklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Abbeville</fullName>
+                <default>false</default>
+                <label>Abbeville</label>
+            </value>
+            <value>
+                <fullName>Aiken</fullName>
+                <default>false</default>
+                <label>Aiken</label>
+            </value>
+            <value>
+                <fullName>Allendale</fullName>
+                <default>false</default>
+                <label>Allendale</label>
+            </value>
+            <value>
+                <fullName>Anderson</fullName>
+                <default>false</default>
+                <label>Anderson</label>
+            </value>
+            <value>
+                <fullName>Bamberg</fullName>
+                <default>false</default>
+                <label>Bamberg</label>
+            </value>
+            <value>
+                <fullName>Barnwell</fullName>
+                <default>false</default>
+                <label>Barnwell</label>
+            </value>
+            <value>
+                <fullName>Beaufort</fullName>
+                <default>false</default>
+                <label>Beaufort</label>
+            </value>
+            <value>
+                <fullName>Berkeley</fullName>
+                <default>false</default>
+                <label>Berkeley</label>
+            </value>
+            <value>
+                <fullName>Bluffton Town</fullName>
+                <default>false</default>
+                <label>Bluffton Town</label>
+            </value>
+            <value>
+                <fullName>Calhoun</fullName>
+                <default>false</default>
+                <label>Calhoun</label>
+            </value>
+            <value>
+                <fullName>Cayce</fullName>
+                <default>false</default>
+                <label>Cayce</label>
+            </value>
+            <value>
+                <fullName>Charleston</fullName>
+                <default>false</default>
+                <label>Charleston</label>
+            </value>
+            <value>
+                <fullName>Cherokee</fullName>
+                <default>false</default>
+                <label>Cherokee</label>
+            </value>
+            <value>
+                <fullName>Chester</fullName>
+                <default>false</default>
+                <label>Chester</label>
+            </value>
+            <value>
+                <fullName>Chesterfield</fullName>
+                <default>false</default>
+                <label>Chesterfield</label>
+            </value>
+            <value>
+                <fullName>Clarendon</fullName>
+                <default>false</default>
+                <label>Clarendon</label>
+            </value>
+            <value>
+                <fullName>Clemson</fullName>
+                <default>false</default>
+                <label>Clemson</label>
+            </value>
+            <value>
+                <fullName>Colleton</fullName>
+                <default>false</default>
+                <label>Colleton</label>
+            </value>
+            <value>
+                <fullName>Columbia</fullName>
+                <default>false</default>
+                <label>Columbia</label>
+            </value>
+            <value>
+                <fullName>Conway</fullName>
+                <default>false</default>
+                <label>Conway</label>
+            </value>
+            <value>
+                <fullName>Darlington</fullName>
+                <default>false</default>
+                <label>Darlington</label>
+            </value>
+            <value>
+                <fullName>Dillon</fullName>
+                <default>false</default>
+                <label>Dillon</label>
+            </value>
+            <value>
+                <fullName>Dorchester</fullName>
+                <default>false</default>
+                <label>Dorchester</label>
+            </value>
+            <value>
+                <fullName>Easley</fullName>
+                <default>false</default>
+                <label>Easley</label>
+            </value>
+            <value>
+                <fullName>Edgefield</fullName>
+                <default>false</default>
+                <label>Edgefield</label>
+            </value>
+            <value>
+                <fullName>Fairfield</fullName>
+                <default>false</default>
+                <label>Fairfield</label>
+            </value>
+            <value>
+                <fullName>Florence</fullName>
+                <default>false</default>
+                <label>Florence</label>
+            </value>
+            <value>
+                <fullName>Forest Acres</fullName>
+                <default>false</default>
+                <label>Forest Acres</label>
+            </value>
+            <value>
+                <fullName>Fort Mill Town</fullName>
+                <default>false</default>
+                <label>Fort Mill Town</label>
+            </value>
+            <value>
+                <fullName>Fountain Inn</fullName>
+                <default>false</default>
+                <label>Fountain Inn</label>
+            </value>
+            <value>
+                <fullName>Gaffney</fullName>
+                <default>false</default>
+                <label>Gaffney</label>
+            </value>
+            <value>
+                <fullName>Georgetown</fullName>
+                <default>false</default>
+                <label>Georgetown</label>
+            </value>
+            <value>
+                <fullName>Goose Creek</fullName>
+                <default>false</default>
+                <label>Goose Creek</label>
+            </value>
+            <value>
+                <fullName>Greenville</fullName>
+                <default>false</default>
+                <label>Greenville</label>
+            </value>
+            <value>
+                <fullName>Greenwood</fullName>
+                <default>false</default>
+                <label>Greenwood</label>
+            </value>
+            <value>
+                <fullName>Greer</fullName>
+                <default>false</default>
+                <label>Greer</label>
+            </value>
+            <value>
+                <fullName>Hampton</fullName>
+                <default>false</default>
+                <label>Hampton</label>
+            </value>
+            <value>
+                <fullName>Hanahan</fullName>
+                <default>false</default>
+                <label>Hanahan</label>
+            </value>
+            <value>
+                <fullName>Hilton Head Island Town</fullName>
+                <default>false</default>
+                <label>Hilton Head Island Town</label>
+            </value>
+            <value>
+                <fullName>Horry</fullName>
+                <default>false</default>
+                <label>Horry</label>
+            </value>
+            <value>
+                <fullName>Irmo Town</fullName>
+                <default>false</default>
+                <label>Irmo Town</label>
+            </value>
+            <value>
+                <fullName>James Island Town</fullName>
+                <default>false</default>
+                <label>James Island Town</label>
+            </value>
+            <value>
+                <fullName>Jasper</fullName>
+                <default>false</default>
+                <label>Jasper</label>
+            </value>
+            <value>
+                <fullName>Kershaw</fullName>
+                <default>false</default>
+                <label>Kershaw</label>
+            </value>
+            <value>
+                <fullName>Lancaster</fullName>
+                <default>false</default>
+                <label>Lancaster</label>
+            </value>
+            <value>
+                <fullName>Laurens</fullName>
+                <default>false</default>
+                <label>Laurens</label>
+            </value>
+            <value>
+                <fullName>Lee</fullName>
+                <default>false</default>
+                <label>Lee</label>
+            </value>
+            <value>
+                <fullName>Lexington</fullName>
+                <default>false</default>
+                <label>Lexington</label>
+            </value>
+            <value>
+                <fullName>Lexington Town</fullName>
+                <default>false</default>
+                <label>Lexington Town</label>
+            </value>
+            <value>
+                <fullName>Marion</fullName>
+                <default>false</default>
+                <label>Marion</label>
+            </value>
+            <value>
+                <fullName>Marlboro</fullName>
+                <default>false</default>
+                <label>Marlboro</label>
+            </value>
+            <value>
+                <fullName>Mauldin</fullName>
+                <default>false</default>
+                <label>Mauldin</label>
+            </value>
+            <value>
+                <fullName>McCormick</fullName>
+                <default>false</default>
+                <label>McCormick</label>
+            </value>
+            <value>
+                <fullName>Moncks Corner Town</fullName>
+                <default>false</default>
+                <label>Moncks Corner Town</label>
+            </value>
+            <value>
+                <fullName>Mount Pleasant Town</fullName>
+                <default>false</default>
+                <label>Mount Pleasant Town</label>
+            </value>
+            <value>
+                <fullName>Myrtle Beach</fullName>
+                <default>false</default>
+                <label>Myrtle Beach</label>
+            </value>
+            <value>
+                <fullName>Newberry</fullName>
+                <default>false</default>
+                <label>Newberry</label>
+            </value>
+            <value>
+                <fullName>North Augusta</fullName>
+                <default>false</default>
+                <label>North Augusta</label>
+            </value>
+            <value>
+                <fullName>North Charleston</fullName>
+                <default>false</default>
+                <label>North Charleston</label>
+            </value>
+            <value>
+                <fullName>North Myrtle Beach</fullName>
+                <default>false</default>
+                <label>North Myrtle Beach</label>
+            </value>
+            <value>
+                <fullName>Oconee</fullName>
+                <default>false</default>
+                <label>Oconee</label>
+            </value>
+            <value>
+                <fullName>Orangeburg</fullName>
+                <default>false</default>
+                <label>Orangeburg</label>
+            </value>
+            <value>
+                <fullName>Pickens</fullName>
+                <default>false</default>
+                <label>Pickens</label>
+            </value>
+            <value>
+                <fullName>Port Royal Town</fullName>
+                <default>false</default>
+                <label>Port Royal Town</label>
+            </value>
+            <value>
+                <fullName>Richland</fullName>
+                <default>false</default>
+                <label>Richland</label>
+            </value>
+            <value>
+                <fullName>Rock Hill</fullName>
+                <default>false</default>
+                <label>Rock Hill</label>
+            </value>
+            <value>
+                <fullName>Saluda</fullName>
+                <default>false</default>
+                <label>Saluda</label>
+            </value>
+            <value>
+                <fullName>Simpsonville</fullName>
+                <default>false</default>
+                <label>Simpsonville</label>
+            </value>
+            <value>
+                <fullName>Spartanburg</fullName>
+                <default>false</default>
+                <label>Spartanburg</label>
+            </value>
+            <value>
+                <fullName>Summerville Town</fullName>
+                <default>false</default>
+                <label>Summerville Town</label>
+            </value>
+            <value>
+                <fullName>Sumter</fullName>
+                <default>false</default>
+                <label>Sumter</label>
+            </value>
+            <value>
+                <fullName>Tega Cay</fullName>
+                <default>false</default>
+                <label>Tega Cay</label>
+            </value>
+            <value>
+                <fullName>Union</fullName>
+                <default>false</default>
+                <label>Union</label>
+            </value>
+            <value>
+                <fullName>West Columbia</fullName>
+                <default>false</default>
+                <label>West Columbia</label>
+            </value>
+            <value>
+                <fullName>Williamsburg</fullName>
+                <default>false</default>
+                <label>Williamsburg</label>
+            </value>
+            <value>
+                <fullName>York</fullName>
+                <default>false</default>
+                <label>York</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <visibleLines>4</visibleLines>
+</CustomField>

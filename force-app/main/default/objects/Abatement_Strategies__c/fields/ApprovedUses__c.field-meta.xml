@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ApprovedUses__c</fullName>
+    <label>Approved Uses</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>MultiselectPicklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>A. Treat Opioid Use Disorder (OUD)</fullName>
+                <default>false</default>
+                <label>A. Treat Opioid Use Disorder (OUD)</label>
+            </value>
+            <value>
+                <fullName>B. Support People in Treatment and Recovery</fullName>
+                <default>false</default>
+                <label>B. Support People in Treatment and Recovery</label>
+            </value>
+            <value>
+                <fullName>C. Connect People Who Need Help to the Help They Need (Connections to Care)</fullName>
+                <default>false</default>
+                <label>C. Connect People Who Need Help to the Help They Need (Connections to Care)</label>
+            </value>
+            <value>
+                <fullName>D. Address the Needs of Criminal Justice-Involved Persons</fullName>
+                <default>false</default>
+                <label>D. Address the Needs of Criminal Justice-Involved Persons</label>
+            </value>
+            <value>
+                <fullName>E. Address the Needs of Pregnant or Parenting Women and Their Families, including Babies with Neonatal Abstinence Syndrome (NAS).</fullName>
+                <default>false</default>
+                <label>E. Address the Needs of Pregnant or Parenting Women and Their Families, including Babies with Neonatal Abstinence Syndrome (NAS).</label>
+            </value>
+            <value>
+                <fullName>F. Prevent Over-Prescribing and Ensure Appropriate Prescribing and Dispensing of Opioids</fullName>
+                <default>false</default>
+                <label>F. Prevent Over-Prescribing and Ensure Appropriate Prescribing and Dispensing of Opioids</label>
+            </value>
+            <value>
+                <fullName>G. Prevent Misuse of Opioids</fullName>
+                <default>false</default>
+                <label>G. Prevent Misuse of Opioids</label>
+            </value>
+            <value>
+                <fullName>H. Prevent Overdose Deaths and Other Harms (Harm Reduction)</fullName>
+                <default>false</default>
+                <label>H. Prevent Overdose Deaths and Other Harms (Harm Reduction)</label>
+            </value>
+            <value>
+                <fullName>I. First Responders</fullName>
+                <default>false</default>
+                <label>I. First Responders</label>
+            </value>
+            <value>
+                <fullName>J Leadership, Planning, and Coordination</fullName>
+                <default>false</default>
+                <label>J Leadership, Planning, and Coordination</label>
+            </value>
+            <value>
+                <fullName>K. Training</fullName>
+                <default>false</default>
+                <label>K. Training</label>
+            </value>
+            <value>
+                <fullName>L. Research</fullName>
+                <default>false</default>
+                <label>L. Research</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <visibleLines>4</visibleLines>
+</CustomField>

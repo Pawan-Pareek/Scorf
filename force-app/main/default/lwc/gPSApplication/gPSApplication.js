@@ -11,7 +11,10 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getPicklistValues from '@salesforce/apex/GPSApplicationController.getPicklistValues';
 import saveApplication from '@salesforce/apex/GPSApplicationController.saveApplication';
 import getApplication from '@salesforce/apex/GPSApplicationController.getApplication';
-import saveTechnicalProposal from '@salesforce/apex/GPSApplicationController.saveTechnicalProposal';
+//import saveTechnicalProposal from '@salesforce/apex/GPSApplicationController.saveTechnicalProposal';
+import saveAbatementStrategies from '@salesforce/apex/GPSApplicationController.saveAbatementStrategies';
+import saveStrategyLineItems from '@salesforce/apex/GPSApplicationController.saveStrategyLineItems';
+import saveStrategyResources from '@salesforce/apex/GPSApplicationController.saveStrategyResources';
 
 // Static resource for logo
 import gpsLogo from '@salesforce/resourceUrl/ScorfBanner';
@@ -49,12 +52,28 @@ export default class GpsApplication extends LightningElement {
 
     //Store each and every step data
     @track organizationData = {};
-    @track technicalProposalData = {};
+    @track abatementStrategiesData = {};
     // Add this after line where you have technicalProposalData
+
+    // Store all strategy line resources data
+    @track strategyLineResourcesData = {};
+
+    // Add this property to store both personnel and budget data
+    @track abatementExtraData = {};
+
+    // Handler for bubbling event from strategyLineResources
+    handleStrategyLineResourcesChange(event) {
+        const { strategyValue, data } = event.detail;
+        this.strategyLineResourcesData = {
+            ...this.strategyLineResourcesData,
+            [strategyValue]: data
+        };
+        // Optionally, persist to backend here or on save
+        console.log('handleStrategyLineResourcesChange START'+JSON.stringify(this.strategyLineResourcesData));
+    }
 
     // Lifecycle hook - loads data when component is inserted into DOM
     connectedCallback() {
-        console.log('GPS Application Connected - Record ID:', this.recordId);
         this.initializeComponent();
     }
 
@@ -74,7 +93,6 @@ export default class GpsApplication extends LightningElement {
                 this.checkIfAllDataLoaded();
             }
         } catch (error) {
-            console.error('Error initializing component:', error);
             this.handleError('Failed to initialize application form', error);
         }
     }
@@ -83,13 +101,11 @@ export default class GpsApplication extends LightningElement {
     loadApplicationData() {
         getApplication({ recordId: this.recordId })
             .then(result => {
-                console.log('Application data loaded:', result);
                 this.applicationData = result ? { ...result } : {};
                 this.applicationLoaded = true;
                 this.checkIfAllDataLoaded();
             })
             .catch(error => {
-                console.error('Error loading application data:', error);
                 this.applicationLoaded = true; // Mark as loaded even on error
                 this.applicationData = {};
                 this.checkIfAllDataLoaded();
@@ -103,12 +119,10 @@ export default class GpsApplication extends LightningElement {
     @wire(getPicklistValues)
     wiredPicklistValues({ error, data }) {
         if (data) {
-            console.log('Picklist values loaded:', data);
             this.picklistValues = data;
             this.picklistLoaded = true;
             this.checkIfAllDataLoaded();
         } else if (error) {
-            console.error('Error loading picklist values:', error);
             this.picklistLoaded = true; // Mark as loaded even on error
             this.picklistValues = {};
             this.checkIfAllDataLoaded();
@@ -118,15 +132,10 @@ export default class GpsApplication extends LightningElement {
 
     // Check if all required data is loaded
     checkIfAllDataLoaded() {
-        console.log('Checking data loaded state:', {
-            picklistLoaded: this.picklistLoaded,
-            applicationLoaded: this.applicationLoaded
-        });
         
         if (this.picklistLoaded && this.applicationLoaded) {
             this.isDataLoaded = true;
             this.isLoading = false;
-            console.log('All data loaded successfully');
             
             // Ensure child components get the data
             this.notifyChildComponents();
@@ -143,34 +152,47 @@ export default class GpsApplication extends LightningElement {
 
     // Replace the existing handleDataChange method
 handleDataChange(event) {
+    const { stepData, stepType } = event.detail;
+    if (stepType === 'organization') {
+        console.log('Data received from organizationInformation child:', JSON.stringify(stepData));
+        this.organizationData = { ...stepData };
+    }
+    // Log all abatement-related data received from child
     try {
-        const { stepData, stepType } = event.detail;
-        console.log('Data change received:', stepData, 'Step type:', stepType);
-        
-        // Store data based on step type
-        if (stepType === 'organization') {
-            this.organizationData = { ...stepData };
-        } else if (stepType === 'technicalProposal') {
-            this.technicalProposalData = { ...stepData };
+        const { abatementStrategies, personnelData, budgetData, stepType } = event.detail;
+        console.log('Abatement Data Received - abatementStrategies:', JSON.stringify(abatementStrategies));
+        console.log('Abatement Data Received - personnelData:', JSON.stringify(personnelData));
+        console.log('Abatement Data Received - budgetData:', JSON.stringify(budgetData));
+        console.log('Abatement Data Received - stepType:', stepType);
+        if (stepType === 'abatementStrategies') {
+            // Log the strategyLineResources data specifically
+            if (abatementStrategies && abatementStrategies.strategyLineResources) {
+                console.log('Abatement Data Received - strategyLineResources:', JSON.stringify(abatementStrategies.strategyLineResources));
+            } else {
+                console.log('Abatement Data Received - strategyLineResources: EMPTY or UNDEFINED');
+            }
+            this.abatementStrategiesData = { ...abatementStrategies };
+            this.abatementExtraData = {
+                personnelData: personnelData || {},
+                budgetData: budgetData || {}
+            };
+            // Assign strategyLineResources to this.strategyLineResourcesData
+            if (abatementStrategies && abatementStrategies.strategyLineResources) {
+                this.strategyLineResourcesData = { ...abatementStrategies.strategyLineResources };
+                console.log('strategyLineResourcesData assigned in parent:', JSON.stringify(this.strategyLineResourcesData));
+            }
+            // Log after assignment
+            console.log('Updated abatementStrategiesData:', JSON.stringify(this.abatementStrategiesData));
+            console.log('Updated abatementExtraData:', JSON.stringify(this.abatementExtraData));
         }
-        
-        // Keep existing applicationData for backward compatibility
-        this.applicationData = {
-            ...this.applicationData,
-            ...stepData
-        };
-
-        console.log('Organization data:', this.organizationData);
-        console.log('Technical proposal data:', this.technicalProposalData);
-        
+        // ...rest of your logic...
     } catch (error) {
-        console.error('Error handling data change:', error);
         this.showToast('Error', 'Failed to update form data', 'error');
     }
 }
 
     // Auto-save functionality to persist data
-    autoSaveData() {
+    autoSava() {
         if (this.recordId) {
             clearTimeout(this.autoSaveTimeout);
             this.autoSaveTimeout = setTimeout(() => {
@@ -181,8 +203,16 @@ handleDataChange(event) {
 
     // Navigate to next step
     handleNext() {
+
         try {
             if (this.validateCurrentStep()) {
+                if (this.currentStep === 3) {
+                    // Reset expanded state in abatement-strategies before leaving step 3
+                    const abatementCmp = this.template.querySelector('c-abatement-strategies');
+                    if (abatementCmp && typeof abatementCmp.resetExpandedStrategies === 'function') {
+                        abatementCmp.resetExpandedStrategies();
+                    }
+                }
                 if (this.currentStep < 4) {
                     this.saveCurrentStepData();
                     this.currentStep++;
@@ -191,7 +221,6 @@ handleDataChange(event) {
                 }
             }
         } catch (error) {
-            console.error('Error navigating to next step:', error);
             this.showToast('Error', 'Failed to navigate to next step', 'error');
         }
     }
@@ -199,6 +228,13 @@ handleDataChange(event) {
     // Navigate to previous step
     handlePrevious() {
         try {
+            if (this.currentStep === 4) {
+                // Reset expanded state in abatement-strategies before leaving step 3 (when going back from 4 to 3)
+                const abatementCmp = this.template.querySelector('c-abatement-strategies');
+                if (abatementCmp && typeof abatementCmp.resetExpandedStrategies === 'function') {
+                    abatementCmp.resetExpandedStrategies();
+                }
+            }
             if (this.currentStep > 1) {
                 this.saveCurrentStepData();
                 this.currentStep--;
@@ -206,7 +242,6 @@ handleDataChange(event) {
                 this.notifyChildComponents();
             }
         } catch (error) {
-            console.error('Error navigating to previous step:', error);
             this.showToast('Error', 'Failed to navigate to previous step', 'error');
         }
     }
@@ -221,7 +256,6 @@ handleDataChange(event) {
                     ...this.applicationData,
                     ...stepData
                 };
-                console.log('Current step data saved:', stepData);
             }
         } catch (error) {
             console.error('Error saving current step data:', error);
@@ -233,11 +267,21 @@ handleDataChange(event) {
         try {
             const currentStepComponent = this.template.querySelector(`[data-step="${this.currentStep}"]`);
             if (currentStepComponent && typeof currentStepComponent.setData === 'function') {
-                currentStepComponent.setData(this.applicationData);
-                console.log('Data passed to step component:', this.currentStep);
+                if (this.currentStep === 3 && this.abatementStrategiesData) {
+                    const dataToPass = {
+                        ...this.applicationData,
+                        ...this.abatementStrategiesData,
+                        ...this.abatementExtraData
+                    };
+                    console.log('Passing abatementStrategiesData to child:', this.abatementStrategiesData);
+                    console.log('Passing abatementExtraData to child:', this.abatementExtraData);
+                    currentStepComponent.setData(dataToPass);
+                } else {
+                    currentStepComponent.setData(this.applicationData);
+                }
             }
         } catch (error) {
-            console.error('Error passing data to current step:', error);
+            this.showToast('Error', 'Failed to pass data to step', 'error');
         }
     }
 
@@ -270,31 +314,33 @@ handleSave() {
         if (!this.validateAllSteps()) {
             return;
         }
-
         this.saveCurrentStepData();
         this.saveAllApplicationData();
     } catch (error) {
-        console.error('Error saving application:', error);
         this.showToast('Error', 'Failed to save application', 'error');
     }
 }
 
 // Add this new method
 saveAllApplicationData() {
+    // Before saving, get the latest data from the child
+    const orgComponent = this.template.querySelector('c-organization-information[data-step="1"]');
+    if (orgComponent && typeof orgComponent.getData === 'function') {
+        this.organizationData = { ...orgComponent.getData() };
+    }
     this.isLoading = true;
     
     // Save organization information first
     this.saveOrganizationData()
         .then(() => {
-            // Then save technical proposal
-            return this.saveTechnicalProposalData();
+            // Then save abatement strategies
+            return this.saveAbatementStrategiesData();
         })
         .then(() => {
             this.showToast('Success', 'Application saved successfully', 'success');
             this.isLoading = false;
         })
         .catch(error => {
-            console.error('Error saving application data:', error);
             this.showToast('Error', 'Failed to save application', 'error');
             this.isLoading = false;
         });
@@ -302,37 +348,150 @@ saveAllApplicationData() {
 
 // Add these new methods
 saveOrganizationData() {
+    console.log('saveOrganizationData START');
+    console.log('Funding Application data to be sent to Apex:', JSON.stringify(this.organizationData));
     if (Object.keys(this.organizationData).length === 0) {
         return Promise.resolve();
     }
     
-    console.log('Saving organization data:', this.organizationData);
     return saveApplication({ application: this.organizationData })
         .then(result => {
-            console.log('Organization data saved:', result);
             this.recordId = result.Id; // Update recordId for subsequent saves
+        })
+        .catch(error => {
+            throw error;
         });
 }
 
 
-saveTechnicalProposalData() {
-    if (Object.keys(this.technicalProposalData).length === 0) {
+saveAbatementStrategiesData() {
+    console.log('saveAbatementStrategiesData START');
+    if (Object.keys(this.abatementStrategiesData).length === 0) {
+        console.log('abatementStrategiesData is empty, skipping saveAbatementStrategies Apex call.');
         return Promise.resolve();
     }
-    
-    // Add the recordId to technical proposal data if available
-    const technicalData = {
-        ...this.technicalProposalData,
-        Funding_Application__c: this.recordId // Assuming lookup field name
-    };
-    
-    console.log('Saving technical proposal data:', JSON.stringify(technicalData));
-    return saveTechnicalProposal({ abatement: technicalData })
+
+    // Only include allowed fields
+    const allowedFields = [
+        'Id',
+        'Funding_Application__c',
+        'PartnerName__c',
+        'GeographicAreaPopulationPoverty__c',
+        'Outline_Existing_Efforts_and_New_Expansi__c',
+        'Describe_Current_Budget_and_Funding_Sour__c',
+        'CoreStrategies__c',
+        'Core_Abatement_Strategies__c'
+    ];
+    const filteredAbatementData = {};
+    allowedFields.forEach(field => {
+        if (this.abatementStrategiesData[field] !== undefined) {
+            filteredAbatementData[field] = this.abatementStrategiesData[field];
+        }
+    });
+    // Ensure Funding_Application__c is set for lookup
+    if (!filteredAbatementData['Funding_Application__c'] && this.recordId) {
+        filteredAbatementData['Funding_Application__c'] = this.recordId;
+    }
+
+    // Create proper SObject structure for Abatement_Strategies__c
+    const abatementData = filteredAbatementData;
+
+    console.log('Calling Apex saveAbatementStrategies with properly structured data:', JSON.stringify(abatementData));
+    return saveAbatementStrategies({ abatement: JSON.stringify(abatementData) })
         .then(result => {
-            console.log('Technical proposal saved:', result);
+            console.log('Abatement strategies saved successfully. Result:', result);
+            if (result && result.success && result.record && result.record.Id) {
+                const abatementId = result.record.Id;
+                // 1. Save strategy line items (existing logic)
+                const allowedLineItemFields = [
+                    'BudgetAmountForThePurchase__c',
+                    'IsYourStrategyInitialContinuation__c',
+                    'BudgetNarrative__c',
+                    'ImplementationPlanForTheStrategy__c',
+                    'ProvideTheOutcomeMeasures__c',
+                    'ProvideTheProcessMeasures__c',
+                    'Strategy_Value__c'
+                ];
+                const filteredStrategyLineResourcesData = {};
+                Object.keys(this.strategyLineResourcesData).forEach(key => {
+                    const item = this.strategyLineResourcesData[key];
+                    const filteredItem = {};
+                    allowedLineItemFields.forEach(field => {
+                        if (item[field] !== undefined) {
+                            filteredItem[field] = item[field];
+                        }
+                    });
+                    // Add abatementId to each item
+                    filteredItem['abatementId'] = abatementId;
+                    filteredStrategyLineResourcesData[key] = filteredItem;
+                });
+                // Save strategy line items
+                console.log('Calling Apex saveStrategyLineItems with:', JSON.stringify( {
+                    abatementId: abatementId,
+                    lineItemsJson: JSON.stringify(filteredStrategyLineResourcesData)
+                }));
+                return saveStrategyLineItems({
+                    abatementId: abatementId,
+                    lineItemsJson: JSON.stringify(filteredStrategyLineResourcesData)
+                }).then(lineItemResult => {
+                    if (lineItemResult && lineItemResult.success) {
+                        this.showToast('Success', 'Strategy Line Items saved successfully', 'success');
+                    } else {
+                        this.showToast('Error', 'Failed to save Strategy Line Items: ' + (lineItemResult && lineItemResult.error ? lineItemResult.error : ''), 'error');
+                    }
+                    // 2. Save strategy resources (new logic)
+                    const resourcesToSave = [];
+                    // Personnel
+                    if (this.abatementExtraData && this.abatementExtraData.personnelData) {
+                        Object.keys(this.abatementExtraData.personnelData).forEach(subStrategy => {
+                            this.abatementExtraData.personnelData[subStrategy].forEach(personnelRow => {
+                                resourcesToSave.push({
+                                    RecordTypeName: 'Personnel Information',
+                                    Strategy_Name__c: subStrategy,
+                                    Abatement_Strategies__c: abatementId,
+                                    ...personnelRow
+                                });
+                            });
+                        });
+                    }
+                    // Budget
+                    if (this.abatementExtraData && this.abatementExtraData.budgetData) {
+                        Object.keys(this.abatementExtraData.budgetData).forEach(subStrategy => {
+                            this.abatementExtraData.budgetData[subStrategy].forEach(budgetRow => {
+                                resourcesToSave.push({
+                                    RecordTypeName: 'Budget Information',
+                                    Strategy_Name__c: subStrategy,
+                                    Abatement_Strategies__c: abatementId,
+                                    ...budgetRow
+                                });
+                            });
+                        });
+                    }
+                    if (resourcesToSave.length > 0) {
+                        return saveStrategyResources({ resourcesJson: JSON.stringify(resourcesToSave) })
+                            .then(resourceResult => {
+                                if (resourceResult && resourceResult.success) {
+                                    this.showToast('Success', 'Strategy Resources saved successfully', 'success');
+                                } else {
+                                    this.showToast('Error', 'Failed to save Strategy Resources: ' + (resourceResult && resourceResult.error ? resourceResult.error : ''), 'error');
+                                }
+                                return result;
+                            })
+                            .catch(error => {
+                                this.showToast('Error', 'Error saving Strategy Resources: ' + (error && error.body && error.body.message ? error.body.message : error), 'error');
+                                throw error;
+                            });
+                    }
+                    return result;
+                });
+            }
+            return result;
+        })
+        .catch(error => {
+            this.showToast('Error', 'Failed to save abatement strategies: ' + (error && error.body && error.body.message ? error.body.message : error), 'error');
+            throw error;
         });
 }
-
 
 
     // Validate all steps
@@ -348,15 +507,12 @@ saveTechnicalProposalData() {
 
     // Save application data
     saveApplicationData(showToast = true) {
+        console.log('saveApplicationData START');
         this.isLoading = true;
-        
-        console.log('Saving application data2:', JSON.stringify(this.applicationData));
         
         saveApplication({ application: this.applicationData })
             .then(result => {
-                console.log('Application saved successfully2:', JSON.stringify(result));
                 // this.applicationData = { ...result };
-                console.log('Updated application data2:', JSON.stringify(this.applicationData));
                 this.recordId = result.Id;
                 
                 if (showToast) {
@@ -365,7 +521,6 @@ saveTechnicalProposalData() {
                 this.isLoading = false;
             })
             .catch(error => {
-                console.error('Error saving application:', error);
                 if (showToast) {
                     const errorMessage = error.body ? error.body.message : 'Unknown error occurred';
                     this.showToast('Error', `Failed to save application: ${errorMessage}`, 'error');
@@ -393,7 +548,6 @@ saveTechnicalProposalData() {
             });
             this.dispatchEvent(event);
         } catch (error) {
-            console.error('Error showing toast:', error);
             // Fallback for portals where ShowToastEvent might not work
             console.log(`${title}: ${message}`);
         }
@@ -408,31 +562,17 @@ saveTechnicalProposalData() {
     get isLastStep() { return this.currentStep === 4; }
 
     // Get data for each step
-    get step1Data() {
-        return { ...this.applicationData };
-    }
+    get step1Data() { return { ...this.applicationData }; }
 
-    get step2Data() {
-        return { ...this.applicationData };
-    }
+    get step2Data() { return { ...this.applicationData }; }
 
-    get step3Data() {
-        return { ...this.applicationData };
-    }
-
-    get step4Data() {
-        return { ...this.applicationData };
-    }
+    get step3Data() { const data = { ...this.applicationData, ...this.abatementStrategiesData, ...this.abatementExtraData }; return data; }
 
     // Show loading state properly
-    get showSpinner() {
-        return this.isLoading && !this.hasError;
-    }
+    get showSpinner() { return this.isLoading && !this.hasError; }
 
     // Show content when data is loaded and no errors
-    get showContent() {
-        return this.isDataLoaded && !this.hasError;
-    }
+    get showContent() { return this.isDataLoaded && !this.hasError; }
 
     // Rendered callback
     renderedCallback() {
@@ -446,5 +586,19 @@ saveTechnicalProposalData() {
         this.hasError = false;
         this.errorMessage = '';
         this.initializeComponent();
+    }
+
+    handleAddPartner() {
+        // Find the abatementStrategies child component
+        const abatementCmp = this.template.querySelector('c-abatement-strategies');
+        if (abatementCmp) {
+            // Call a public @api method or dispatch an event to notify the child
+            if (typeof abatementCmp.handleAddPartnerFromParent === 'function') {
+                abatementCmp.handleAddPartnerFromParent();
+            } else {
+                // Fallback: dispatch a custom event the child can listen for
+                abatementCmp.dispatchEvent(new CustomEvent('addpartner', { bubbles: true, composed: true }));
+            }
+        }
     }
 }

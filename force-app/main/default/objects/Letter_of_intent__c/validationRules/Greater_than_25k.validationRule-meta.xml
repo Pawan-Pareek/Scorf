@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Greater_than_25k</fullName>
+    <active>true</active>
+    <errorConditionFormula>BudgetAmount__c &lt;= 25</errorConditionFormula>
+    <errorDisplayField>BudgetAmount__c</errorDisplayField>
+    <errorMessage>Budget amount should be more than $25k</errorMessage>
+</ValidationRule>

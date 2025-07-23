@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>C3</label>
+    <protected>false</protected>
+    <values>
+        <field>FullDescription__c</field>
+        <value xsi:type="xsd:string">C.3 Provide training and long-term implementation of SBIRT in key systems (health, schools, colleges, criminal justice, and probation), with a focus on youth and young adults when transition from misuse to opioid disorder is common</value>
+    </values>
+    <values>
+        <field>ShortValue_c__c</field>
+        <value xsi:type="xsd:string">C.3 Support SBIRT implementation in health, school, justice, and youth-focused settings.</value>
+    </values>
+</CustomMetadata>

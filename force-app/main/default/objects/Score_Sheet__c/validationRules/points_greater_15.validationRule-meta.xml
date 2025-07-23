@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>points_greater_15</fullName>
+    <active>true</active>
+    <description>Points shouldn&apos;t be greater than 15</description>
+    <errorConditionFormula>PointsForQualificationsAndExperience__c &lt; 15</errorConditionFormula>
+    <errorDisplayField>PointsForQualificationsAndExperience__c</errorDisplayField>
+    <errorMessage>Points shouldn&apos;t be greater than 15</errorMessage>
+</ValidationRule>

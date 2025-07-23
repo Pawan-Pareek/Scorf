@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>points_greater_25</fullName>
+    <active>true</active>
+    <description>Points shouldn&apos;t be greater than 25</description>
+    <errorConditionFormula>AwardedPointsForTechnicalProposal__c &lt; 25</errorConditionFormula>
+    <errorDisplayField>AwardedPointsForTechnicalProposal__c</errorDisplayField>
+    <errorMessage>Points shouldn&apos;t be greater than 25</errorMessage>
+</ValidationRule>

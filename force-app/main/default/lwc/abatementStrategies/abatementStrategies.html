@@ -1,218 +1,613 @@
 <template>
-    <div class="slds-card">
-        <div class="slds-card__header slds-grid">
-            <header class="slds-media slds-media_center slds-has-flexi-truncate">
-                <div class="slds-media__body">
-                    <h2 class="slds-card__header-title">
-                        <span class="slds-text-heading_medium">Core Abatement Strategy</span>
-                    </h2>
-                </div>
-            </header>
+    <!-- Loading Spinner -->
+    <template if:true={showSpinner}>
+        <div class="slds-spinner_container">
+            <div role="status" class="slds-spinner slds-spinner_medium slds-spinner_brand">
+                <span class="slds-assistive-text">Loading</span>
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
         </div>
+    </template>
 
-        <div class="slds-card__body slds-card__body_inner">
-            <!-- Loading Spinner -->
-            <template if:true={isLoading}>
-                <div class="slds-align_absolute-center slds-p-around_large">
-                    <lightning-spinner alternative-text="Loading strategies..." size="medium"></lightning-spinner>
-                </div>
-            </template>
+    <!-- Error State -->
+    <template if:true={hasError}>
+        <div class="slds-notify slds-notify_alert slds-alert_error">
+            <span class="slds-assistive-text">error</span>
+            <span class="slds-icon_container slds-icon-utility-error slds-m-right_x-small">
+                <lightning-icon icon-name="utility:error" size="x-small" variant="inverse"></lightning-icon>
+            </span>
+            <h2>{errorMessage}</h2>
+        </div>
+    </template>
 
-            <!-- Error State -->
-            <template if:true={hasError}>
-                <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
-                    <span class="slds-assistive-text">Error</span>
-                    <h2>{errorMessage}</h2>
-                    <lightning-button 
-                        label="Retry" 
-                        onclick={loadPicklistData} 
-                        class="slds-m-top_small">
-                    </lightning-button>
-                </div>
-            </template>
-
-            <!-- Main Content -->
-            <template if:false={isLoading}>
-                <template if:false={hasError}>
-                    
-                    <!-- Core Strategies Selection -->
-                    <div class="slds-form-element slds-m-bottom_large">
-                        <label class="slds-form-element__label slds-text-heading_small">
-                            <span class="slds-required">*</span>
-                            Select Core Strategies
-                        </label>
-                        <div class="slds-form-element__control">
-                            <lightning-dual-listbox
-                                name="coreStrategies"
-                                label="Core Strategies"
-                                variant="label-hidden"
-                                source-label="Available Strategies"
-                                selected-label="Selected Strategies"
-                                options={coreStrategiesOptions}
-                                value={coreStrategiesValue}
-                                onchange={handleCoreStrategyChange}
-                                min="0"
-                                max="10"
-                                required>
-                            </lightning-dual-listbox>
+    <!-- Main Content -->
+    <template if:true={showContent}>
+        <div class="abatement-strategies-container">
+            <!-- Header -->
+            <div class="slds-page-header slds-page-header_record-home">
+                <div class="slds-page-header__row">
+                    <div class="slds-page-header__col-title">
+                        <div class="slds-media">
+                            <div class="slds-media__body">
+                                <div class="slds-page-header__name">
+                                    <div class="slds-page-header__name-title">
+                                        <h1>
+                                            <span class="slds-page-header__title slds-truncate">Core Abatement
+                                                Strategy</span>
+                                        </h1>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Strategy Details Section -->
-                    <template if:true={expandedStrategiesList.length}>
-                        <div class="strategy-details-section slds-m-top_large">
-                            <h3 class="slds-text-heading_small slds-m-bottom_medium">Strategy Details</h3>
-                            
-                            <template for:each={expandedStrategiesList} for:item="strategy">
-                                <div key={strategy} class="strategy-item slds-m-bottom_medium">
-                                    
-                                    <!-- Strategy Header -->
-                                    <div class="strategy-header slds-border slds-p-around_small" 
-                                         style="background-color: #f3f3f3; border-left: 4px solid #1589ee;">
-                                        <button 
-                                            class="slds-button slds-button_reset slds-text-link slds-text-heading_small" 
-                                            data-strategy={strategy}
-                                            onclick={toggleStrategy}
-                                            style="width: 100%; text-align: left;">
-                                            <lightning-icon 
-                                                icon-name={expandedIcon} 
-                                                size="x-small" 
-                                                class="slds-m-right_x-small">
-                                            </lightning-icon>
-                                            {strategy}
-                                        </button>
+            <!-- Strategy List -->
+            <div class="slds-card slds-m-top_medium">
+                <div class="slds-card__body slds-card__body_inner">
+                    <template for:each={processedCoreStrategies} for:item="strategy">
+                        <div key={strategy.value} class={strategy.hasSelections}
+                            data-strategy-container={strategy.value}>
+                            <!-- Main Strategy Header -->
+                            <div class="strategy-header" data-strategy={strategy.value}
+                                onclick={handleCoreStrategyToggle}>
+                                <div class="slds-media slds-media_center strategy-header-content">
+                                    <!-- Strategy Letter Circle -->
+                                    <div class="slds-media__figure">
+                                        <div class="strategy-circle">
+                                            <span class="strategy-letter">{strategy.strategyLetter}</span>
+                                        </div>
                                     </div>
 
-                                    <!-- Strategy Sub-Items (Expanded Content) -->
-                                    <template if:true={strategy}>
-                                        <div class="strategy-subitems slds-border slds-border_top-0 slds-p-around_small"
-                                             style="background-color: #fafafa;">
-                                            
-                                            <!-- Sub-strategy example for demonstration -->
-                                            <template if:true={strategy}>
-                                                <div class="sub-strategy-item slds-p-left_medium slds-m-bottom_small">
-                                                    <div class="slds-media">
-                                                        <div class="slds-media__figure">
-                                                            <span class="strategy-number slds-badge slds-theme_info">
-                                                                {strategy}.1
-                                                            </span>
+                                    <!-- Strategy Title and Description -->
+                                    <div class="slds-media__body slds-m-left_small">
+                                        <h3 class="strategy-title">{strategy.label}</h3>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="slds-media__figure slds-media__figure_reverse">
+                                        <div class="slds-button-group">
+                                            <!-- Expand/Collapse Icon -->
+                                            <lightning-icon icon-name={strategy.iconName} size="small"
+                                                class="expand-icon">
+                                            </lightning-icon>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sub-strategies (Expandable) -->
+                            <template if:true={strategy.isExpanded}>
+                                <div class="sub-strategies slds-m-top_small">
+                                    <!-- Existing abatement options UI here -->
+                                    <template if:true={strategy.hasAbatementOptions}>
+                                        <template for:each={strategy.abatementOptions} for:item="abatementOption">
+                                            <div key={abatementOption.value}
+                                                class="sub-strategy-item slds-m-bottom_small">
+                                                <div class="slds-media slds-media_center">
+                                                    <!-- Number Circle -->
+                                                    <div class="slds-media__figure">
+                                                        <div class="sub-strategy-circle">
+                                                            <span
+                                                                class="sub-strategy-number">{abatementOption.subNumber}</span>
                                                         </div>
-                                                        <div class="slds-media__body">
-                                                            <p class="slds-text-body_regular">
-                                                                Expand training for first responders, schools, community support groups, and families.
-                                                            </p>
-                                                            
-                                                            <!-- Action buttons -->
-                                                            <div class="slds-m-top_small">
-                                                                <lightning-button 
-                                                                    label="Clear" 
-                                                                    variant="neutral" 
-                                                                    size="small"
-                                                                    class="slds-m-right_x-small">
-                                                                </lightning-button>
-                                                                <lightning-icon 
-                                                                    icon-name="utility:edit" 
-                                                                    size="x-small" 
-                                                                    class="slds-button slds-button_icon slds-button_icon-border-filled">
-                                                                </lightning-icon>
-                                                            </div>
+                                                    </div>
 
-                                                            <!-- Strategy details form -->
-                                                            <div class="strategy-form slds-m-top_medium slds-grid slds-wrap">
-                                                                <div class="slds-col slds-size_1-of-2 slds-p-right_small">
-                                                                    <lightning-input 
-                                                                        label="Budget Amount" 
-                                                                        type="currency" 
-                                                                        value="$10.00"
-                                                                        required>
-                                                                    </lightning-input>
-                                                                </div>
-                                                                
-                                                                <div class="slds-col slds-size_1-of-2 slds-p-left_small">
-                                                                    <lightning-combobox 
-                                                                        label="Initial or Continuation"
-                                                                        value="Continuation"
-                                                                        options={continuationOptions}
-                                                                        required>
-                                                                    </lightning-combobox>
-                                                                </div>
-
-                                                                <div class="slds-col slds-size_1-of-1 slds-m-top_small">
-                                                                    <lightning-textarea 
-                                                                        label="Budget Narrative"
-                                                                        placeholder="Enter budget narrative..."
-                                                                        value="qwer"
-                                                                        required>
-                                                                    </lightning-textarea>
-                                                                </div>
-
-                                                                <div class="slds-col slds-size_1-of-1 slds-m-top_small">
-                                                                    <lightning-textarea 
-                                                                        label="Implementation Plan"
-                                                                        placeholder="Enter implementation plan..."
-                                                                        value="test"
-                                                                        required>
-                                                                    </lightning-textarea>
-                                                                </div>
-
-                                                                <div class="slds-col slds-size_1-of-1 slds-m-top_small">
-                                                                    <lightning-textarea 
-                                                                        label="Outcome Measures"
-                                                                        placeholder="Enter outcome measures..."
-                                                                        value="test"
-                                                                        required>
-                                                                    </lightning-textarea>
+                                                    <!-- Sub-strategy Content -->
+                                                    <div class="slds-media__body slds-m-left_small">
+                                                        <div class="slds-form-element">
+                                                            <div class="slds-form-element__control">
+                                                                <div class="slds-checkbox">
+                                                                    <input type="checkbox" id={abatementOption.value}
+                                                                        data-strategy={abatementOption.value}
+                                                                        checked={abatementOption.isSelected}
+                                                                        onchange={handleAbatementStrategyChange} />
+                                                                    <label class="slds-checkbox__label"
+                                                                        for={abatementOption.value}>
+                                                                        <span class="slds-checkbox__faux"></span>
+                                                                        <span
+                                                                            class="slds-form-element__label sub-strategy-label">
+                                                                            {abatementOption.label}
+                                                                        </span>
+                                                                    </label>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
+
+                                                    <!-- Checkmark Icon and Clear Button for Sub-strategy -->
+                                                    <div class="slds-media__figure slds-media__figure_reverse">
+                                                        <template if:true={abatementOption.isSelected}>
+                                                            <lightning-icon icon-name="utility:check" size="small"
+                                                                variant="success" class="selected-icon">
+                                                            </lightning-icon>
+                                                            <button
+                                                                class="slds-button slds-button_neutral slds-button_small clear-button"
+                                                                data-abatement={abatementOption.value}
+                                                                onclick={handleClearAbatementOption}>
+                                                                <lightning-icon icon-name="utility:delete"
+                                                                    size="x-small"
+                                                                    class="slds-m-right_x-small"></lightning-icon>
+                                                                Clear
+                                                            </button>
+                                                        </template>
+                                                        <template if:false={abatementOption.isSelected}>
+                                                            <lightning-icon icon-name="utility:chevrondown" size="small"
+                                                                class="sub-strategy-icon">
+                                                            </lightning-icon>
+                                                        </template>
+                                                    </div>
                                                 </div>
-                                            </template>
+
+                                                <!-- Strategy Line Resources Component (shown when selected) -->
+                                                <template if:true={abatementOption.isSelected}>
+                                                    <div
+                                                        class="strategy-line-resources slds-p-around_medium slds-box slds-theme_shade slds-m-top_small">
+                                                        <div class="slds-grid slds-wrap slds-gutters">
+                                                            <!-- Budget Amount and Initial/Continuation Row -->
+                                                            <div class="slds-col slds-size_1-of-1">
+                                                                <div class="slds-grid slds-wrap slds-gutters">
+                                                                    <!-- Budget Amount -->
+                                                                    <div class="slds-col slds-size_1-of-2">
+                                                                        <div class="slds-form-element">
+                                                                            <label class="slds-form-element__label"
+                                                                                for={abatementOption.value}>
+                                                                                <abbr class="slds-required"
+                                                                                    title="required">*</abbr>Budget
+                                                                                Amount
+                                                                            </label>
+                                                                            <div class="slds-form-element__control">
+                                                                                <lightning-input type="number"
+                                                                                    name="BudgetAmountForThePurchase__c"
+                                                                                    data-field="BudgetAmountForThePurchase__c"
+                                                                                    data-abatement={abatementOption.value}
+                                                                                    value={abatementOption.persistedData.BudgetAmountForThePurchase__c}
+                                                                                    placeholder="$10.00" step="0.01"
+                                                                                    min="0" formatter="currency"
+                                                                                    required
+                                                                                    onchange={handleStrategyLineResourceInputChange}
+                                                                                    class="budget-amount-input">
+                                                                                </lightning-input>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <!-- Initial or Continuation -->
+                                                                    <div class="slds-col slds-size_1-of-2">
+                                                                        <div class="slds-form-element">
+                                                                            <label class="slds-form-element__label"
+                                                                                for="initial-continuation">
+                                                                                <abbr class="slds-required"
+                                                                                    title="required">*</abbr>Initial or
+                                                                                Continuation
+                                                                            </label>
+                                                                            <div class="slds-form-element__control">
+                                                                                <lightning-combobox
+                                                                                    name="IsYourStrategyInitialContinuation__c"
+                                                                                    data-field="IsYourStrategyInitialContinuation__c"
+                                                                                    data-abatement={abatementOption.value}
+                                                                                    value={abatementOption.persistedData.IsYourStrategyInitialContinuation__c}
+                                                                                    placeholder="Continuation"
+                                                                                    options={initialContinuationOptions}
+                                                                                    required
+                                                                                    onchange={handleStrategyLineResourceInputChange}
+                                                                                    class="initial-continuation-combobox">
+                                                                                </lightning-combobox>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <!-- Budget Narrative -->
+                                                            <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                                                                <div class="slds-form-element">
+                                                                    <label class="slds-form-element__label"
+                                                                        for="budget-narrative">
+                                                                        <abbr class="slds-required"
+                                                                            title="required">*</abbr>Budget Narrative
+                                                                    </label>
+                                                                    <div class="slds-form-element__control">
+                                                                        <lightning-textarea name="BudgetNarrative__c"
+                                                                            data-field="BudgetNarrative__c"
+                                                                            data-abatement={abatementOption.value}
+                                                                            value={abatementOption.persistedData.BudgetNarrative__c}
+                                                                            placeholder="qqq" required
+                                                                            onchange={handleStrategyLineResourceInputChange}
+                                                                            max-length="32768"
+                                                                            class="budget-narrative-textarea">
+                                                                        </lightning-textarea>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <!-- Implementation Plan -->
+                                                            <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                                                                <div class="slds-form-element">
+                                                                    <label class="slds-form-element__label"
+                                                                        for="implementation-plan">
+                                                                        <abbr class="slds-required"
+                                                                            title="required">*</abbr>Implementation Plan
+                                                                    </label>
+                                                                    <div class="slds-form-element__control">
+                                                                        <lightning-textarea
+                                                                            name="ImplementationPlanForTheStrategy__c"
+                                                                            data-field="ImplementationPlanForTheStrategy__c"
+                                                                            data-abatement={abatementOption.value}
+                                                                            value={abatementOption.persistedData.ImplementationPlanForTheStrategy__c}
+                                                                            placeholder="test" required
+                                                                            onchange={handleStrategyLineResourceInputChange}
+                                                                            max-length="32768"
+                                                                            class="implementation-plan-textarea">
+                                                                        </lightning-textarea>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <!-- Outcome Measures -->
+                                                            <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                                                                <div class="slds-form-element">
+                                                                    <label class="slds-form-element__label"
+                                                                        for="outcome-measures">
+                                                                        <abbr class="slds-required"
+                                                                            title="required">*</abbr>Outcome Measures
+                                                                    </label>
+                                                                    <div class="slds-form-element__control">
+                                                                        <lightning-textarea
+                                                                            name="ProvideTheOutcomeMeasures__c"
+                                                                            data-field="ProvideTheOutcomeMeasures__c"
+                                                                            data-abatement={abatementOption.value}
+                                                                            value={abatementOption.persistedData.ProvideTheOutcomeMeasures__c}
+                                                                            placeholder="test" required
+                                                                            onchange={handleStrategyLineResourceInputChange}
+                                                                            max-length="32768"
+                                                                            class="outcome-measures-textarea">
+                                                                        </lightning-textarea>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <!-- Process Measures -->
+                                                            <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                                                                <div class="slds-form-element">
+                                                                    <label class="slds-form-element__label"
+                                                                        for="process-measures">
+                                                                        <abbr class="slds-required"
+                                                                            title="required">*</abbr>Process Measures
+                                                                    </label>
+                                                                    <div class="slds-form-element__control">
+                                                                        <lightning-textarea
+                                                                            name="ProvideTheProcessMeasures__c"
+                                                                            data-field="ProvideTheProcessMeasures__c"
+                                                                            data-abatement={abatementOption.value}
+                                                                            value={abatementOption.persistedData.ProvideTheProcessMeasures__c}
+                                                                            placeholder="test" required
+                                                                            onchange={handleStrategyLineResourceInputChange}
+                                                                            max-length="32768"
+                                                                            class="process-measures-textarea">
+                                                                        </lightning-textarea>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Personnel Information Section (Replace the existing personnel section in your template) -->
+                                                            <div class="slds-col slds-size_1-of-1 slds-m-top_medium">
+                                                                <div class="slds-card">
+                                                                    <div class="slds-card__header">
+                                                                        <div class="slds-media slds-media_center">
+                                                                            <div class="slds-media__body">
+                                                                                <h2 class="slds-card__header-title">
+                                                                                    <span>Personnel Information</span>
+                                                                                    <lightning-helptext
+                                                                                        content="Add personnel information for this strategy"></lightning-helptext>
+                                                                                </h2>
+                                                                            </div>
+                                                                            <div
+                                                                                class="slds-media__figure slds-media__figure_reverse">
+                                                                                <button
+                                                                                    class="slds-button slds-button_brand"
+                                                                                    data-abatement={abatementOption.value}
+                                                                                    onclick={addPersonnelRow}>
+                                                                                    <lightning-icon
+                                                                                        icon-name="utility:add"
+                                                                                        size="x-small"
+                                                                                        class="slds-m-right_x-small"></lightning-icon>
+                                                                                    Add Personnel
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="slds-card__body slds-card__body_inner">
+                                                                        <!-- Personnel Table Header -->
+                                                                        <div
+                                                                            class="slds-grid slds-wrap slds-gutters personnel-header">
+                                                                            <div class="slds-col slds-size_1-of-6">
+                                                                                <strong>NAME *</strong>
+                                                                            </div>
+                                                                            <div class="slds-col slds-size_1-of-6">
+                                                                                <strong>POSITION *</strong>
+                                                                            </div>
+                                                                            <div class="slds-col slds-size_1-of-6">
+                                                                                <strong>KEY STAFF ANNUAL SALARY
+                                                                                    *</strong>
+                                                                            </div>
+                                                                            <div class="slds-col slds-size_1-of-6">
+                                                                                <strong>LEVEL OF EFFORT *</strong>
+                                                                            </div>
+                                                                            <div class="slds-col slds-size_1-of-6">
+                                                                                <strong>TOTAL CHARGED TO AWARD
+                                                                                    *</strong>
+                                                                            </div>
+                                                                            <div class="slds-col slds-size_1-of-6">
+                                                                                <strong>ACTION</strong>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <!-- Personnel Rows -->
+                                                                        <template
+                                                                            for:each={abatementOption.personnelRows}
+                                                                            for:item="personnel"
+                                                                            for:index="personnelIndex">
+                                                                            <div key={personnel.id}
+                                                                                class="slds-grid slds-wrap slds-gutters slds-m-top_small personnel-row">
+                                                                                <!-- Name Field -->
+                                                                                <div class="slds-col slds-size_1-of-6">
+                                                                                    <lightning-input type="text"
+                                                                                        name="PersonnelName__c"
+                                                                                        data-field="PersonnelName__c"
+                                                                                        data-abatement={abatementOption.value}
+                                                                                        data-index={personnelIndex}
+                                                                                        value={personnel.PersonnelName__c}
+                                                                                        placeholder="Enter name"
+                                                                                        required
+                                                                                        onchange={handlePersonnelInputChange}>
+                                                                                    </lightning-input>
+                                                                                </div>
+
+                                                                                <!-- Position Field -->
+                                                                                <div class="slds-col slds-size_1-of-6">
+                                                                                    <lightning-input type="text"
+                                                                                        name="PersonnelPosition__c"
+                                                                                        data-field="PersonnelPosition__c"
+                                                                                        data-abatement={abatementOption.value}
+                                                                                        data-index={personnelIndex}
+                                                                                        value={personnel.PersonnelPosition__c}
+                                                                                        placeholder="Enter position"
+                                                                                        required
+                                                                                        onchange={handlePersonnelInputChange}>
+                                                                                    </lightning-input>
+                                                                                </div>
+
+                                                                                <!-- Key Staff Annual Salary Field -->
+                                                                                <div class="slds-col slds-size_1-of-6">
+                                                                                    <lightning-input type="number"
+                                                                                        name="PersonnelKeyStaffAnnualSalary__c"
+                                                                                        data-field="PersonnelKeyStaffAnnualSalary__c"
+                                                                                        data-abatement={abatementOption.value}
+                                                                                        data-index={personnelIndex}
+                                                                                        value={personnel.PersonnelKeyStaffAnnualSalary__c}
+                                                                                        placeholder="0.00" step="0.01"
+                                                                                        min="0" formatter="currency"
+                                                                                        required
+                                                                                        onchange={handlePersonnelInputChange}>
+                                                                                    </lightning-input>
+                                                                                </div>
+
+                                                                                <!-- Level of Effort Field -->
+                                                                                <div class="slds-col slds-size_1-of-6">
+                                                                                    <lightning-input type="number"
+                                                                                        name="PersonnelLevelOfEffort__c"
+                                                                                        data-field="PersonnelLevelOfEffort__c"
+                                                                                        data-abatement={abatementOption.value}
+                                                                                        data-index={personnelIndex}
+                                                                                        value={personnel.PersonnelLevelOfEffort__c}
+                                                                                        placeholder="0.00" step="0.01"
+                                                                                        min="0" max="100" required
+                                                                                        onchange={handlePersonnelInputChange}>
+                                                                                    </lightning-input>
+                                                                                </div>
+
+                                                                                <!-- Total Charged to Award Field -->
+                                                                                <div class="slds-col slds-size_1-of-6">
+                                                                                    <lightning-input type="number"
+                                                                                        name="PersonnelTotalChargedToAward__c"
+                                                                                        data-field="PersonnelTotalChargedToAward__c"
+                                                                                        data-abatement={abatementOption.value}
+                                                                                        data-index={personnelIndex}
+                                                                                        value={personnel.PersonnelTotalChargedToAward__c}
+                                                                                        placeholder="0.00" step="0.01"
+                                                                                        min="0" formatter="currency"
+                                                                                        required
+                                                                                        onchange={handlePersonnelInputChange}>
+                                                                                    </lightning-input>
+                                                                                </div>
+
+                                                                                <!-- Action Button -->
+                                                                                <div class="slds-col slds-size_1-of-6">
+                                                                                    <button
+                                                                                        class="slds-button slds-button_destructive slds-button_small"
+                                                                                        data-abatement={abatementOption.value}
+                                                                                        data-index={personnelIndex}
+                                                                                        onclick={deletePersonnelRow}
+                                                                                        title="Delete Personnel">
+                                                                                        <lightning-icon
+                                                                                            icon-name="utility:delete"
+                                                                                            size="x-small"></lightning-icon>
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        </template>
+
+                                                                        <!-- No Personnel Message -->
+                                                                        <template
+                                                                            if:false={abatementOption.personnelRows.length}>
+                                                                            <div
+                                                                                class="slds-text-align_center slds-m-top_medium">
+                                                                                <p class="slds-text-color_weak">No
+                                                                                    personnel added yet. Click "Add
+                                                                                    Personnel" to get started.</p>
+                                                                            </div>
+                                                                        </template>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Budget Information Section -->
+                                                            <div class="slds-col slds-size_1-of-1 slds-m-top_medium">
+                                                                <div class="slds-card">
+                                                                    <div class="slds-card__header">
+                                                                        <div class="slds-media slds-media_center">
+                                                                            <div class="slds-media__body">
+                                                                                <h2 class="slds-card__header-title">
+                                                                                    <span>Budget Information</span>
+                                                                                    <lightning-helptext
+                                                                                        content="Add budget information for this strategy"></lightning-helptext>
+                                                                                </h2>
+                                                                            </div>
+                                                                            <div
+                                                                                class="slds-media__figure slds-media__figure_reverse">
+                                                                                <button
+                                                                                    class="slds-button slds-button_brand"
+                                                                                    data-abatement={abatementOption.value}
+                                                                                    onclick={addBudgetRow}>
+                                                                                    <lightning-icon
+                                                                                        icon-name="utility:add"
+                                                                                        size="x-small"
+                                                                                        class="slds-m-right_x-small"></lightning-icon>
+                                                                                    Add Budget Item
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="slds-card__body slds-card__body_inner">
+                                                                        <!-- Budget Table Header -->
+                                                                        <div
+                                                                            class="slds-grid slds-wrap slds-gutters budget-header">
+                                                                            <div class="slds-col slds-size_1-of-5">
+                                                                                <strong>ITEM *</strong>
+                                                                            </div>
+                                                                            <div class="slds-col slds-size_1-of-5">
+                                                                                <strong>PURPOSE *</strong>
+                                                                            </div>
+                                                                            <div class="slds-col slds-size_1-of-5">
+                                                                                <strong>CALCULATION *</strong>
+                                                                            </div>
+                                                                            <div class="slds-col slds-size_1-of-5">
+                                                                                <strong>TOTAL CHARGED TO AWARD
+                                                                                    *</strong>
+                                                                            </div>
+                                                                            <div class="slds-col slds-size_1-of-5">
+                                                                                <strong>ACTION</strong>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <!-- Budget Rows -->
+                                                                        <template for:each={abatementOption.budgetRows}
+                                                                            for:item="budget" for:index="budgetIndex">
+                                                                            <div key={budget.id}
+                                                                                class="slds-grid slds-wrap slds-gutters slds-m-top_small budget-row">
+                                                                                <!-- Item Field -->
+                                                                                <div class="slds-col slds-size_1-of-5">
+                                                                                    <lightning-input type="text"
+                                                                                        name="BudgetItem__c"
+                                                                                        data-field="BudgetItem__c"
+                                                                                        data-abatement={abatementOption.value}
+                                                                                        data-index={budgetIndex}
+                                                                                        value={budget.BudgetItem__c}
+                                                                                        placeholder="Enter item"
+                                                                                        required
+                                                                                        onchange={handleBudgetInputChange}>
+                                                                                    </lightning-input>
+                                                                                </div>
+
+                                                                                <!-- Purpose Field -->
+                                                                                <div class="slds-col slds-size_1-of-5">
+                                                                                    <lightning-input type="text"
+                                                                                        name="BudgetPurpose__c"
+                                                                                        data-field="BudgetPurpose__c"
+                                                                                        data-abatement={abatementOption.value}
+                                                                                        data-index={budgetIndex}
+                                                                                        value={budget.BudgetPurpose__c}
+                                                                                        placeholder="Enter purpose"
+                                                                                        required
+                                                                                        onchange={handleBudgetInputChange}>
+                                                                                    </lightning-input>
+                                                                                </div>
+
+                                                                                <!-- Calculation Field -->
+                                                                                <div class="slds-col slds-size_1-of-5">
+                                                                                    <lightning-input type="text"
+                                                                                        name="BudgetCalculation__c"
+                                                                                        data-field="BudgetCalculation__c"
+                                                                                        data-abatement={abatementOption.value}
+                                                                                        data-index={budgetIndex}
+                                                                                        value={budget.BudgetCalculation__c}
+                                                                                        placeholder="Enter calculation"
+                                                                                        required
+                                                                                        onchange={handleBudgetInputChange}>
+                                                                                    </lightning-input>
+                                                                                </div>
+
+                                                                                <!-- Total Charged to Award Field -->
+                                                                                <div class="slds-col slds-size_1-of-5">
+                                                                                    <lightning-input type="number"
+                                                                                        name="BudgetTotalChargedToAward__c"
+                                                                                        data-field="BudgetTotalChargedToAward__c"
+                                                                                        data-abatement={abatementOption.value}
+                                                                                        data-index={budgetIndex}
+                                                                                        value={budget.BudgetTotalChargedToAward__c}
+                                                                                        placeholder="0.00" step="0.01"
+                                                                                        min="0" formatter="currency"
+                                                                                        required
+                                                                                        onchange={handleBudgetInputChange}>
+                                                                                    </lightning-input>
+                                                                                </div>
+
+                                                                                <!-- Action Button -->
+                                                                                <div class="slds-col slds-size_1-of-5">
+                                                                                    <button
+                                                                                        class="slds-button slds-button_destructive slds-button_small"
+                                                                                        data-abatement={abatementOption.value}
+                                                                                        data-index={budgetIndex}
+                                                                                        onclick={deleteBudgetRow}
+                                                                                        title="Delete Budget Item">
+                                                                                        <lightning-icon
+                                                                                            icon-name="utility:delete"
+                                                                                            size="x-small"></lightning-icon>
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        </template>
+
+                                                                        <!-- No Budget Items Message -->
+                                                                        <template
+                                                                            if:false={abatementOption.budgetRows.length}>
+                                                                            <div
+                                                                                class="slds-text-align_center slds-m-top_medium">
+                                                                                <p class="slds-text-color_weak">No
+                                                                                    budget items added yet. Click "Add
+                                                                                    Budget Item" to get started.</p>
+                                                                            </div>
+                                                                        </template>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </template>
+
+                                    <!-- No sub-strategies message -->
+                                    <template if:false={strategy.hasAbatementOptions}>
+                                        <div class="slds-text-color_weak slds-m-left_medium">
+                                            No sub-strategies available for this option.
                                         </div>
                                     </template>
                                 </div>
                             </template>
                         </div>
                     </template>
-
-                    <!-- Core Abatement Strategies Selection (only show if core strategies are selected) -->
-                    <template if:true={showAbatementStrategies}>
-                        <div class="slds-form-element slds-m-top_large">
-                            <label class="slds-form-element__label slds-text-heading_small">
-                                Related Abatement Strategies
-                            </label>
-                            <div class="slds-form-element__control">
-                                <lightning-dual-listbox
-                                    name="abatementStrategies"
-                                    label="Core Abatement Strategies"
-                                    variant="label-hidden"
-                                    source-label="Available Abatement Strategies"
-                                    selected-label="Selected Abatement Strategies"
-                                    options={availableAbatementStrategies}
-                                    value={abatementStrategiesValue}
-                                    onchange={handleAbatementStrategyChange}
-                                    min="0"
-                                    max="20">
-                                </lightning-dual-listbox>
-                            </div>
-                            <div class="slds-form-element__help">
-                                These options are filtered based on your core strategy selections
-                            </div>
-                        </div>
-                    </template>
-
-                    <!-- Debug Info (remove in production) -->
-                    <template if:true={selectedCoreStrategies.length}>
-                        <div class="slds-box slds-theme_shade slds-m-top_large">
-                            <h4 class="slds-text-heading_small">Debug Information</h4>
-                            <p><strong>Selected Core Strategies:</strong> {selectedCoreStrategies}</p>
-                            <p><strong>Selected Abatement Strategies:</strong> {selectedAbatementStrategies}</p>
-                            <p><strong>Available Abatement Count:</strong> {availableAbatementStrategies.length}</p>
-                        </div>
-                    </template>
-                    
-                </template>
-            </template>
+                </div>
+            </div>
         </div>
-    </div>
+    </template>
 </template>

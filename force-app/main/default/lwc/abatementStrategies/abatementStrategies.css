@@ -1,0 +1,258 @@
+.abatement-strategies-container {
+    padding: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Strategy Item Container */
+.strategy-item {
+    border: 1px solid #d8dde6;
+    border-radius: 0.375rem;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    margin-bottom: 1rem;
+}
+
+.strategy-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-color: #1589ee;
+}
+
+[data-strategy-container] {
+    border: 1px solid #d8dde6;
+    border-radius: 0.375rem;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    margin-bottom: 1rem;
+}
+
+[data-strategy-container]:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-color: #1589ee;
+}
+
+/* Strategy Item with selections */
+[data-strategy-container].has-selections,
+.strategy-item.has-selections {
+    border-color: #0176d3;
+    background-color: #f8f9ff;
+    box-shadow: 0 2px 8px rgba(1, 118, 211, 0.2);
+}
+
+/* Strategy Header */
+.strategy-header {
+    padding: 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.strategy-header:hover {
+    background-color: #f8f9fa;
+}
+
+.strategy-header-content {
+    align-items: center;
+}
+
+/* Strategy Circle (A, B, C, D) */
+.strategy-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1589ee, #0176d3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.strategy-letter {
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+/* Strategy Title */
+.strategy-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #181818;
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Clear Button */
+.clear-button {
+    background-color: #f3f2f2;
+    border: 1px solid #c9c7c5;
+    color: #0176d3;
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+    margin-right: 0.5rem;
+}
+
+.clear-button:hover {
+    background-color: #e5e5e5;
+    border-color: #0176d3;
+}
+
+/* Expand Icon */
+.expand-icon {
+    color: #706e6b;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.expand-icon:hover {
+    color: #0176d3;
+}
+
+/* Sub-strategies Container */
+.sub-strategies {
+    background-color: #fafaf9;
+    border-top: 1px solid #e5e5e5;
+    padding: 1rem;
+    margin-left: 0; /* Remove left margin to align properly */
+}
+
+/* Selected Icon */
+.selected-icon {
+    color: #2e844a;
+}
+
+/* Strategy Item with selections - header styling */
+[data-strategy-container].has-selections .strategy-header {
+    background-color: #f0f7ff;
+    border-bottom-color: #0176d3;
+}
+
+/* Sub-strategy Item */
+.sub-strategy-item {
+    padding: 0.75rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s ease;
+}
+
+.sub-strategy-item:hover {
+    background-color: #f0f0f0;
+}
+
+/* Sub-strategy Circle (1, 2, etc.) */
+.sub-strategy-circle {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background-color: #706e6b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sub-strategy-number {
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Sub-strategy Label */
+.sub-strategy-label {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: #181818;
+    cursor: pointer;
+}
+
+/* Custom Checkbox Styling */
+.sub-strategy-item .slds-checkbox__faux {
+    border-radius: 0.25rem;
+}
+
+.sub-strategy-item .slds-checkbox input:checked ~ .slds-checkbox__faux {
+    background-color: #0176d3;
+    border-color: #0176d3;
+}
+
+/* Sub-strategy Icon */
+.sub-strategy-icon {
+    color: #706e6b;
+    transform: rotate(-90deg);
+}
+
+/* Page Header Styling */
+.slds-page-header {
+    background: transparent;
+    border-bottom: 2px solid #e5e5e5;
+    margin-bottom: 1rem;
+}
+
+.slds-page-header__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #181818;
+}
+
+/* Card Styling */
+.slds-card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .abatement-strategies-container {
+        padding: 0.5rem;
+    }
+    
+    .strategy-header {
+        padding: 0.75rem;
+    }
+    
+    .sub-strategies {
+        padding-left: 2.5rem;
+    }
+    
+    .strategy-title {
+        font-size: 0.875rem;
+    }
+}
+
+/* Loading and Error States */
+.slds-spinner_container {
+    position: relative;
+    height: 300px;
+}
+
+.slds-alert_error {
+    margin: 1rem 0;
+}
+
+/* Animation for expand/collapse */
+.strategy-item[aria-expanded="true"] .expand-icon {
+    transform: rotate(180deg);
+}
+
+/* Selection State */
+.strategy-item.has-selections {
+    border-color: #0176d3;
+    background-color: #f8f9ff;
+}
+
+.strategy-item.has-selections .strategy-header {
+    background-color: #f0f7ff;
+}
+
+/* Focus States */
+.strategy-header:focus {
+    outline: 2px solid #0176d3;
+    outline-offset: 2px;
+}
+
+.sub-strategy-item:focus-within {
+    background-color: #f0f7ff;
+    outline: 1px solid #0176d3;
+    outline-offset: 1px;
+}

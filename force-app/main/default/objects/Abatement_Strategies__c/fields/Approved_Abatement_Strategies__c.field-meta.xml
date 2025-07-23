@@ -1,0 +1,566 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Approved_Abatement_Strategies__c</fullName>
+    <label>Approved Abatement Strategies</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>MultiselectPicklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>A.1 Expand access to all FDA-approved forms of Medication-Assisted Treatment (MAT) for OUD and co-occurring SUD/MH conditions</fullName>
+                <default>false</default>
+                <label>A.1 Expand access to all FDA-approved forms of Medication-Assisted Treatment (MAT) for OUD and co-occurring SUD/MH conditions</label>
+            </value>
+            <value>
+                <fullName>A.2 Reimburse evidence-based services that follow the ASAM continuum of care</fullName>
+                <default>false</default>
+                <label>A.2 Reimburse evidence-based services that follow the ASAM continuum of care</label>
+            </value>
+            <value>
+                <fullName>A.3 Expand telehealth for MAT, counseling, psychiatric, and recovery services</fullName>
+                <default>false</default>
+                <label>A.3 Expand telehealth for MAT, counseling, psychiatric, and recovery services</label>
+            </value>
+            <value>
+                <fullName>A.4 Improve oversight of Opioid Treatment Programs (OTPs) to ensure evidence-based practices</fullName>
+                <default>false</default>
+                <label>A.4 Improve oversight of Opioid Treatment Programs (OTPs) to ensure evidence-based practices</label>
+            </value>
+            <value>
+                <fullName>A.5 Support mobile intervention, treatment, and recovery services, including peer recovery coaches</fullName>
+                <default>false</default>
+                <label>A.5 Support mobile intervention, treatment, and recovery services, including peer recovery coaches</label>
+            </value>
+            <value>
+                <fullName>A.6 Provide trauma treatment for individuals with OUD and affected family members, train healthcare personnel</fullName>
+                <default>false</default>
+                <label>A.6 Provide trauma treatment for individuals with OUD and affected family members, train healthcare personnel</label>
+            </value>
+            <value>
+                <fullName>A.7 Support evidence-based withdrawal management services</fullName>
+                <default>false</default>
+                <label>A.7 Support evidence-based withdrawal management services</label>
+            </value>
+            <value>
+                <fullName>Provide MAT training for providers, responders, and support professionals, include tele-mentoring</fullName>
+                <default>false</default>
+                <label>Provide MAT training for providers, responders, and support professionals, include tele-mentoring</label>
+            </value>
+            <value>
+                <fullName>A.9 Support workforce development for addiction professionals</fullName>
+                <default>false</default>
+                <label>A.9 Support workforce development for addiction professionals</label>
+            </value>
+            <value>
+                <fullName>A.10 Offer fellowships for addiction medicine specialists in care, teaching, and research</fullName>
+                <default>false</default>
+                <label>A.10 Offer fellowships for addiction medicine specialists in care, teaching, and research</label>
+            </value>
+            <value>
+                <fullName>A.11 Provide scholarships, fellowships, and incentives for behavioral health professionals, especially in underserved areas</fullName>
+                <default>false</default>
+                <label>A.11 Provide scholarships, fellowships, and incentives for behavioral health professionals, especially in underserved areas</label>
+            </value>
+            <value>
+                <fullName>A.12 Fund DATA 2000 waiver training and support for MAT prescribers</fullName>
+                <default>false</default>
+                <label>A.12 Fund DATA 2000 waiver training and support for MAT prescribers</label>
+            </value>
+            <value>
+                <fullName>A.13 Disseminate web-based training such as PCSS-Opioids and motivational interviewing</fullName>
+                <default>false</default>
+                <label>A.13 Disseminate web-based training such as PCSS-Opioids and motivational interviewing</label>
+            </value>
+            <value>
+                <fullName>A.14 Develop and share new training curricula, like those from PCSS-MAT</fullName>
+                <default>false</default>
+                <label>A.14 Develop and share new training curricula, like those from PCSS-MAT</label>
+            </value>
+            <value>
+                <fullName>B.1 Provide comprehensive wrap-around services including housing, transport, education, job placement, and childcare</fullName>
+                <default>false</default>
+                <label>B.1 Provide comprehensive wrap-around services including housing, transport, education, job placement, and childcare</label>
+            </value>
+            <value>
+                <fullName>B.2 Offer the full continuum of care including supportive housing, peer support, case management, and community navigation</fullName>
+                <default>false</default>
+                <label>B.2 Offer the full continuum of care including supportive housing, peer support, case management, and community navigation</label>
+            </value>
+            <value>
+                <fullName>B.3 Provide counseling, peer recovery, and access to MAT in residential treatment</fullName>
+                <default>false</default>
+                <label>B.3 Provide counseling, peer recovery, and access to MAT in residential treatment</label>
+            </value>
+            <value>
+                <fullName>B.4 Expand access to housing options including recovery housing that integrates MAT</fullName>
+                <default>false</default>
+                <label>B.4 Expand access to housing options including recovery housing that integrates MAT</label>
+            </value>
+            <value>
+                <fullName>B.5 Provide community legal and social services to deinstitutionalize individuals</fullName>
+                <default>false</default>
+                <label>B.5 Provide community legal and social services to deinstitutionalize individuals</label>
+            </value>
+            <value>
+                <fullName>B.6 Support or expand peer recovery centers offering diverse services</fullName>
+                <default>false</default>
+                <label>B.6 Support or expand peer recovery centers offering diverse services</label>
+            </value>
+            <value>
+                <fullName>B.7 Offer or support transportation to treatment and recovery services</fullName>
+                <default>false</default>
+                <label>B.7 Offer or support transportation to treatment and recovery services</label>
+            </value>
+            <value>
+                <fullName>B.8 Provide employment training and educational opportunities for individuals in treatment or recovery</fullName>
+                <default>false</default>
+                <label>B.8 Provide employment training and educational opportunities for individuals in treatment or recovery</label>
+            </value>
+            <value>
+                <fullName>B.9 Identify, support, and replicate successful recovery programs (e.g., for physicians, pilots, college students)</fullName>
+                <default>false</default>
+                <label>B.9 Identify, support, and replicate successful recovery programs (e.g., for physicians, pilots, college students)</label>
+            </value>
+            <value>
+                <fullName>B.10 Engage nonprofits, faith-based organizations, and coalitions in family and recovery support</fullName>
+                <default>false</default>
+                <label>B.10 Engage nonprofits, faith-based organizations, and coalitions in family and recovery support</label>
+            </value>
+            <value>
+                <fullName>B.11 Train government staff to serve people in recovery without stigma</fullName>
+                <default>false</default>
+                <label>B.11 Train government staff to serve people in recovery without stigma</label>
+            </value>
+            <value>
+                <fullName>B.12 Promote stigma reduction campaigns for effective treatment and recovery support</fullName>
+                <default>false</default>
+                <label>B.12 Promote stigma reduction campaigns for effective treatment and recovery support</label>
+            </value>
+            <value>
+                <fullName>B.13 Create culturally appropriate services for diverse communities including immigrants</fullName>
+                <default>false</default>
+                <label>B.13 Create culturally appropriate services for diverse communities including immigrants</label>
+            </value>
+            <value>
+                <fullName>B.15 Hire or train behavioral health workers to provide or expand recovery services</fullName>
+                <default>false</default>
+                <label>B.15 Hire or train behavioral health workers to provide or expand recovery services</label>
+            </value>
+            <value>
+                <fullName>C.1 Ensure providers screen for OUD and refer or treat accordingly</fullName>
+                <default>false</default>
+                <label>C.1 Ensure providers screen for OUD and refer or treat accordingly</label>
+            </value>
+            <value>
+                <fullName>C.2 Fund SBIRT services including for uninsured pregnant women</fullName>
+                <default>false</default>
+                <label>C.2 Fund SBIRT services including for uninsured pregnant women</label>
+            </value>
+            <value>
+                <fullName>C.3 Support SBIRT implementation in health, school, justice, and youth-focused settings</fullName>
+                <default>false</default>
+                <label>C.3 Support SBIRT implementation in health, school, justice, and youth-focused settings</label>
+            </value>
+            <value>
+                <fullName>C.4 Purchase and sustain automated SBIRT technology</fullName>
+                <default>false</default>
+                <label>C.4 Purchase and sustain automated SBIRT technology</label>
+            </value>
+            <value>
+                <fullName>C.5 Expand MAT access in emergency departments through navigators or response teams</fullName>
+                <default>false</default>
+                <label>C.5 Expand MAT access in emergency departments through navigators or response teams</label>
+            </value>
+            <value>
+                <fullName>C.6 Train ER staff on discharge planning and referrals to care</fullName>
+                <default>false</default>
+                <label>C.6 Train ER staff on discharge planning and referrals to care</label>
+            </value>
+            <value>
+                <fullName>C.7 Fund hospital programs that transition patients into follow-up treatment</fullName>
+                <default>false</default>
+                <label>C.7 Fund hospital programs that transition patients into follow-up treatment</label>
+            </value>
+            <value>
+                <fullName>C.8 Support crisis stabilization centers as alternatives to emergency departments</fullName>
+                <default>false</default>
+                <label>C.8 Support crisis stabilization centers as alternatives to emergency departments</label>
+            </value>
+            <value>
+                <fullName>C.9 Support EMS programs that link overdose survivors to services</fullName>
+                <default>false</default>
+                <label>C.9 Support EMS programs that link overdose survivors to services</label>
+            </value>
+            <value>
+                <fullName>C.10 Fund peer recovery specialists in EDs, detox centers, and recovery housing</fullName>
+                <default>false</default>
+                <label>C.10 Fund peer recovery specialists in EDs, detox centers, and recovery housing</label>
+            </value>
+            <value>
+                <fullName>C.11 Expand warm hand-off services to facilitate treatment transitions</fullName>
+                <default>false</default>
+                <label>C.11 Expand warm hand-off services to facilitate treatment transitions</label>
+            </value>
+            <value>
+                <fullName>C.12 Create school-based contact points for families seeking immediate treatment access</fullName>
+                <default>false</default>
+                <label>C.12 Create school-based contact points for families seeking immediate treatment access</label>
+            </value>
+            <value>
+                <fullName>C.13 Develop best practices for addressing OUD in workplace settings</fullName>
+                <default>false</default>
+                <label>C.13 Develop best practices for addressing OUD in workplace settings</label>
+            </value>
+            <value>
+                <fullName>C.14 Support health provider assistance programs for those with OUD</fullName>
+                <default>false</default>
+                <label>C.14 Support health provider assistance programs for those with OUD</label>
+            </value>
+            <value>
+                <fullName>C.15 Engage nonprofits and faith-based organizations for outreach and support</fullName>
+                <default>false</default>
+                <label>C.15 Engage nonprofits and faith-based organizations for outreach and support</label>
+            </value>
+            <value>
+                <fullName>C.16 Create centralized call centers to link individuals with treatment and recovery services</fullName>
+                <default>false</default>
+                <label>C.16 Create centralized call centers to link individuals with treatment and recovery services</label>
+            </value>
+            <value>
+                <fullName>D.1 Support diversion and deflection strategies including self-referral, active outreach, naloxone-plus, LEAD, civil citation, and co-responder models</fullName>
+                <default>false</default>
+                <label>D.1 Support diversion and deflection strategies including self-referral, active outreach, naloxone-plus, LEAD, civil citation, and co-responder models</label>
+            </value>
+            <value>
+                <fullName>D.2 Fund pre-trial services connecting clients to treatment and MAT</fullName>
+                <default>false</default>
+                <label>D.2 Fund pre-trial services connecting clients to treatment and MAT</label>
+            </value>
+            <value>
+                <fullName>D.3 Support treatment and recovery courts</fullName>
+                <default>false</default>
+                <label>D.3 Support treatment and recovery courts</label>
+            </value>
+            <value>
+                <fullName>D.4 Provide MAT and support services in jails and prisons</fullName>
+                <default>false</default>
+                <label>D.4 Provide MAT and support services in jails and prisons</label>
+            </value>
+            <value>
+                <fullName>D.5 Support re-entry services including MAT and recovery supports</fullName>
+                <default>false</default>
+                <label>D.5 Support re-entry services including MAT and recovery supports</label>
+            </value>
+            <value>
+                <fullName>D.6 Support Critical Time Interventions (CTI) for high-risk justice-involved populations</fullName>
+                <default>false</default>
+                <label>D.6 Support Critical Time Interventions (CTI) for high-risk justice-involved populations</label>
+            </value>
+            <value>
+                <fullName>D.7 Train law enforcement and justice professionals on best practices for OUD treatment and recovery</fullName>
+                <default>false</default>
+                <label>D.7 Train law enforcement and justice professionals on best practices for OUD treatment and recovery</label>
+            </value>
+            <value>
+                <fullName>E.1 Provide MAT and other supports for pregnant women and families affected by Neonatal Abstinence Syndrome (NAS)</fullName>
+                <default>false</default>
+                <label>E.1 Provide MAT and other supports for pregnant women and families affected by Neonatal Abstinence Syndrome (NAS)</label>
+            </value>
+            <value>
+                <fullName>E.2 Offer up to 12 months of postpartum care, including MAT, for uninsured women</fullName>
+                <default>false</default>
+                <label>E.2 Offer up to 12 months of postpartum care, including MAT, for uninsured women</label>
+            </value>
+            <value>
+                <fullName>E.3 Train OB/GYNs and related staff on OUD treatment during pregnancy</fullName>
+                <default>false</default>
+                <label>E.3 Train OB/GYNs and related staff on OUD treatment during pregnancy</label>
+            </value>
+            <value>
+                <fullName>E.4 Expand care and monitoring for NAS infants and their families</fullName>
+                <default>false</default>
+                <label>E.4 Expand care and monitoring for NAS infants and their families</label>
+            </value>
+            <value>
+                <fullName>E.5 Train providers on federal compliance for safe care plans for NAS babies</fullName>
+                <default>false</default>
+                <label>E.5 Train providers on federal compliance for safe care plans for NAS babies</label>
+            </value>
+            <value>
+                <fullName>E.6 Offer child and family supports for parenting women in treatment</fullName>
+                <default>false</default>
+                <label>E.6 Offer child and family supports for parenting women in treatment</label>
+            </value>
+            <value>
+                <fullName>E.7 Enhance family and childcare support for parents with OUD/SUD/MH</fullName>
+                <default>false</default>
+                <label>E.7 Enhance family and childcare support for parents with OUD/SUD/MH</label>
+            </value>
+            <value>
+                <fullName>E.8 Provide trauma-informed care for children and families affected by addiction</fullName>
+                <default>false</default>
+                <label>E.8 Provide trauma-informed care for children and families affected by addiction</label>
+            </value>
+            <value>
+                <fullName>E.9 Deliver home-based services like parenting training</fullName>
+                <default>false</default>
+                <label>E.9 Deliver home-based services like parenting training</label>
+            </value>
+            <value>
+                <fullName>E.10 Fund child welfare support services including supportive housing and foster care staffing</fullName>
+                <default>false</default>
+                <label>E.10 Fund child welfare support services including supportive housing and foster care staffing</label>
+            </value>
+            <value>
+                <fullName>F.1 Educate medical providers on CDC opioid prescribing guidelines</fullName>
+                <default>false</default>
+                <label>F.1 Educate medical providers on CDC opioid prescribing guidelines</label>
+            </value>
+            <value>
+                <fullName>F.2 Train providers on safe opioid prescribing, tapering, and dosing</fullName>
+                <default>false</default>
+                <label>F.2 Train providers on safe opioid prescribing, tapering, and dosing</label>
+            </value>
+            <value>
+                <fullName>F.3 Offer CME on appropriate prescribing practices</fullName>
+                <default>false</default>
+                <label>F.3 Offer CME on appropriate prescribing practices</label>
+            </value>
+            <value>
+                <fullName>F.4 Promote non-opioid alternatives for pain treatment</fullName>
+                <default>false</default>
+                <label>F.4 Promote non-opioid alternatives for pain treatment</label>
+            </value>
+            <value>
+                <fullName>F.5 Enhance PDMPs by increasing prescriber use, improving data quality/interface, and enabling programmatic interventions</fullName>
+                <default>false</default>
+                <label>F.5 Enhance PDMPs by increasing prescriber use, improving data quality/interface, and enabling programmatic interventions</label>
+            </value>
+            <value>
+                <fullName>F.6 Integrate overdose/naloxone data into PDMPs</fullName>
+                <default>false</default>
+                <label>F.6 Integrate overdose/naloxone data into PDMPs</label>
+            </value>
+            <value>
+                <fullName>F.7 Increase electronic prescribing to prevent misuse or fraud</fullName>
+                <default>false</default>
+                <label>F.7 Increase electronic prescribing to prevent misuse or fraud</label>
+            </value>
+            <value>
+                <fullName>G.1 Fund prevention media campaigns</fullName>
+                <default>false</default>
+                <label>G.1 Fund prevention media campaigns</label>
+            </value>
+            <value>
+                <fullName>G.2 Conduct public education and corrective advertising</fullName>
+                <default>false</default>
+                <label>G.2 Conduct public education and corrective advertising</label>
+            </value>
+            <value>
+                <fullName>G.3 Educate the public on safe drug disposal</fullName>
+                <default>false</default>
+                <label>G.3 Educate the public on safe drug disposal</label>
+            </value>
+            <value>
+                <fullName>G.4 Support take-back and disposal programs</fullName>
+                <default>false</default>
+                <label>G.4 Support take-back and disposal programs</label>
+            </value>
+            <value>
+                <fullName>G.5 Fund community anti-drug coalitions</fullName>
+                <default>false</default>
+                <label>G.5 Fund community anti-drug coalitions</label>
+            </value>
+            <value>
+                <fullName>G.6 Help coalitions implement evidence-informed prevention (e.g., stigma reduction, SPF model)</fullName>
+                <default>false</default>
+                <label>G.6 Help coalitions implement evidence-informed prevention (e.g., stigma reduction, SPF model)</label>
+            </value>
+            <value>
+                <fullName>G.7 Engage nonprofits and faith-based organizations in prevention efforts</fullName>
+                <default>false</default>
+                <label>G.7 Engage nonprofits and faith-based organizations in prevention efforts</label>
+            </value>
+            <value>
+                <fullName>G.8 Fund school and community evidence-based prevention programs</fullName>
+                <default>false</default>
+                <label>G.8 Fund school and community evidence-based prevention programs</label>
+            </value>
+            <value>
+                <fullName>G.9 Support youth programs proven to prevent drug misuse</fullName>
+                <default>false</default>
+                <label>G.9 Support youth programs proven to prevent drug misuse</label>
+            </value>
+            <value>
+                <fullName>G.10 Create community-based education and intervention for at-risk youth</fullName>
+                <default>false</default>
+                <label>G.10 Create community-based education and intervention for at-risk youth</label>
+            </value>
+            <value>
+                <fullName>G.11 Promote mental health curricula to build resilience in young people</fullName>
+                <default>false</default>
+                <label>G.11 Promote mental health curricula to build resilience in young people</label>
+            </value>
+            <value>
+                <fullName>G.12 Expand access to school-based mental health services</fullName>
+                <default>false</default>
+                <label>G.12 Expand access to school-based mental health services</label>
+            </value>
+            <value>
+                <fullName>H.1 Increase naloxone availability to public, responders, and re-entering individuals</fullName>
+                <default>false</default>
+                <label>H.1 Increase naloxone availability to public, responders, and re-entering individuals</label>
+            </value>
+            <value>
+                <fullName>H.2 Distribute free naloxone via public health agencies</fullName>
+                <default>false</default>
+                <label>H.2 Distribute free naloxone via public health agencies</label>
+            </value>
+            <value>
+                <fullName>H.3 Train public on naloxone use and overdose treatment</fullName>
+                <default>false</default>
+                <label>H.3 Train public on naloxone use and overdose treatment</label>
+            </value>
+            <value>
+                <fullName>H.4 Equip school personnel with naloxone and training</fullName>
+                <default>false</default>
+                <label>H.4 Equip school personnel with naloxone and training</label>
+            </value>
+            <value>
+                <fullName>H.5 Improve software for overdose tracking and naloxone usage</fullName>
+                <default>false</default>
+                <label>H.5 Improve software for overdose tracking and naloxone usage</label>
+            </value>
+            <value>
+                <fullName>H.6 Conduct public education on overdose emergency response</fullName>
+                <default>false</default>
+                <label>H.6 Conduct public education on overdose emergency response</label>
+            </value>
+            <value>
+                <fullName>H.7 Educate on Good Samaritan and immunity laws</fullName>
+                <default>false</default>
+                <label>H.7 Educate on Good Samaritan and immunity laws</label>
+            </value>
+            <value>
+                <fullName>H.8 Train responders on protections under Good Samaritan laws</fullName>
+                <default>false</default>
+                <label>H.8 Train responders on protections under Good Samaritan laws</label>
+            </value>
+            <value>
+                <fullName>H.9 Support syringe services and harm-reduction programs</fullName>
+                <default>false</default>
+                <label>H.9 Support syringe services and harm-reduction programs</label>
+            </value>
+            <value>
+                <fullName>H.10 Expand infectious disease screening and treatment (e.g., HIV, Hep C)</fullName>
+                <default>false</default>
+                <label>H.10 Expand infectious disease screening and treatment (e.g., HIV, Hep C)</label>
+            </value>
+            <value>
+                <fullName>H.11 Deploy mobile harm reduction and support service units</fullName>
+                <default>false</default>
+                <label>H.11 Deploy mobile harm reduction and support service units</label>
+            </value>
+            <value>
+                <fullName>H.12 Train professionals on harm-reduction methods</fullName>
+                <default>false</default>
+                <label>H.12 Train professionals on harm-reduction methods</label>
+            </value>
+            <value>
+                <fullName>H.13 Include fentanyl screening in routine clinical toxicology</fullName>
+                <default>false</default>
+                <label>H.13 Include fentanyl screening in routine clinical toxicology</label>
+            </value>
+            <value>
+                <fullName>I.1 Train responders on safe handling of fentanyl and similar substances</fullName>
+                <default>false</default>
+                <label>I.1 Train responders on safe handling of fentanyl and similar substances</label>
+            </value>
+            <value>
+                <fullName>I.2 Provide wellness and trauma support services for responders</fullName>
+                <default>false</default>
+                <label>I.2 Provide wellness and trauma support services for responders</label>
+            </value>
+            <value>
+                <fullName>J.1 Fund planning to identify root causes and address opioid-related harms</fullName>
+                <default>false</default>
+                <label>J.1 Fund planning to identify root causes and address opioid-related harms</label>
+            </value>
+            <value>
+                <fullName>J.2 Support transparency by sharing plans, fund usage, outcomes, and data dashboards</fullName>
+                <default>false</default>
+                <label>J.2 Support transparency by sharing plans, fund usage, outcomes, and data dashboards</label>
+            </value>
+            <value>
+                <fullName>J.3 Fund infrastructure and staff for cross-agency collaboration</fullName>
+                <default>false</default>
+                <label>J.3 Fund infrastructure and staff for cross-agency collaboration</label>
+            </value>
+            <value>
+                <fullName>J.4 Provide oversight resources for opioid abatement management</fullName>
+                <default>false</default>
+                <label>J.4 Provide oversight resources for opioid abatement management</label>
+            </value>
+            <value>
+                <fullName>K.1 Fund training and networking to build community and government capacity</fullName>
+                <default>false</default>
+                <label>K.1 Fund training and networking to build community and government capacity</label>
+            </value>
+            <value>
+                <fullName>K.2 Support infrastructure for cross-system coordination (e.g., healthcare, PDMPs, pharmacies)</fullName>
+                <default>false</default>
+                <label>K.2 Support infrastructure for cross-system coordination (e.g., healthcare, PDMPs, pharmacies)</label>
+            </value>
+            <value>
+                <fullName>L.1 Fund monitoring and evaluation of abatement strategies</fullName>
+                <default>false</default>
+                <label>L.1 Fund monitoring and evaluation of abatement strategies</label>
+            </value>
+            <value>
+                <fullName>L.2 Support research into non-opioid chronic pain treatment</fullName>
+                <default>false</default>
+                <label>L.2 Support research into non-opioid chronic pain treatment</label>
+            </value>
+            <value>
+                <fullName>L.3 Study improved delivery models like SBIRT</fullName>
+                <default>false</default>
+                <label>L.3 Study improved delivery models like SBIRT</label>
+            </value>
+            <value>
+                <fullName>L.4 Research new harm reduction approaches (e.g., fentanyl test strips)</fullName>
+                <default>false</default>
+                <label>L.4 Research new harm reduction approaches (e.g., fentanyl test strips)</label>
+            </value>
+            <value>
+                <fullName>L.5 Evaluate supply-side enforcement innovations</fullName>
+                <default>false</default>
+                <label>L.5 Evaluate supply-side enforcement innovations</label>
+            </value>
+            <value>
+                <fullName>L.6 Expand justice-system research on swift/certain/fair models</fullName>
+                <default>false</default>
+                <label>L.6 Expand justice-system research on swift/certain/fair models</label>
+            </value>
+            <value>
+                <fullName>L.7 Conduct surveillance in justice-involved populations (e.g., ADAM model)</fullName>
+                <default>false</default>
+                <label>L.7 Conduct surveillance in justice-involved populations (e.g., ADAM model)</label>
+            </value>
+            <value>
+                <fullName>L.8 Research risks and opportunities in illicit drug markets</fullName>
+                <default>false</default>
+                <label>L.8 Research risks and opportunities in illicit drug markets</label>
+            </value>
+            <value>
+                <fullName>L.9 Perform geospatial analysis on MAT access and barriers</fullName>
+                <default>false</default>
+                <label>L.9 Perform geospatial analysis on MAT access and barriers</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <visibleLines>4</visibleLines>
+</CustomField>
