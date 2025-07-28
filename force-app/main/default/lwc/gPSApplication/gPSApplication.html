@@ -120,6 +120,16 @@
                                 </lightning-button>
                             </template>
 
+                            <!-- Add this button next to the existing Save button, but only show on step 4 -->
+<template if:true={showSaveAndPreviewButton}>
+    <lightning-button 
+        variant="brand" 
+        label="Save and Preview" 
+        onclick={handleSaveAndPreview}
+        class="slds-m-left_x-small">
+    </lightning-button>
+</template>
+
                             <!-- Add Partner button, only visible in step 3 -->
                             <template if:true={isStep3}>
                                 <lightning-button 
@@ -135,4 +145,284 @@
             </lightning-card>
         </div>
     </div>
+
+    <!-- Preview Modal -->
+<template if:true={showPreviewModal}>
+    <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" class="slds-modal slds-fade-in-open">
+        <div class="slds-modal__container" style="max-width: 80%; width: 80%;">
+            <header class="slds-modal__header">
+                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={handleCloseModal}>
+                    <lightning-icon icon-name="utility:close" alternative-text="close" size="small"></lightning-icon>
+                    <span class="slds-assistive-text">Close</span>
+                </button>
+                <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Application Preview</h2>
+            </header>
+            <div class="slds-modal__content slds-p-around_medium">
+                
+                <!-- Political Subdivision Information Section -->
+                <div class="slds-accordion">
+                    <section class="slds-accordion__section slds-is-open">
+                        <div class="slds-accordion__summary">
+                            <h3 class="slds-accordion__summary-heading">
+                                <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
+                                    <lightning-icon icon-name="standard:account" size="small" class="slds-m-right_small"></lightning-icon>
+                                    Political Subdivision Information
+                                </span>
+                            </h3>
+                        </div>
+                        <div class="slds-accordion__content">
+                            <div class="slds-grid slds-wrap slds-p-around_medium">
+                                <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+                                    <p><strong>Indicate whether this request is for funds from the Guaranteed Political Subdivision Fund (GPS for/on behalf of participating political subdivisions only) or Discretionary Subfund (DSF)? :</strong> {formattedPreviewData.requestType}</p>
+                                    <p><strong>Name of Individual Completing the Application :</strong> {formattedPreviewData.nameOfPerson}</p>
+                                    <p><strong>Title of Individual Completing the Application :</strong> {formattedPreviewData.titleOfPerson}</p>
+                                    <p><strong>Political Subdivision Name :</strong> {formattedPreviewData.subdivisionName}</p>
+                                    <p><strong>Political Subdivision Contact Number :</strong> {formattedPreviewData.subdivisionContact}</p>
+                                    <p><strong>Political Subdivision Email :</strong> {formattedPreviewData.subdivisionEmail}</p>
+                                    <p><strong>SCEIS Vendor Number :</strong> {formattedPreviewData.sceisVendor}</p>
+                                    <p><strong>Entity Type :</strong> {formattedPreviewData.entityType}</p>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <p><strong>Does The Requesting Entity Approve Line-item Severability Throughout The Application? :</strong> {formattedPreviewData.entityApprove}</p>
+                                    <p><strong>Are You Collaborating With Other GPS? :</strong> {formattedPreviewData.collaborating}</p>
+                                    <p><strong>Was the requesting Entity a litigating subdivision? :</strong> {formattedPreviewData.litigating}</p>
+                                    <p><strong>Is the requesting Entity a South Carolina Bellwether Plaintiff? :</strong> {formattedPreviewData.bellwether}</p>
+                                    <p><strong>Does the requesting Entity, or any of its board members or employees, have any personal, financial, or other relationship with any Member of the SC Opioid Recovery Fund Board that may reasonably be viewed as a conflict of interest for that Member? :</strong> {formattedPreviewData.conflict}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Payment Remit To Section -->
+                <div class="slds-accordion slds-m-top_medium">
+                    <section class="slds-accordion__section slds-is-open">
+                        <div class="slds-accordion__summary">
+                            <h3 class="slds-accordion__summary-heading">
+                                <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
+                                    <lightning-icon icon-name="standard:address" size="small" class="slds-m-right_small"></lightning-icon>
+                                    Payment Remit To (As per SCEIS)
+                                </span>
+                            </h3>
+                        </div>
+                        <div class="slds-accordion__content">
+                            <div class="slds-grid slds-wrap slds-p-around_medium">
+                                <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+                                    <p><strong>Address Line 1 :</strong> {formattedPreviewData.paymentAddressLine1}</p>
+                                    <p><strong>Address Line 2 :</strong> {formattedPreviewData.paymentAddressLine2}</p>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <p><strong>City :</strong> {formattedPreviewData.paymentCity}</p>
+                                    <p><strong>State :</strong> {formattedPreviewData.paymentState}</p>
+                                    <p><strong>Zip :</strong> {formattedPreviewData.paymentZip}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Political Subdivision Address Section -->
+                <div class="slds-accordion slds-m-top_medium">
+                    <section class="slds-accordion__section slds-is-open">
+                        <div class="slds-accordion__summary">
+                            <h3 class="slds-accordion__summary-heading">
+                                <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
+                                    <lightning-icon icon-name="standard:location" size="small" class="slds-m-right_small"></lightning-icon>
+                                    Political Subdivision Address
+                                </span>
+                            </h3>
+                        </div>
+                        <div class="slds-accordion__content">
+                            <div class="slds-grid slds-wrap slds-p-around_medium">
+                                <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+                                    <p><strong>Address Line 1 :</strong> {formattedPreviewData.subdivisionAddressLine1}</p>
+                                    <p><strong>Address Line 2 :</strong> {formattedPreviewData.subdivisionAddressLine2}</p>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <p><strong>City :</strong> {formattedPreviewData.subdivisionCity}</p>
+                                    <p><strong>State :</strong> {formattedPreviewData.subdivisionState}</p>
+                                    <p><strong>Zip :</strong> {formattedPreviewData.subdivisionZip}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Application Point of Contact Section -->
+                <div class="slds-accordion slds-m-top_medium">
+                    <section class="slds-accordion__section slds-is-open">
+                        <div class="slds-accordion__summary">
+                            <h3 class="slds-accordion__summary-heading">
+                                <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
+                                    <lightning-icon icon-name="standard:contact" size="small" class="slds-m-right_small"></lightning-icon>
+                                    Application Point of Contact
+                                </span>
+                            </h3>
+                        </div>
+                        <div class="slds-accordion__content">
+                            <div class="slds-grid slds-wrap slds-p-around_medium">
+                                <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+                                    <h4 class="slds-text-heading_small slds-m-bottom_small">Program Manager</h4>
+                                    <p><strong>Name :</strong> {formattedPreviewData.programManagerName}</p>
+                                    <p><strong>Email :</strong> {formattedPreviewData.programManagerEmail}</p>
+                                    <p><strong>Phone Number :</strong> {formattedPreviewData.programManagerPhone}</p>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <h4 class="slds-text-heading_small slds-m-bottom_small">Fiscal Manager</h4>
+                                    <p><strong>Name :</strong> {formattedPreviewData.fiscalManagerName}</p>
+                                    <p><strong>Email :</strong> {formattedPreviewData.fiscalManagerEmail}</p>
+                                    <p><strong>Phone Number :</strong> {formattedPreviewData.fiscalManagerPhone}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                    <!-- Partner Table Section -->
+<div class="slds-accordion slds-m-top_medium">
+    <section class="slds-accordion__section slds-is-open">
+        <div class="slds-accordion__summary">
+            <h3 class="slds-accordion__summary-heading">
+                <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
+                    <lightning-icon icon-name="standard:partner_fund" size="small" class="slds-m-right_small"></lightning-icon>
+                    Partner Table
+                </span>
+            </h3>
+        </div>
+        <div class="slds-accordion__content">
+            <div class="slds-p-around_medium">
+                <template if:true={partnerTableData}>
+                    <template if:true={partnerTableData.length}>
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Partner Name">Partner Name</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Actions">Actions</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Edit">Edit</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Delete">Delete</div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={partnerTableData} for:item="partner">
+                                    <tr key={partner.id} class="slds-hint-parent">
+                                        <td data-label="Partner Name">
+                                            <div class="slds-truncate" title={partner.name}>{partner.name}</div>
+                                        </td>
+                                        <td data-label="Actions">
+                                            <button class="slds-button slds-button_brand" 
+                                                    data-index={partner.index} 
+                                                    onclick={handleViewPartner}>
+                                                <lightning-icon icon-name="utility:preview" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                View
+                                            </button>
+                                        </td>
+                                        <td data-label="Edit">
+                                            <button class="slds-button slds-button_brand" 
+                                                    data-index={partner.index} 
+                                                    onclick={handleEditPartner}>
+                                                <lightning-icon icon-name="utility:edit" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                Edit
+                                            </button>
+                                        </td>
+                                        <td data-label="Delete">
+                                            <button class="slds-button slds-button_destructive" 
+                                                    data-index={partner.index} 
+                                                    onclick={handleDeletePartner}>
+                                                <lightning-icon icon-name="utility:delete" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </template>
+                    <template if:false={partnerTableData.length}>
+                        <div class="slds-text-align_center slds-p-around_medium">
+                            <p class="slds-text-color_weak">No partners added yet. Go to Step 2 and 3 to add partners.</p>
+                        </div>
+                    </template>
+                </template>
+            </div>
+        </div>
+
+        <!-- Partner View Modal -->
+<template if:true={showPartnerViewModal}>
+    <section role="dialog" tabindex="-1" aria-labelledby="partner-modal-heading" aria-modal="true" class="slds-modal slds-fade-in-open">
+        <div class="slds-modal__container" style="max-width: 80%; width: 80%;">
+            <header class="slds-modal__header">
+                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={handleClosePartnerModal}>
+                    <lightning-icon icon-name="utility:close" alternative-text="close" size="small"></lightning-icon>
+                    <span class="slds-assistive-text">Close</span>
+                </button>
+                <h2 id="partner-modal-heading" class="slds-modal__title slds-hyphenate">Partner Details</h2>
+            </header>
+            <div class="slds-modal__content slds-p-around_medium">
+                <template if:true={selectedPartnerData.technicalProposal}>
+                    <!-- Technical Proposal Section -->
+                    <div class="slds-accordion">
+                        <section class="slds-accordion__section slds-is-open">
+                            <div class="slds-accordion__summary">
+                                <h3 class="slds-accordion__summary-heading">
+                                    <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem;">
+                                        Technical Proposal
+                                    </span>
+                                </h3>
+                            </div>
+                            <div class="slds-accordion__content slds-p-around_medium">
+                                <p><strong>Partner Name:</strong> {selectedPartnerData.technicalProposal.PartnerName__c}</p>
+                                <p><strong>Geographic Area:</strong> {selectedPartnerData.technicalProposal.GeographicAreaPopulationPoverty__c}</p>
+                                <p><strong>Existing Efforts:</strong> {selectedPartnerData.technicalProposal.Outline_Existing_Efforts_and_New_Expansi__c}</p>
+                                <p><strong>Budget Description:</strong> {selectedPartnerData.technicalProposal.Describe_Current_Budget_and_Funding_Sour__c}</p>
+                            </div>
+                        </section>
+                    </div>
+                    
+                    <!-- Abatement Strategies Section -->
+                    <div class="slds-accordion slds-m-top_medium">
+                        <section class="slds-accordion__section slds-is-open">
+                            <div class="slds-accordion__summary">
+                                <h3 class="slds-accordion__summary-heading">
+                                    <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem;">
+                                        Abatement Strategies
+                                    </span>
+                                </h3>
+                            </div>
+                            <div class="slds-accordion__content slds-p-around_medium">
+                                <p><strong>Core Strategies:</strong> {selectedPartnerData.abatementStrategies.CoreStrategies__c}</p>
+                                <p><strong>Abatement Strategies:</strong> {selectedPartnerData.abatementStrategies.Core_Abatement_Strategies__c}</p>
+                            </div>
+                        </section>
+                    </div>
+                </template>
+            </div>
+            <footer class="slds-modal__footer">
+                <button class="slds-button slds-button_neutral" onclick={handleClosePartnerModal}>Close</button>
+            </footer>
+        </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+</template>
+    </section>
+</div>
+
+            </div>
+            <footer class="slds-modal__footer">
+                <button class="slds-button slds-button_neutral" onclick={handleCloseModal}>Close</button>
+            </footer>
+        </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+
+
+
+</template>
 </template>

@@ -456,7 +456,7 @@ public static Map<String, Object> saveStrategyResources(String resourcesJson) {
                 rec.Strategy_Name__c = (String)row.get('Strategy_Name__c');
             
             // Set Abatement_Strategies__c (lookup to parent)
-            if (row.containsKey('Abatement_Strategies__c'))
+            if (row.containsKey('Abatement_Strategies__c'))  
                 rec.Abatement_Strategies__c = (String)row.get('Abatement_Strategies__c');
             
             // Map all other fields (skip RecordTypeName, Strategy_Name__c, Abatement_Strategies__c, Id)
