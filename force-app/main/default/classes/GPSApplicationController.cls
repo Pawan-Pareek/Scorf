@@ -407,75 +407,95 @@ public static Map<String, Object> saveAbatementStrategies(String abatement) {
      * Each record must include a RecordTypeName ("Budget Information" or "Personnel Information") and Strategy_Name__c.
      */
     @AuraEnabled
-    public static Map<String, Object> saveStrategyResources(String resourcesJson) {
-        System.debug('saveStrategyResources START');
-        Map<String, Object> result = new Map<String, Object>();
-        try {
-            System.debug('Received resourcesJson: ' + resourcesJson);
-            if (String.isBlank(resourcesJson)) {
-                result.put('success', false);
-                result.put('error', 'No resource data provided');
-                return result;
-            }
-            // Parse JSON
-            List<Object> resourceList = (List<Object>) JSON.deserializeUntyped(resourcesJson);
-            if (resourceList.isEmpty()) {
-                result.put('success', false);
-                result.put('error', 'No resource records found');
-                return result;
-            }
-            // Get RecordTypeId map
-            Map<String, Id> recordTypeMap = new Map<String, Id>();
-            for (RecordType rt : [SELECT Id, Name FROM RecordType WHERE SObjectType = 'Strategy_Resources__c']) {
-                recordTypeMap.put(rt.Name, rt.Id);
-            }
-            List<Strategy_Resources__c> toUpsert = new List<Strategy_Resources__c>();
-            for (Object rowObj : resourceList) {
-                Map<String, Object> row = (Map<String, Object>)rowObj;
-                Strategy_Resources__c rec = new Strategy_Resources__c();
-                // Only set Id if it's a valid Salesforce Id
-                if (row.containsKey('Id')) {
-                    String idVal = (String)row.get('Id');
-                    if (idVal != null && (idVal.length() == 15 || idVal.length() == 18) && Pattern.matches('^[a-zA-Z0-9]+$', idVal)) {
-                        rec.Id = idVal;
-                    }
-                }
-                // Set RecordTypeId
-                if (row.containsKey('RecordTypeName') && recordTypeMap.containsKey((String)row.get('RecordTypeName')))
-                    rec.RecordTypeId = recordTypeMap.get((String)row.get('RecordTypeName'));
-                // Set Strategy_Name__c
-                if (row.containsKey('Strategy_Name__c'))
-                    rec.Strategy_Name__c = (String)row.get('Strategy_Name__c');
-                // Set Abatement_Strategies__c (lookup to parent)
-                if (row.containsKey('Abatement_Strategies__c'))
-                    rec.Abatement_Strategies__c = (String)row.get('Abatement_Strategies__c');
-                // Map all other fields (skip RecordTypeName, Strategy_Name__c, Abatement_Strategies__c, Id)
-                for (String key : row.keySet()) {
-                    if (key == 'RecordTypeName' || key == 'Strategy_Name__c' || key == 'Abatement_Strategies__c' || key == 'Id') continue;
-                    SObjectField f = Strategy_Resources__c.SObjectType.getDescribe().fields.getMap().get(key);
-                    if (f != null && row.get(key) != null) {
-                        // Convert to Decimal for currency fields
-                        if (key == 'BudgetTotalChargedToAward__c' || key == 'PersonnelTotalChargedToAward__c' || key == 'PersonnelKeyStaffAnnualSalary__c') {
-                            rec.put(f, Decimal.valueOf(String.valueOf(row.get(key))));
-                        } else {
-                            rec.put(f, row.get(key));
-                        }
-                    }
-                }
-                toUpsert.add(rec);
-            }
-            System.debug('Prepared toUpsert list: ' + toUpsert);
-            upsert toUpsert;
-            result.put('success', true);
-            result.put('message', toUpsert.size() + ' Strategy_Resources__c records saved');
-        } catch (Exception e) {
+public static Map<String, Object> saveStrategyResources(String resourcesJson) {
+    System.debug('saveStrategyResources START');
+    Map<String, Object> result = new Map<String, Object>();
+    List<String> insertedIds = new List<String>(); // Track inserted IDs
+    
+    try {
+        System.debug('Received resourcesJson: ' + resourcesJson);
+        if (String.isBlank(resourcesJson)) {
             result.put('success', false);
-            result.put('error', e.getMessage());
-            System.debug('Error in saveStrategyResources: ' + e.getMessage());
+            result.put('error', 'No resource data provided');
+            return result;
         }
-        System.debug('saveStrategyResources END');
-        return result;
+        
+        // Parse JSON
+        List<Object> resourceList = (List<Object>) JSON.deserializeUntyped(resourcesJson);
+        if (resourceList.isEmpty()) {
+            result.put('success', false);
+            result.put('error', 'No resource records found');
+            return result;
+        }
+        
+        // Get RecordTypeId map
+        Map<String, Id> recordTypeMap = new Map<String, Id>();
+        for (RecordType rt : [SELECT Id, Name FROM RecordType WHERE SObjectType = 'Strategy_Resources__c']) {
+            recordTypeMap.put(rt.Name, rt.Id);
+        }
+        
+        List<Strategy_Resources__c> toUpsert = new List<Strategy_Resources__c>();
+        for (Object rowObj : resourceList) {
+            Map<String, Object> row = (Map<String, Object>)rowObj;
+            Strategy_Resources__c rec = new Strategy_Resources__c();
+            
+            // Only set Id if it's a valid Salesforce Id
+            if (row.containsKey('Id')) {
+                String idVal = (String)row.get('Id');
+                if (idVal != null && (idVal.length() == 15 || idVal.length() == 18) && Pattern.matches('^[a-zA-Z0-9]+$', idVal)) {
+                    rec.Id = idVal;
+                }
+            }
+            
+            // Set RecordTypeId
+            if (row.containsKey('RecordTypeName') && recordTypeMap.containsKey((String)row.get('RecordTypeName')))
+                rec.RecordTypeId = recordTypeMap.get((String)row.get('RecordTypeName'));
+            
+            // Set Strategy_Name__c
+            if (row.containsKey('Strategy_Name__c'))
+                rec.Strategy_Name__c = (String)row.get('Strategy_Name__c');
+            
+            // Set Abatement_Strategies__c (lookup to parent)
+            if (row.containsKey('Abatement_Strategies__c'))
+                rec.Abatement_Strategies__c = (String)row.get('Abatement_Strategies__c');
+            
+            // Map all other fields (skip RecordTypeName, Strategy_Name__c, Abatement_Strategies__c, Id)
+            for (String key : row.keySet()) {
+                if (key == 'RecordTypeName' || key == 'Strategy_Name__c' || key == 'Abatement_Strategies__c' || key == 'Id') continue;
+                SObjectField f = Strategy_Resources__c.SObjectType.getDescribe().fields.getMap().get(key);
+                if (f != null && row.get(key) != null) {
+                    // Convert to Decimal for currency fields
+                    if (key == 'BudgetTotalChargedToAward__c' || key == 'PersonnelTotalChargedToAward__c' || key == 'PersonnelKeyStaffAnnualSalary__c') {
+                        rec.put(f, Decimal.valueOf(String.valueOf(row.get(key))));
+                    } else {
+                        rec.put(f, row.get(key));
+                    }
+                }
+            }
+            toUpsert.add(rec);
+        }
+        
+        System.debug('Prepared toUpsert list: ' + toUpsert);
+        upsert toUpsert;
+        
+        // Collect inserted IDs
+        for (Strategy_Resources__c resource : toUpsert) {
+            insertedIds.add(resource.Id);
+        }
+        
+        result.put('success', true);
+        result.put('message', toUpsert.size() + ' Strategy_Resources__c records saved');
+        result.put('insertedIds', insertedIds); // Return the IDs
+        
+    } catch (Exception e) {
+        result.put('success', false);
+        result.put('error', e.getMessage());
+        System.debug('Error in saveStrategyResources: ' + e.getMessage());
     }
+    
+    System.debug('saveStrategyResources END');
+    return result;
+}
 
 
 }

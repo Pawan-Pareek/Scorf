@@ -1,0 +1,69 @@
+/* Strategy Line Resources Component Styles */
+.strategy-line-resources {
+    background-color: #f3f3f3;
+    border-left: 4px solid #1589ee;
+    border-radius: 4px;
+    margin-top: 8px;
+}
+
+.strategy-line-resources .slds-form-element__label {
+    font-weight: 600;
+    color: #181818;
+    font-size: 0.875rem;
+}
+
+.strategy-line-resources .slds-required {
+    color: #ea001e;
+}
+
+.strategy-line-resources lightning-input,
+.strategy-line-resources lightning-combobox,
+.strategy-line-resources lightning-textarea {
+    --slds-c-input-color-background: #ffffff;
+    --slds-c-input-color-border: #d8dde6;
+    --slds-c-input-radius-border: 0.25rem;
+}
+
+.strategy-line-resources lightning-input:focus-within,
+.strategy-line-resources lightning-combobox:focus-within,
+.strategy-line-resources lightning-textarea:focus-within {
+    --slds-c-input-color-border-focus: #1589ee;
+    --slds-c-input-shadow-focus: 0 0 0 1px #1589ee inset;
+}
+
+.strategy-line-resources lightning-textarea {
+    --slds-c-textarea-sizing-min-height: 5rem;
+}
+
+.strategy-line-resources .budget-amount-input {
+    --slds-c-input-text-align: left;
+}
+
+.strategy-line-resources .slds-grid.slds-gutters {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+}
+
+.strategy-line-resources .slds-grid.slds-gutters > .slds-col {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .strategy-line-resources .slds-size_1-of-2 {
+        width: 100%;
+        flex: 0 0 100%;
+    }
+}
+
+/* Form validation styles */
+.strategy-line-resources .has-error {
+    --slds-c-input-color-border: #ea001e;
+    --slds-c-input-color-border-focus: #ea001e;
+}
+
+.strategy-line-resources .slds-form-element__help {
+    color: #ea001e;
+    font-size: 0.75rem;
+}

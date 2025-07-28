@@ -36,11 +36,11 @@ export default class AbatementStrategies extends LightningElement {
         { id: Date.now(), PersonnelName__c: '', PersonnelPosition__c: '', PersonnelKeyStaffAnnualSalary__c: '', PersonnelLevelOfEffort__c: '', PersonnelTotalChargedToAward__c: '' }
     ];
 
-    @api
-    handleAddPartnerFromParent() {
-        // Handle Add Partner action from parent
-        this.handleAddPartner();
-    }
+    // @api
+    // handleAddPartnerFromParent() {
+    //     // Handle Add Partner action from parent
+    //     this.handleAddPartner();
+    // }
 
     connectedCallback() {
         this.loadPicklistData();
@@ -48,17 +48,24 @@ export default class AbatementStrategies extends LightningElement {
             this.loadExistingData();
         }
         // Listen for addpartner event from parent as fallback
-        this.template?.addEventListener?.('addpartner', this.handleAddPartner.bind(this));
+        // this.template?.addEventListener?.('addpartner', this.handleAddPartner.bind(this));
+        this.template?.addEventListener?.('addpartner', this.handleAddPartnerFromParent.bind(this));
     }
 
-    handleAddPartner() {
-        // Notify internally or perform any logic needed
-        // For demonstration, show a toast
-        this.showToast('Info', 'Add Partner button clicked', 'info');
-        // You can add your custom logic here
-        // Optionally, dispatch a custom event for further handling
-        this.dispatchEvent(new CustomEvent('partneradded'));
-    }
+    // handleAddPartner() {
+    //     // Clear only the local fields
+    //     this.selectedCoreStrategies = [];
+    //     this.selectedAbatementStrategies = [];
+    //     this.personnelData = {};
+    //     this.budgetData = {};
+    //     this.expandedStrategies = new Set();
+    //     this.updateComponentData && this.updateComponentData();
+    //     // Optionally show a toast
+    //     this.showToast('Info', 'Add Partner button clicked', 'info');
+    //     // Optionally, dispatch a custom event for further handling
+    //     this.dispatchEvent(new CustomEvent('partneradded'));
+    //     console.log('handleAddPartner START in Abatement Strategies');
+    // }
 
 
     
@@ -686,7 +693,7 @@ get processedCoreStrategies() {
             }
             this.updateComponentData();
             // Do NOT expand anything here!
-            this.expandedStrategies = new Set();
+            // this.expandedStrategies = new Set(); // <-- Removed to preserve expanded state
         }
     }
 
@@ -800,5 +807,54 @@ getBudgetRecords(abatementValue) {
     @api
     resetExpandedStrategies() {
         this.expandedStrategies = new Set();
+    }
+
+    @api
+    clearData() {
+        console.log('=== clearData called on abatementStrategies component ===');
+        // Clear all internal state
+        this.selectedCoreStrategies = [];
+        this.selectedAbatementStrategies = [];
+        this.expandedStrategies = new Set();
+        this.strategyLineResourcesData = {};
+        this.personnelData = {};
+        this.budgetData = {};
+        this.componentData = {
+            coreStrategies: [],
+            abatementStrategies: []
+        };
+        this.abatementOptionDataMap = {};
+        
+        // Force reactivity
+        this.strategyLineResourcesData = { ...this.strategyLineResourcesData };
+        this.personnelData = { ...this.personnelData };
+        this.budgetData = { ...this.budgetData };
+        
+        console.log('abatementStrategies component cleared successfully');
+    }
+
+    @api
+    handleAddPartnerFromParent() {
+        console.log('=== handleAddPartnerFromParent METHOD CALLED ===');
+        // Log all tracked, api, and internal variables
+        console.log('Add Partner Clicked - Logging all variables:');
+        console.log('applicationData:', JSON.stringify(this.applicationData));
+        console.log('picklistValues:', JSON.stringify(this.picklistValues));
+        console.log('recordId:', this.recordId);
+        console.log('strategyLineResourcesData:', JSON.stringify(this.strategyLineResourcesData));
+        console.log('coreStrategies:', JSON.stringify(this.coreStrategies));
+        console.log('mappedAbatementStrategies:', JSON.stringify(this.mappedAbatementStrategies));
+        console.log('selectedCoreStrategies:', JSON.stringify(this.selectedCoreStrategies));
+        console.log('selectedAbatementStrategies:', JSON.stringify(this.selectedAbatementStrategies));
+        console.log('expandedStrategies:', JSON.stringify(Array.from(this.expandedStrategies)));
+        console.log('isLoading:', this.isLoading);
+        console.log('hasError:', this.hasError);
+        console.log('errorMessage:', this.errorMessage);
+        console.log('componentData:', JSON.stringify(this.componentData));
+        console.log('abatementOptionDataMap:', JSON.stringify(this.abatementOptionDataMap));
+        console.log('personnelData:', JSON.stringify(this.personnelData));
+        console.log('budgetData:', JSON.stringify(this.budgetData));
+        console.log('personnelRows:', JSON.stringify(this.personnelRows));
+        // If you want to log more, add here
     }
 }

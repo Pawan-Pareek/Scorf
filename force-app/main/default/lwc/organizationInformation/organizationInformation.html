@@ -63,13 +63,21 @@
                             onchange={handleInputChange}>
                         </lightning-combobox>
                     </div>
-                    <div class="slds-col slds-size_1-of-2">
-                        <lightning-combobox name="Please_select_the_appropriate_county__c" label="Please Select The Appropriate County"
-                            value={applicationData.Please_select_the_appropriate_county__c} placeholder="Select County"
-                            options={countyOptions} data-field="Please_select_the_appropriate_county__c"
-                            onchange={handleInputChange} multiple>
-                        </lightning-combobox>
-                    </div>
+                    <template if:true={showCountyFieldGetter}>
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-dual-listbox
+                                name="Please_select_the_appropriate_county__c"
+                                label="Please Select The Appropriate County"
+                                source-label="Available Counties"
+                                selected-label="Selected Counties"
+                                options={countyOptions}
+                                value={applicationData.Please_select_the_appropriate_county__c}
+                                data-field="Please_select_the_appropriate_county__c"
+                                onchange={handleInputChange}
+                                required>
+                            </lightning-dual-listbox>
+                        </div>
+                    </template>
                     <div class="slds-col slds-size_1-of-2">
                         <lightning-combobox name="IsEntityAnSCBellwetherPlaintiff__c" label="Is Entity An SC Bellwether Plaintiff"
                             value={applicationData.IsEntityAnSCBellwetherPlaintiff__c} placeholder="Select Option"

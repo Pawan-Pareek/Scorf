@@ -1,12 +1,14 @@
 import { LightningElement, api, track, wire } from 'lwc';
 // Add this import at the top with other imports
 import fetchTechnicalProposalData from '@salesforce/apex/GPSApplicationController.fetchTechnicalProposalData';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 
 export default class TechnicalProposal extends LightningElement {
     @api recordId;
     @track formData = {};
     @track isInitialized = false;
+    @track ignoreParentData = false;
 
     // Fetch record data when recordId changes
     @wire(fetchTechnicalProposalData, { recordId: '$recordId' })
@@ -22,12 +24,22 @@ export default class TechnicalProposal extends LightningElement {
 
     @api
     setData(data) {
-        if (data) {
+        if (!this.ignoreParentData && data) {
             this.formData = {
                 PartnerName__c: data.PartnerName__c || '',
                 GeographicAreaPopulationPoverty__c: data.GeographicAreaPopulationPoverty__c || '',
                 Outline_Existing_Efforts_and_New_Expansi__c: data.Outline_Existing_Efforts_and_New_Expansi__c || '',
                 Describe_Current_Budget_and_Funding_Sour__c: data.Describe_Current_Budget_and_Funding_Sour__c || ''
+            };
+            this.isInitialized = true;
+            this.updateFormFields();
+        } else if (!this.ignoreParentData && Object.keys(data).length === 0) {
+            // If data is an empty object, clear all fields
+            this.formData = {
+                PartnerName__c: '',
+                GeographicAreaPopulationPoverty__c: '',
+                Outline_Existing_Efforts_and_New_Expansi__c: '',
+                Describe_Current_Budget_and_Funding_Sour__c: ''
             };
             this.isInitialized = true;
             this.updateFormFields();
@@ -51,6 +63,7 @@ export default class TechnicalProposal extends LightningElement {
     }
 
     handleInputChange(event) {
+        this.ignoreParentData = true;
         const fieldName = event.target.name;
         const value = event.target.value;
         this.formData[fieldName] = value;
@@ -123,10 +136,29 @@ notifyParent() {
     }
 }
 
+    @api
+    handleAddPartnerFromParent() {
+        this.handleAddPartner();
+    }
+
     connectedCallback() {
         if (!this.formData || Object.keys(this.formData).length === 0) {
             this.formData = {};
         }
+        // Listen for addpartner event from parent as fallback
+        this.template?.addEventListener?.('addpartner', this.handleAddPartner.bind(this));
+    }
+
+    handleAddPartner() {
+        this.clearData();
+        this.dispatchEvent(
+            new ShowToastEvent({
+                title: 'Info',
+                message: 'Add Partner button clicked (Technical Proposal)',
+                variant: 'info'
+            })
+        );
+        this.dispatchEvent(new CustomEvent('partneradded'));
     }
 
     renderedCallback() {
@@ -134,4 +166,18 @@ notifyParent() {
             this.updateFormFields();
         }
     }
+
+    // Add this method after the existing API methods (around line 60):
+@api
+clearData() {
+    this.ignoreParentData = true;
+    this.formData = {
+        PartnerName__c: '',
+        GeographicAreaPopulationPoverty__c: '',
+        Outline_Existing_Efforts_and_New_Expansi__c: '',
+        Describe_Current_Budget_and_Funding_Sour__c: ''
+    };
+    this.updateFormFields();
+    // Do NOT set ignoreParentData = false here
+}
 }

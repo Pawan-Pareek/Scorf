@@ -8,6 +8,7 @@ export default class OrganizationInformation extends LightningElement {
     @api picklistValues = {};
     @track formData = {};
     @track isInitialized = false;
+    @track showCountyField = false; // Add this line
 
     // Private property to store the received application data
     _applicationData = {};
@@ -75,11 +76,17 @@ export default class OrganizationInformation extends LightningElement {
             // Update reactive property for template
             this.updateReactiveProperties();
         }
+        // Show county field only if CollaboratingWithOtherGPSEntity__c is 'Yes'
+        if (fieldName === 'CollaboratingWithOtherGPSEntity__c') {
+            this.showCountyField = (value === 'Yes');
+        }
     }
 
     // Update reactive properties for template rendering
     updateReactiveProperties() {
         // This can be overridden in each child component for specific logic
+        // Also update showCountyField in case data is set from parent
+        this.showCountyField = (this.formData.CollaboratingWithOtherGPSEntity__c === 'Yes');
     }
 
     // Handle file upload
@@ -281,6 +288,11 @@ notifyParent() {
     // Getter for showing other entity type field
     get showOtherEntityType() {
         return this.formData?.entityType === 'Other';
+    }
+
+    // Getter for showing county field
+    get showCountyFieldGetter() {
+        return this.showCountyField;
     }
 
     // Getter for application data to be used in template

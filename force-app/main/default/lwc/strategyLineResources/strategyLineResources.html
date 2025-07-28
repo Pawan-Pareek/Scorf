@@ -1,0 +1,146 @@
+<template>
+    <!-- Strategy Line Resources Form -->
+    <div class="strategy-line-resources slds-p-around_medium slds-box slds-theme_shade slds-m-top_small">
+        
+        <!-- Form Fields -->
+        <div class="slds-grid slds-wrap slds-gutters">
+            
+            <!-- Budget Amount and Initial/Continuation Row -->
+            <div class="slds-col slds-size_1-of-1">
+                <div class="slds-grid slds-wrap slds-gutters">
+                    
+                    <!-- Budget Amount -->
+                    <div class="slds-col slds-size_1-of-2">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label" for={strategyValue}>
+                                <abbr class="slds-required" title="required">*</abbr>Budget Amount
+                            </label>
+                            <div class="slds-form-element__control">
+                                <lightning-input
+                                    type="number"
+                                    name="BudgetAmountForThePurchase__c"
+                                    data-field="BudgetAmountForThePurchase__c"
+                                    value={budgetAmount}
+                                    placeholder="$10.00"
+                                    step="0.01"
+                                    min="0"
+                                    formatter="currency"
+                                    required
+                                    onchange={handleInputChange}
+                                    class="budget-amount-input">
+                                </lightning-input>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Initial or Continuation -->
+                    <div class="slds-col slds-size_1-of-2">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label" for="initial-continuation">
+                                <abbr class="slds-required" title="required">*</abbr>Initial or Continuation
+                            </label>
+                            <div class="slds-form-element__control">
+                                <lightning-combobox
+                                    name="IsYourStrategyInitialContinuation__c"
+                                    data-field="IsYourStrategyInitialContinuation__c"
+                                    value={initialContinuation}
+                                    placeholder="Continuation"
+                                    options={initialContinuationOptions}
+                                    required
+                                    onchange={handleInputChange}
+                                    class="initial-continuation-combobox">
+                                </lightning-combobox>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <!-- Budget Narrative -->
+            <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="budget-narrative">
+                        <abbr class="slds-required" title="required">*</abbr>Budget Narrative
+                    </label>
+                    <div class="slds-form-element__control">
+                        <lightning-textarea
+                            name="BudgetNarrative__c"
+                            data-field="BudgetNarrative__c"
+                            value={budgetNarrative}
+                            placeholder="qqq"
+                            required
+                            onchange={handleInputChange}
+                            max-length="32768"
+                            class="budget-narrative-textarea">
+                        </lightning-textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Implementation Plan -->
+            <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="implementation-plan">
+                        <abbr class="slds-required" title="required">*</abbr>Implementation Plan
+                    </label>
+                    <div class="slds-form-element__control">
+                        <lightning-textarea
+                            name="ImplementationPlanForTheStrategy__c"
+                            data-field="ImplementationPlanForTheStrategy__c"
+                            value={implementationPlan}
+                            placeholder="test"
+                            required
+                            onchange={handleInputChange}
+                            max-length="32768"
+                            class="implementation-plan-textarea">
+                        </lightning-textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Outcome Measures -->
+            <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="outcome-measures">
+                        <abbr class="slds-required" title="required">*</abbr>Outcome Measures
+                    </label>
+                    <div class="slds-form-element__control">
+                        <lightning-textarea
+                            name="ProvideTheOutcomeMeasures__c"
+                            data-field="ProvideTheOutcomeMeasures__c"
+                            value={outcomeMeasures}
+                            placeholder="test"
+                            required
+                            onchange={handleInputChange}
+                            max-length="32768"
+                            class="outcome-measures-textarea">
+                        </lightning-textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Process Measures -->
+            <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="process-measures">
+                        <abbr class="slds-required" title="required">*</abbr>Process Measures
+                    </label>
+                    <div class="slds-form-element__control">
+                        <lightning-textarea
+                            name="ProvideTheProcessMeasures__c"
+                            data-field="ProvideTheProcessMeasures__c"
+                            value={processMeasures}
+                            placeholder="test"
+                            required
+                            onchange={handleInputChange}
+                            max-length="32768"
+                            class="process-measures-textarea">
+                        </lightning-textarea>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</template>
