@@ -561,5 +561,83 @@ public static Map<String, Object> saveStrategyResources(String resourcesJson) {
     return result;
 }
 
+    /**
+     * Get existing Strategy_Resources__c records for a given Abatement_Strategies__c record.
+     * Returns personnel and budget data organized by strategy name.
+     */
+    @AuraEnabled(cacheable=true)
+    public static Map<String, Object> getStrategyResources(Id abatementId) {
+        System.debug('getStrategyResources START');
+        Map<String, Object> result = new Map<String, Object>();
+        
+        try {
+            if (String.isBlank(abatementId)) {
+                result.put('success', true);
+                result.put('personnelData', new Map<String, List<Object>>());
+                result.put('budgetData', new Map<String, List<Object>>());
+                return result;
+            }
+            
+            // Query for Strategy_Resources__c records
+            List<Strategy_Resources__c> resources = [
+                SELECT Id, RecordType.Name, Strategy_Name__c, 
+                       PersonnelName__c, PersonnelPosition__c, PersonnelKeyStaffAnnualSalary__c, 
+                       PersonnelLevelOfEffort__c, PersonnelTotalChargedToAward__c,
+                       BudgetItem__c, BudgetPurpose__c, BudgetCalculation__c, BudgetTotalChargedToAward__c
+                FROM Strategy_Resources__c 
+                WHERE Abatement_Strategies__c = :abatementId
+                ORDER BY Strategy_Name__c, CreatedDate
+            ];
+            
+            Map<String, List<Object>> personnelData = new Map<String, List<Object>>();
+            Map<String, List<Object>> budgetData = new Map<String, List<Object>>();
+            
+            for (Strategy_Resources__c resource : resources) {
+                Map<String, Object> resourceMap = new Map<String, Object>();
+                resourceMap.put('Id', resource.Id);
+                resourceMap.put('Strategy_Name__c', resource.Strategy_Name__c);
+                
+                if (resource.RecordType.Name == 'Personnel Information') {
+                    // Add personnel fields
+                    resourceMap.put('PersonnelName__c', resource.PersonnelName__c);
+                    resourceMap.put('PersonnelPosition__c', resource.PersonnelPosition__c);
+                    resourceMap.put('PersonnelKeyStaffAnnualSalary__c', resource.PersonnelKeyStaffAnnualSalary__c);
+                    resourceMap.put('PersonnelLevelOfEffort__c', resource.PersonnelLevelOfEffort__c);
+                    resourceMap.put('PersonnelTotalChargedToAward__c', resource.PersonnelTotalChargedToAward__c);
+                    
+                    // Add to personnel data
+                    if (!personnelData.containsKey(resource.Strategy_Name__c)) {
+                        personnelData.put(resource.Strategy_Name__c, new List<Object>());
+                    }
+                    personnelData.get(resource.Strategy_Name__c).add(resourceMap);
+                    
+                } else if (resource.RecordType.Name == 'Budget Information') {
+                    // Add budget fields
+                    resourceMap.put('BudgetItem__c', resource.BudgetItem__c);
+                    resourceMap.put('BudgetPurpose__c', resource.BudgetPurpose__c);
+                    resourceMap.put('BudgetCalculation__c', resource.BudgetCalculation__c);
+                    resourceMap.put('BudgetTotalChargedToAward__c', resource.BudgetTotalChargedToAward__c);
+                    
+                    // Add to budget data
+                    if (!budgetData.containsKey(resource.Strategy_Name__c)) {
+                        budgetData.put(resource.Strategy_Name__c, new List<Object>());
+                    }
+                    budgetData.get(resource.Strategy_Name__c).add(resourceMap);
+                }
+            }
+            
+            result.put('success', true);
+            result.put('personnelData', personnelData);
+            result.put('budgetData', budgetData);
+            
+        } catch (Exception e) {
+            result.put('success', false);
+            result.put('error', e.getMessage());
+            System.debug('Error in getStrategyResources: ' + e.getMessage());
+        }
+        
+        System.debug('getStrategyResources END');
+        return result;
+    }
 
 }

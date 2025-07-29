@@ -11,6 +11,7 @@ import getApplication from '@salesforce/apex/GPSApplicationController.getApplica
 import saveAbatementStrategies from '@salesforce/apex/GPSApplicationController.saveAbatementStrategies';
 import saveStrategyLineItems from '@salesforce/apex/GPSApplicationController.saveStrategyLineItems';
 import saveStrategyResources from '@salesforce/apex/GPSApplicationController.saveStrategyResources';
+import getStrategyResources from '@salesforce/apex/GPSApplicationController.getStrategyResources';
 
 // Static resource for logo
 import gpsLogo from '@salesforce/resourceUrl/ScorfBanner';
@@ -191,6 +192,9 @@ export default class GpsApplication extends LightningElement {
                         Total_Amount_Requested__c: result.Total_Amount_Requested__c || '',
                         ElectronicSignature__c: result.ElectronicSignature__c || ''
                     };
+                    
+                    // Load existing partners data if available
+                    this.loadExistingPartnersData();
                 } else {
                     this.applicationData = {};
                     this.budgetInformationData = {};
@@ -602,16 +606,26 @@ export default class GpsApplication extends LightningElement {
         }
 
         const resourcesToSave = [];
+        const resourceIndexMap = []; // Array to track the order and type of resources being saved
         
         // Personnel Data
         if (partner.abatementExtra.personnelData) {
             Object.keys(partner.abatementExtra.personnelData).forEach(strategyName => {
-                partner.abatementExtra.personnelData[strategyName].forEach(personnelRow => {
-                    resourcesToSave.push({
+                partner.abatementExtra.personnelData[strategyName].forEach((personnelRow, index) => {
+                    const resourceData = {
                         RecordTypeName: 'Personnel Information',
                         Strategy_Name__c: strategyName,
                         Abatement_Strategies__c: abatementId,
                         ...personnelRow
+                    };
+                    resourcesToSave.push(resourceData);
+                    
+                    // Track this resource for ID mapping
+                    resourceIndexMap.push({
+                        type: 'personnel',
+                        strategyName: strategyName,
+                        index: index,
+                        originalId: personnelRow.id || null
                     });
                 });
             });
@@ -620,12 +634,21 @@ export default class GpsApplication extends LightningElement {
         // Budget Data
         if (partner.abatementExtra.budgetData) {
             Object.keys(partner.abatementExtra.budgetData).forEach(strategyName => {
-                partner.abatementExtra.budgetData[strategyName].forEach(budgetRow => {
-                    resourcesToSave.push({
+                partner.abatementExtra.budgetData[strategyName].forEach((budgetRow, index) => {
+                    const resourceData = {
                         RecordTypeName: 'Budget Information',
                         Strategy_Name__c: strategyName,
                         Abatement_Strategies__c: abatementId,
                         ...budgetRow
+                    };
+                    resourcesToSave.push(resourceData);
+                    
+                    // Track this resource for ID mapping
+                    resourceIndexMap.push({
+                        type: 'budget',
+                        strategyName: strategyName,
+                        index: index,
+                        originalId: budgetRow.id || null
                     });
                 });
             });
@@ -640,10 +663,75 @@ export default class GpsApplication extends LightningElement {
                 if (result && result.success) {
                     if (result.insertedIds && result.insertedIds.length > 0) {
                         this.strategyResourcesIds.push(...result.insertedIds);
+                        
+                        // Update the partner's abatementExtraData with the returned IDs
+                        // Map the returned IDs back to the correct records
+                        resourceIndexMap.forEach((resourceInfo, saveIndex) => {
+                            if (saveIndex < result.insertedIds.length) {
+                                const salesforceId = result.insertedIds[saveIndex];
+                                
+                                if (resourceInfo.type === 'personnel') {
+                                    // Update personnel record with Salesforce ID
+                                    if (partner.abatementExtra.personnelData[resourceInfo.strategyName]) {
+                                        const personnelRecord = partner.abatementExtra.personnelData[resourceInfo.strategyName][resourceInfo.index];
+                                        personnelRecord.Id = salesforceId;
+                                        
+                                        // If this was a new record (no original Id), remove the temporary id
+                                        if (personnelRecord.id && personnelRecord.id !== salesforceId) {
+                                            delete personnelRecord.id;
+                                        }
+                                    }
+                                } else if (resourceInfo.type === 'budget') {
+                                    // Update budget record with Salesforce ID
+                                    if (partner.abatementExtra.budgetData[resourceInfo.strategyName]) {
+                                        const budgetRecord = partner.abatementExtra.budgetData[resourceInfo.strategyName][resourceInfo.index];
+                                        budgetRecord.Id = salesforceId;
+                                        
+                                        // If this was a new record (no original Id), remove the temporary id
+                                        if (budgetRecord.id && budgetRecord.id !== salesforceId) {
+                                            delete budgetRecord.id;
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // Update the partners array with the modified data
+                        this.partners[partnerIndex] = {
+                            ...this.partners[partnerIndex],
+                            abatementExtra: {
+                                ...this.partners[partnerIndex].abatementExtra,
+                                personnelData: partner.abatementExtra.personnelData,
+                                budgetData: partner.abatementExtra.budgetData
+                            }
+                        };
                     }
                 } else {
                     throw new Error(`Failed to save strategy resources for partner ${partnerIndex}: ${result.error}`);
                 }
+            });
+    }
+
+    // Load existing Strategy_Resources__c data for a partner
+    loadPartnerStrategyResources(partner, abatementId) {
+        if (!abatementId) {
+            return Promise.resolve();
+        }
+        
+        return getStrategyResources({ abatementId: abatementId })
+            .then(result => {
+                if (result && result.success) {
+                    // Update the partner's abatementExtraData with existing data
+                    if (result.personnelData && Object.keys(result.personnelData).length > 0) {
+                        partner.abatementExtra.personnelData = result.personnelData;
+                    }
+                    if (result.budgetData && Object.keys(result.budgetData).length > 0) {
+                        partner.abatementExtra.budgetData = result.budgetData;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading strategy resources:', error);
             });
     }
 
