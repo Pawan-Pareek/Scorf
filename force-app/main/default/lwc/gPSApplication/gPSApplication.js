@@ -1,8 +1,5 @@
-// Fixed GPS Application Component - Main Issues Addressed:
-// 1. Portal compatibility fixes
-// 2. Component lifecycle improvements
-// 3. Better error handling
-// 4. Data loading fixes
+// GPS Application Component - Cleaned Version
+// Removed unused imports, methods, and properties
 
 import { LightningElement, api, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
@@ -11,7 +8,6 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getPicklistValues from '@salesforce/apex/GPSApplicationController.getPicklistValues';
 import saveApplication from '@salesforce/apex/GPSApplicationController.saveApplication';
 import getApplication from '@salesforce/apex/GPSApplicationController.getApplication';
-//import saveTechnicalProposal from '@salesforce/apex/GPSApplicationController.saveTechnicalProposal';
 import saveAbatementStrategies from '@salesforce/apex/GPSApplicationController.saveAbatementStrategies';
 import saveStrategyLineItems from '@salesforce/apex/GPSApplicationController.saveStrategyLineItems';
 import saveStrategyResources from '@salesforce/apex/GPSApplicationController.saveStrategyResources';
@@ -24,13 +20,12 @@ export default class GpsApplication extends LightningElement {
     logoUrl = gpsLogo;
     
     // Public property to hold the record ID passed from parent
-    // record id of funding application record that is passed to abatement strategy record
     @api recordId;
 
     // Reactive tracked properties
     @track applicationData = {};
     @track picklistValues = {};
-    @track isLoading = true; // Start with loading true
+    @track isLoading = true;
     @track currentStep = 1;
 
     // Step indicator configuration
@@ -50,38 +45,35 @@ export default class GpsApplication extends LightningElement {
     @track hasError = false;
     @track errorMessage = '';
 
-    //Store each and every step data
+    // Store each step data
     @track organizationData = {};
     @track abatementStrategiesData = {};
-    // Add this after line where you have technicalProposalData
-
-    // Store all strategy line resources data
     @track strategyLineResourcesData = {};
-
-    // Add this property to store both personnel and budget data
     @track abatementExtraData = {};
-
     @track budgetInformationData = {};
 
     // Partners array to store all partner data
-@track partners = [];
-@track currentPartnerIndex = 0;
+    @track partners = [];
+    @track currentPartnerIndex = 0;
 
-// Store technical proposal data separately
-@track technicalProposalData = {};
+    // Store technical proposal data separately
+    @track technicalProposalData = {};
 
-// Arrays to store returned IDs from Salesforce
-@track abatementStrategiesIds = [];
-@track strategyLineItemIds = [];
-@track strategyResourcesIds = [];
+    // Arrays to store returned IDs from Salesforce
+    @track abatementStrategiesIds = [];
+    @track strategyLineItemIds = [];
+    @track strategyResourcesIds = [];
 
-// Preview Modal properties
-@track showPreviewModal = false;
-@track previewData = {};
-@track showPartnerViewModal = false;
-@track selectedPartnerData = {};
-@track editingPartnerIndex = -1;
-@track isEditingExistingPartner = false;
+    // Flag to track if current partner data has been added to partners array
+    @track isCurrentPartnerAdded = false;
+
+    // Preview Modal properties
+    @track showPreviewModal = false;
+    @track previewData = {};
+    @track showPartnerViewModal = false;
+    @track selectedPartnerData = {};
+    @track editingPartnerIndex = -1;
+    @track isEditingExistingPartner = false;
 
     // Handler for bubbling event from strategyLineResources
     handleStrategyLineResourcesChange(event) {
@@ -90,65 +82,74 @@ export default class GpsApplication extends LightningElement {
             ...this.strategyLineResourcesData,
             [strategyValue]: data
         };
-        // Optionally, persist to backend here or on save
-        console.log('handleStrategyLineResourcesChange START'+JSON.stringify(this.strategyLineResourcesData));
     }
 
+    // Partner Table Methods
+    handleViewPartner(event) {
+        const partnerIndex = event.target.dataset.index;
+        this.selectedPartnerData = this.partners[partnerIndex];
+        this.showPartnerViewModal = true;
+    }
 
-    //preview modal method before callback method
-// Partner Table Methods
-handleViewPartner(event) {
-    const partnerIndex = event.target.dataset.index;
-    this.selectedPartnerData = this.partners[partnerIndex];
-    this.showPartnerViewModal = true;
-}
+    handleEditPartner(event) {
+        const partnerIndex = parseInt(event.target.dataset.index);
+        this.editingPartnerIndex = partnerIndex;
+        this.isEditingExistingPartner = true;
+        
+        // Reset the flag since we're editing existing partner data
+        this.isCurrentPartnerAdded = false;
+        
+        // Load partner data into form
+        const partnerToEdit = this.partners[partnerIndex];
+        
+        // Set technical proposal data
+        this.technicalProposalData = { ...partnerToEdit.technicalProposal };
+        
+        // Set abatement strategies data
+        this.abatementStrategiesData = { ...partnerToEdit.abatementStrategies };
+        this.strategyLineResourcesData = { ...partnerToEdit.strategyLineResources };
+        this.abatementExtraData = { ...partnerToEdit.abatementExtra };
+        
+        // Navigate to step 2
+        this.currentStep = 2;
+        this.updateStepStyles();
+        
+        this.showToast('Info', `Now editing partner: ${partnerToEdit.technicalProposal.PartnerName__c}`, 'info');
+    }
 
-handleEditPartner(event) {
-    const partnerIndex = parseInt(event.target.dataset.index);
-    this.editingPartnerIndex = partnerIndex;
-    this.isEditingExistingPartner = true;
-    
-    // Load partner data into form
-    const partnerToEdit = this.partners[partnerIndex];
-    
-    // Set technical proposal data
-    this.technicalProposalData = { ...partnerToEdit.technicalProposal };
-    
-    // Set abatement strategies data
-    this.abatementStrategiesData = { ...partnerToEdit.abatementStrategies };
-    this.strategyLineResourcesData = { ...partnerToEdit.strategyLineResources };
-    this.abatementExtraData = { ...partnerToEdit.abatementExtra };
-    
-    // Navigate to step 2
-    this.currentStep = 2;
-    this.updateStepStyles();
-    
-    this.showToast('Info', `Now editing partner: ${partnerToEdit.technicalProposal.PartnerName__c}`, 'info');
-}
+    handleDeletePartner(event) {
+        const partnerIndex = parseInt(event.target.dataset.index);
+        const partnerName = this.partners[partnerIndex].technicalProposal.PartnerName__c;
+        
+        console.log('Deleting partner at index:', partnerIndex);
+        console.log('Partner to delete:', this.partners[partnerIndex]);
+        console.log('Partners array before deletion:', this.partners);
+        
+        // Remove partner from array
+        this.partners.splice(partnerIndex, 1);
+        
+        console.log('Partners array after deletion:', this.partners);
+        console.log('Total partners count after deletion:', this.partners.length);
+        
+        this.showToast('Success', `Partner "${partnerName}" deleted successfully`, 'success');
 
-handleDeletePartner(event) {
-    const partnerIndex = parseInt(event.target.dataset.index);
-    const partnerName = this.partners[partnerIndex].technicalProposal.PartnerName__c;
-    
-    // Remove partner from array
-    this.partners.splice(partnerIndex, 1);
-    
-    this.showToast('Success', `Partner "${partnerName}" deleted successfully`, 'success');
-}
+        // Single log for final partners array state
+        console.log('FINAL PARTNERS ARRAY:', JSON.stringify(this.partners));
+    }
 
-handleClosePartnerModal() {
-    this.showPartnerViewModal = false;
-    this.selectedPartnerData = {};
-}
+    handleClosePartnerModal() {
+        this.showPartnerViewModal = false;
+        this.selectedPartnerData = {};
+    }
 
-// Get partner table data for display
-get partnerTableData() {
-    return this.partners.map((partner, index) => ({
-        id: index,
-        name: partner.technicalProposal.PartnerName__c || `Partner ${index + 1}`,
-        index: index
-    }));
-}
+    // Get partner table data for display
+    get partnerTableData() {
+        return this.partners.map((partner, index) => ({
+            id: index,
+            name: partner.technicalProposal.PartnerName__c || `Partner ${index + 1}`,
+            index: index
+        }));
+    }
 
     // Lifecycle hook - loads data when component is inserted into DOM
     connectedCallback() {
@@ -179,16 +180,29 @@ get partnerTableData() {
     loadApplicationData() {
         getApplication({ recordId: this.recordId })
             .then(result => {
-                this.applicationData = result ? { ...result } : {};
+                if (result) {
+                    this.applicationData = { ...result };
+                    
+                    // Extract budget information data from the loaded application data
+                    this.budgetInformationData = {
+                        Total_Project_Budget__c: result.Total_Project_Budget__c || '',
+                        MinusEstimatedCarryForwardAmount__c: result.MinusEstimatedCarryForwardAmount__c || '',
+                        MinusEstimatedInterestEarned__c: result.MinusEstimatedInterestEarned__c || '',
+                        Total_Amount_Requested__c: result.Total_Amount_Requested__c || '',
+                        ElectronicSignature__c: result.ElectronicSignature__c || ''
+                    };
+                } else {
+                    this.applicationData = {};
+                    this.budgetInformationData = {};
+                }
                 this.applicationLoaded = true;
                 this.checkIfAllDataLoaded();
             })
             .catch(error => {
-                this.applicationLoaded = true; // Mark as loaded even on error
+                this.applicationLoaded = true;
                 this.applicationData = {};
+                this.budgetInformationData = {};
                 this.checkIfAllDataLoaded();
-                
-                // Show error but don't block the form
                 this.showToast('Warning', 'Could not load existing application data. Starting with blank form.', 'warning');
             });
     }
@@ -201,7 +215,7 @@ get partnerTableData() {
             this.picklistLoaded = true;
             this.checkIfAllDataLoaded();
         } else if (error) {
-            this.picklistLoaded = true; // Mark as loaded even on error
+            this.picklistLoaded = true;
             this.picklistValues = {};
             this.checkIfAllDataLoaded();
             this.showToast('Warning', 'Could not load form options. Some fields may not work properly.', 'warning');
@@ -210,87 +224,77 @@ get partnerTableData() {
 
     // Check if all required data is loaded
     checkIfAllDataLoaded() {
-        
         if (this.picklistLoaded && this.applicationLoaded) {
             this.isDataLoaded = true;
             this.isLoading = false;
-            
-            // Ensure child components get the data
             this.notifyChildComponents();
         }
     }
 
     // Notify child components that data is ready
     notifyChildComponents() {
-        // Use setTimeout to ensure DOM is fully rendered
         setTimeout(() => {
             this.passDataToCurrentStep();
         }, 100);
     }
 
-    // Replace the existing handleDataChange method
-// Replace the existing handleDataChange method with this updated version
-handleDataChange(event) {
-    const { stepData, stepType } = event.detail;
-    
-    if (stepType === 'organization') {
-        console.log('Data received from organizationInformation child:', JSON.stringify(stepData));
-        this.organizationData = { ...stepData };
-    }
-    
-    // Add this new condition for technical proposal
-    if (stepType === 'technicalProposal') {
-        console.log('Data received from technicalProposal child:', JSON.stringify(stepData));
-        this.technicalProposalData = { ...stepData };
-    }
-    
-    // Log all abatement-related data received from child
-    try {
-        const { abatementStrategies, personnelData, budgetData, stepType } = event.detail;
-        console.log('Abatement Data Received - abatementStrategies:', JSON.stringify(abatementStrategies));
-        console.log('Abatement Data Received - personnelData:', JSON.stringify(personnelData));
-        console.log('Abatement Data Received - budgetData:', JSON.stringify(budgetData));
-        console.log('Abatement Data Received - stepType:', stepType);
+    // Handle data change from child components
+    handleDataChange(event) {
+        const { stepData, stepType } = event.detail;
         
-        if (stepType === 'abatementStrategies') {
-            if (abatementStrategies && abatementStrategies.strategyLineResources) {
-                console.log('Abatement Data Received - strategyLineResources:', JSON.stringify(abatementStrategies.strategyLineResources));
-            } else {
-                console.log('Abatement Data Received - strategyLineResources: EMPTY or UNDEFINED');
+        if (stepType === 'organization') {
+            this.organizationData = { ...stepData };
+        }
+        
+        if (stepType === 'technicalProposal') {
+            this.technicalProposalData = { ...stepData };
+            // Reset flag when user starts entering new technical proposal data
+            if (this.hasCurrentFormData()) {
+                this.isCurrentPartnerAdded = false;
             }
-            this.abatementStrategiesData = { ...abatementStrategies };
-            this.abatementExtraData = {
-                personnelData: personnelData || {},
-                budgetData: budgetData || {}
-            };
+        }
+        
+        try {
+            const { abatementStrategies, personnelData, budgetData } = event.detail;
             
-            if (abatementStrategies && abatementStrategies.strategyLineResources) {
-                this.strategyLineResourcesData = { ...abatementStrategies.strategyLineResources };
-                console.log('strategyLineResourcesData assigned in parent:', JSON.stringify(this.strategyLineResourcesData));
+            if (stepType === 'abatementStrategies') {
+                this.abatementStrategiesData = { ...abatementStrategies };
+                this.abatementExtraData = {
+                    personnelData: personnelData || {},
+                    budgetData: budgetData || {}
+                };
+                
+                if (abatementStrategies && abatementStrategies.strategyLineResources) {
+                    this.strategyLineResourcesData = { ...abatementStrategies.strategyLineResources };
+                }
+                
+                // Reset flag when user starts entering new abatement strategies data
+                if (this.hasCurrentFormData()) {
+                    this.isCurrentPartnerAdded = false;
+                }
             }
 
             if (stepType === 'budgetInformation') {
-                console.log('Data received from budgetInformation child:', JSON.stringify(stepData));
                 this.budgetInformationData = { ...stepData };
             }
-            
-            console.log('Updated abatementStrategiesData:', JSON.stringify(this.abatementStrategiesData));
-            console.log('Updated abatementExtraData:', JSON.stringify(this.abatementExtraData));
-            console.log('Updated strategyLineResourcesData:', JSON.stringify(this.strategyLineResourcesData));
+        } catch (error) {
+            this.showToast('Error', 'Failed to update form data', 'error');
         }
-    } catch (error) {
-        this.showToast('Error', 'Failed to update form data', 'error');
     }
-}
 
-    // Auto-save functionality to persist data
-    autoSava() {
-        if (this.recordId) {
-            clearTimeout(this.autoSaveTimeout);
-            this.autoSaveTimeout = setTimeout(() => {
-                this.saveApplicationData(false);
-            }, 2000); // Increased timeout for better performance
-        }
+    // Check if current form has any data
+    hasCurrentFormData() {
+        const hasTechnicalData = this.technicalProposalData && 
+            (this.technicalProposalData.PartnerName__c || 
+             this.technicalProposalData.GeographicAreaPopulationPoverty__c || 
+             this.technicalProposalData.Outline_Existing_Efforts_and_New_Expansi__c || 
+             this.technicalProposalData.Describe_Current_Budget_and_Funding_Sour__c);
+             
+        const hasAbatementData = this.abatementStrategiesData && 
+            (this.abatementStrategiesData.abatementStrategies || 
+             this.abatementStrategiesData.coreStrategies);
+             
+        return hasTechnicalData || hasAbatementData;
     }
 
     // Navigate to next step
@@ -305,7 +309,10 @@ handleDataChange(event) {
                     }
                     
                     // Check if there's current partner data that needs to be added
-                    this.addCurrentPartnerIfExists();
+                    // Only add if not already added
+                    if (!this.isCurrentPartnerAdded) {
+                        this.addCurrentPartnerIfExists();
+                    }
                 }
                 if (this.currentStep < 4) {
                     this.saveCurrentStepData();
@@ -323,7 +330,7 @@ handleDataChange(event) {
     handlePrevious() {
         try {
             if (this.currentStep === 4) {
-                // Reset expanded state in abatement-strategies before leaving step 3 (when going back from 4 to 3)
+                // Reset expanded state in abatement-strategies before leaving step 3
                 const abatementCmp = this.template.querySelector('c-abatement-strategies');
                 if (abatementCmp && typeof abatementCmp.resetExpandedStrategies === 'function') {
                     abatementCmp.resetExpandedStrategies();
@@ -346,10 +353,19 @@ handleDataChange(event) {
             const currentStepComponent = this.template.querySelector(`[data-step="${this.currentStep}"]`);
             if (currentStepComponent && typeof currentStepComponent.getData === 'function') {
                 const stepData = currentStepComponent.getData();
-                this.applicationData = {
-                    ...this.applicationData,
-                    ...stepData
-                };
+                if (this.currentStep === 4) {
+                    // For step 4, save to budgetInformationData
+                    this.budgetInformationData = {
+                        ...this.budgetInformationData,
+                        ...stepData
+                    };
+                } else {
+                    // For other steps, save to applicationData
+                    this.applicationData = {
+                        ...this.applicationData,
+                        ...stepData
+                    };
+                }
             }
         } catch (error) {
             console.error('Error saving current step data:', error);
@@ -367,11 +383,11 @@ handleDataChange(event) {
                         ...this.abatementStrategiesData,
                         ...this.abatementExtraData
                     };
-                    // Add console logs for debugging
-                    console.log('Passing strategyLineResourcesData to child:', JSON.stringify(this.strategyLineResourcesData));
-                    console.log('Passing abatementStrategiesData to child:', JSON.stringify(this.abatementStrategiesData));
-                    console.log('Passing abatementExtraData to child:', JSON.stringify(this.abatementExtraData));
                     currentStepComponent.setData(dataToPass);
+                } else if (this.currentStep === 4) {
+                    // For step 4, use step4Data which includes both applicationData and budgetInformationData
+                    console.log('Setting data for step 4 with step4Data:', this.step4Data);
+                    currentStepComponent.setData(this.step4Data);
                 } else {
                     currentStepComponent.setData(this.applicationData);
                 }
@@ -405,363 +421,208 @@ handleDataChange(event) {
     }
 
     // Save application
-handleSave() {
-    try {
-        if (!this.validateAllSteps()) {
-            return;
-        }
-        
-        // If we're in step 3, add current partner data before saving
-        if (this.currentStep === 3) {
-            this.addCurrentPartnerIfExists();
-        }
-        
-        this.saveCurrentStepData();
-        this.saveAllApplicationData();
-    } catch (error) {
-        this.showToast('Error', 'Failed to save application', 'error');
-    }
-}
-
-// Add this new method
-saveAllApplicationData() {
-    // Before saving, get the latest data from the child
-    const orgComponent = this.template.querySelector('c-organization-information[data-step="1"]');
-    if (orgComponent && typeof orgComponent.getData === 'function') {
-        this.organizationData = { ...orgComponent.getData() };
-    }
-
-    // Add this after getting organization data
-const partnersData = this.getAllPartnersData();
-console.log('All partners data:', JSON.stringify(partnersData));
-    this.isLoading = true;
-    
-    // Save organization information first
-    this.saveOrganizationData()
-        .then(() => {
-            // Then save abatement strategies
-            return this.saveAllPartnersData();
-        })
-        .then(() => {
-            console.log('Final IDs stored:');
-            console.log('abatementStrategiesIds:', this.abatementStrategiesIds);
-            console.log('strategyLineItemIds:', this.strategyLineItemIds);
-            console.log('strategyResourcesIds:', this.strategyResourcesIds);
-            this.showToast('Success', 'Application saved successfully', 'success');
-            this.isLoading = false;
-        })
-        .catch(error => {
-            console.error('Error in saveAllApplicationData:', error);
+    handleSave() {
+        try {
+            if (!this.validateAllSteps()) {
+                return;
+            }
+            
+            // If we're in step 3, add current partner data before saving
+            // Only add if not already added
+            if (this.currentStep === 3 && !this.isCurrentPartnerAdded) {
+                this.addCurrentPartnerIfExists();
+            }
+            
+            this.saveCurrentStepData();
+            this.saveAllApplicationData();
+        } catch (error) {
             this.showToast('Error', 'Failed to save application', 'error');
-            this.isLoading = false;
-        });
-}
-
-saveAllPartnersData() {
-    // Get all partners data including current partner if it exists
-    const allPartnersData = this.getAllPartnersData();
-    
-    if (!allPartnersData.partners || allPartnersData.partners.length === 0) {
-        return Promise.resolve();
+        }
     }
 
-    // Process partners sequentially
-    let promise = Promise.resolve();
-    
-    allPartnersData.partners.forEach((partner, index) => {
-        promise = promise.then(() => {
-            return this.savePartnerData(partner, index);
+    // Save all application data
+    saveAllApplicationData() {
+        // Before saving, get the latest data from the child
+        const orgComponent = this.template.querySelector('c-organization-information[data-step="1"]');
+        if (orgComponent && typeof orgComponent.getData === 'function') {
+            this.organizationData = { ...orgComponent.getData() };
+        }
+
+        const partnersData = this.getAllPartnersData();
+        this.isLoading = true;
+        
+        // Save organization information first
+        this.saveOrganizationData()
+            .then(() => {
+                // Then save abatement strategies
+                return this.saveAllPartnersData();
+            })
+            .then(() => {
+                this.showToast('Success', 'Application saved successfully', 'success');
+                this.isLoading = false;
+            })
+            .catch(error => {
+                console.error('Error in saveAllApplicationData:', error);
+                this.showToast('Error', 'Failed to save application', 'error');
+                this.isLoading = false;
+            });
+    }
+
+    saveAllPartnersData() {
+        // Get all partners data including current partner if it exists
+        const allPartnersData = this.getAllPartnersData();
+        
+        if (!allPartnersData.partners || allPartnersData.partners.length === 0) {
+            return Promise.resolve();
+        }
+
+        // Process partners sequentially
+        let promise = Promise.resolve();
+        
+        allPartnersData.partners.forEach((partner, index) => {
+            promise = promise.then(() => {
+                return this.savePartnerData(partner, index);
+            });
         });
-    });
-    
-    return promise;
-}
+        
+        return promise;
+    }
 
-savePartnerData(partner, partnerIndex) {
-    console.log(`Saving partner ${partnerIndex}:`, JSON.stringify(partner));
-    
-    // Prepare Abatement_Strategies__c data
-    const abatementData = {
-        Funding_Application__c: this.recordId,
-        ...partner.technicalProposal,
-        CoreStrategies__c: partner.abatementStrategies.CoreStrategies__c,
-        Core_Abatement_Strategies__c: partner.abatementStrategies.Core_Abatement_Strategies__c
-    };
+    savePartnerData(partner, partnerIndex) {
+        // Prepare Abatement_Strategies__c data
+        const abatementData = {
+            Funding_Application__c: this.recordId,
+            ...partner.technicalProposal,
+            CoreStrategies__c: partner.abatementStrategies.CoreStrategies__c,
+            Core_Abatement_Strategies__c: partner.abatementStrategies.Core_Abatement_Strategies__c
+        };
+        
+        return saveAbatementStrategies({ abatement: JSON.stringify(abatementData) })
+            .then(result => {
+                if (result && result.success && result.record && result.record.Id) {
+                    const abatementId = result.record.Id;
+                    this.abatementStrategiesIds.push(abatementId);
+                    
+                    // Save Strategy Line Items
+                    const lineItemsPromise = this.savePartnerStrategyLineItems(partner, abatementId, partnerIndex);
+                    
+                    // Save Strategy Resources 
+                    const resourcesPromise = this.savePartnerStrategyResources(partner, abatementId, partnerIndex);
+                    
+                    return Promise.all([lineItemsPromise, resourcesPromise]);
+                } else {
+                    throw new Error(`Failed to save abatement strategy for partner ${partnerIndex}`);
+                }
+            });
+    }
 
-    console.log('Calling saveAbatementStrategies for partner', partnerIndex, ':', JSON.stringify(abatementData));
-    
-    return saveAbatementStrategies({ abatement: JSON.stringify(abatementData) })
+    savePartnerStrategyLineItems(partner, abatementId, partnerIndex) {
+        if (!partner.strategyLineResources || Object.keys(partner.strategyLineResources).length === 0) {
+            return Promise.resolve();
+        }
+
+        // Transform data for Strategy_Line_Items__c
+        const transformedLineItems = {};
+        Object.keys(partner.strategyLineResources).forEach(key => {
+            const item = { ...partner.strategyLineResources[key] };
+            transformedLineItems[key] = item;
+        });
+        
+        return saveStrategyLineItems({
+            abatementId: abatementId,
+            lineItemsJson: JSON.stringify(transformedLineItems)
+        })
         .then(result => {
-            if (result && result.success && result.record && result.record.Id) {
-                const abatementId = result.record.Id;
-                this.abatementStrategiesIds.push(abatementId);
-                
-                console.log(`Abatement strategy saved for partner ${partnerIndex}, ID: ${abatementId}`);
-                
-                // Save Strategy Line Items
-                const lineItemsPromise = this.savePartnerStrategyLineItems(partner, abatementId, partnerIndex);
-                
-                // Save Strategy Resources 
-                const resourcesPromise = this.savePartnerStrategyResources(partner, abatementId, partnerIndex);
-                
-                return Promise.all([lineItemsPromise, resourcesPromise]);
+            if (result && result.success) {
+                if (result.insertedIds && result.insertedIds.length > 0) {
+                    this.strategyLineItemIds.push(...result.insertedIds);
+                }
             } else {
-                throw new Error(`Failed to save abatement strategy for partner ${partnerIndex}`);
+                throw new Error(`Failed to save strategy line items for partner ${partnerIndex}`);
             }
         });
-}
-
-savePartnerStrategyLineItems(partner, abatementId, partnerIndex) {
-    if (!partner.strategyLineResources || Object.keys(partner.strategyLineResources).length === 0) {
-        return Promise.resolve();
     }
 
-    // Transform data for Strategy_Line_Items__c - map Strategy_Value__c to Name__c
-    const transformedLineItems = {};
-    Object.keys(partner.strategyLineResources).forEach(key => {
-        const item = { ...partner.strategyLineResources[key] };
-        // Remove Strategy_Value__c and use it for Name__c in Apex
-        transformedLineItems[key] = item;
-    });
-
-    console.log(`Saving strategy line items for partner ${partnerIndex}:`, JSON.stringify(transformedLineItems));
-    
-    return saveStrategyLineItems({
-        abatementId: abatementId,
-        lineItemsJson: JSON.stringify(transformedLineItems)
-    })
-    .then(result => {
-        if (result && result.success) {
-            console.log(`Strategy line items saved for partner ${partnerIndex}`);
-            if (result.insertedIds && result.insertedIds.length > 0) {
-                this.strategyLineItemIds.push(...result.insertedIds);
-            }
-        } else {
-            throw new Error(`Failed to save strategy line items for partner ${partnerIndex}`);
+    savePartnerStrategyResources(partner, abatementId, partnerIndex) {
+        if (!partner.abatementExtra || 
+            (!partner.abatementExtra.personnelData || Object.keys(partner.abatementExtra.personnelData).length === 0) &&
+            (!partner.abatementExtra.budgetData || Object.keys(partner.abatementExtra.budgetData).length === 0)) {
+            return Promise.resolve();
         }
-    });
-}
 
-savePartnerStrategyResources(partner, abatementId, partnerIndex) {
-    if (!partner.abatementExtra || 
-        (!partner.abatementExtra.personnelData || Object.keys(partner.abatementExtra.personnelData).length === 0) &&
-        (!partner.abatementExtra.budgetData || Object.keys(partner.abatementExtra.budgetData).length === 0)) {
-        return Promise.resolve();
-    }
-
-    const resourcesToSave = [];
-    
-    // Personnel Data
-    if (partner.abatementExtra.personnelData) {
-        Object.keys(partner.abatementExtra.personnelData).forEach(strategyName => {
-            partner.abatementExtra.personnelData[strategyName].forEach(personnelRow => {
-                resourcesToSave.push({
-                    RecordTypeName: 'Personnel Information',
-                    Strategy_Name__c: strategyName,
-                    Abatement_Strategies__c: abatementId,
-                    ...personnelRow
-                });
-            });
-        });
-    }
-    
-    // Budget Data
-    if (partner.abatementExtra.budgetData) {
-        Object.keys(partner.abatementExtra.budgetData).forEach(strategyName => {
-            partner.abatementExtra.budgetData[strategyName].forEach(budgetRow => {
-                resourcesToSave.push({
-                    RecordTypeName: 'Budget Information',
-                    Strategy_Name__c: strategyName,
-                    Abatement_Strategies__c: abatementId,
-                    ...budgetRow
-                });
-            });
-        });
-    }
-
-    if (resourcesToSave.length === 0) {
-        return Promise.resolve();
-    }
-
-    console.log(`Saving strategy resources for partner ${partnerIndex}:`, JSON.stringify(resourcesToSave));
-    
-    return saveStrategyResources({ resourcesJson: JSON.stringify(resourcesToSave) })
-        // Replace the success handling part in savePartnerStrategyResources
-.then(result => {
-    if (result && result.success) {
-        console.log(`Strategy resources saved for partner ${partnerIndex}`);
-        if (result.insertedIds && result.insertedIds.length > 0) {
-            this.strategyResourcesIds.push(...result.insertedIds);
-        }
-    } else {
-        throw new Error(`Failed to save strategy resources for partner ${partnerIndex}: ${result.error}`);
-    }
-});
-}
-
-// Add these new methods
-saveOrganizationData() {
-    console.log('saveOrganizationData START');
-    
-    // Get the latest budget data from step 4 component
-    const budgetComponent = this.template.querySelector('c-budget-information[data-step="4"]');
-    if (budgetComponent && typeof budgetComponent.getData === 'function') {
-        this.budgetInformationData = { ...budgetComponent.getData() };
-    }
-    
-    // Merge organization data with budget data for the same Funding_Application__c record
-    const combinedApplicationData = {
-        ...this.organizationData,
-        ...this.budgetInformationData,
-        Id: this.recordId // Include record ID if updating
-    };
-    
-    console.log('Combined Funding Application data to be sent to Apex:', JSON.stringify(combinedApplicationData));
-    
-    if (Object.keys(combinedApplicationData).length === 0) {
-        return Promise.resolve();
-    }
-    
-    return saveApplication({ application: combinedApplicationData })
-        .then(result => {
-            this.recordId = result.Id; // Update recordId for subsequent saves
-            console.log('Funding Application saved with ID:', result.Id);
-        })
-        .catch(error => {
-            throw error;
-        });
-}
-
-
-saveAbatementStrategiesData() {
-    console.log('saveAbatementStrategiesData START');
-    if (Object.keys(this.abatementStrategiesData).length === 0) {
-        console.log('abatementStrategiesData is empty, skipping saveAbatementStrategies Apex call.');
-        return Promise.resolve();
-    }
-
-    // Only include allowed fields
-    const allowedFields = [
-        'Id',
-        'Funding_Application__c',
-        'PartnerName__c',
-        'GeographicAreaPopulationPoverty__c',
-        'Outline_Existing_Efforts_and_New_Expansi__c',
-        'Describe_Current_Budget_and_Funding_Sour__c',
-        'CoreStrategies__c',
-        'Core_Abatement_Strategies__c'
-    ];
-    const filteredAbatementData = {};
-    allowedFields.forEach(field => {
-        if (this.abatementStrategiesData[field] !== undefined) {
-            filteredAbatementData[field] = this.abatementStrategiesData[field];
-        }
-    });
-    // Ensure Funding_Application__c is set for lookup
-    if (!filteredAbatementData['Funding_Application__c'] && this.recordId) {
-        filteredAbatementData['Funding_Application__c'] = this.recordId;
-    }
-
-    // Create proper SObject structure for Abatement_Strategies__c
-    const abatementData = filteredAbatementData;
-
-    console.log('Calling Apex saveAbatementStrategies with properly structured data:', JSON.stringify(abatementData));
-    return saveAbatementStrategies({ abatement: JSON.stringify(abatementData) })
-        .then(result => {
-            console.log('Abatement strategies saved successfully. Result:', result);
-            if (result && result.success && result.record && result.record.Id) {
-                const abatementId = result.record.Id;
-                // 1. Save strategy line items (existing logic)
-                const allowedLineItemFields = [
-                    'BudgetAmountForThePurchase__c',
-                    'IsYourStrategyInitialContinuation__c',
-                    'BudgetNarrative__c',
-                    'ImplementationPlanForTheStrategy__c',
-                    'ProvideTheOutcomeMeasures__c',
-                    'ProvideTheProcessMeasures__c',
-                    'Strategy_Value__c'
-                ];
-                const filteredStrategyLineResourcesData = {};
-                Object.keys(this.strategyLineResourcesData).forEach(key => {
-                    const item = this.strategyLineResourcesData[key];
-                    const filteredItem = {};
-                    allowedLineItemFields.forEach(field => {
-                        if (item[field] !== undefined) {
-                            filteredItem[field] = item[field];
-                        }
+        const resourcesToSave = [];
+        
+        // Personnel Data
+        if (partner.abatementExtra.personnelData) {
+            Object.keys(partner.abatementExtra.personnelData).forEach(strategyName => {
+                partner.abatementExtra.personnelData[strategyName].forEach(personnelRow => {
+                    resourcesToSave.push({
+                        RecordTypeName: 'Personnel Information',
+                        Strategy_Name__c: strategyName,
+                        Abatement_Strategies__c: abatementId,
+                        ...personnelRow
                     });
-                    // Add abatementId to each item
-                    filteredItem['abatementId'] = abatementId;
-                    filteredStrategyLineResourcesData[key] = filteredItem;
                 });
-                // Save strategy line items
-                console.log('Calling Apex saveStrategyLineItems with:', JSON.stringify( {
-                    abatementId: abatementId,
-                    lineItemsJson: JSON.stringify(filteredStrategyLineResourcesData)
-                }));
-                return saveStrategyLineItems({
-                    abatementId: abatementId,
-                    lineItemsJson: JSON.stringify(filteredStrategyLineResourcesData)
-                }).then(lineItemResult => {
-                    if (lineItemResult && lineItemResult.success) {
-                        this.showToast('Success', 'Strategy Line Items saved successfully', 'success');
-                    } else {
-                        this.showToast('Error', 'Failed to save Strategy Line Items: ' + (lineItemResult && lineItemResult.error ? lineItemResult.error : ''), 'error');
-                    }
-                    // 2. Save strategy resources (new logic)
-                    const resourcesToSave = [];
-                    // Personnel
-                    if (this.abatementExtraData && this.abatementExtraData.personnelData) {
-                        Object.keys(this.abatementExtraData.personnelData).forEach(subStrategy => {
-                            this.abatementExtraData.personnelData[subStrategy].forEach(personnelRow => {
-                                resourcesToSave.push({
-                                    RecordTypeName: 'Personnel Information',
-                                    Strategy_Name__c: subStrategy,
-                                    Abatement_Strategies__c: abatementId,
-                                    ...personnelRow
-                                });
-                            });
-                        });
-                    }
-                    // Budget
-                    if (this.abatementExtraData && this.abatementExtraData.budgetData) {
-                        Object.keys(this.abatementExtraData.budgetData).forEach(subStrategy => {
-                            this.abatementExtraData.budgetData[subStrategy].forEach(budgetRow => {
-                                resourcesToSave.push({
-                                    RecordTypeName: 'Budget Information',
-                                    Strategy_Name__c: subStrategy,
-                                    Abatement_Strategies__c: abatementId,
-                                    ...budgetRow
-                                });
-                            });
-                        });
-                    }
-                    if (resourcesToSave.length > 0) {
-                        return saveStrategyResources({ resourcesJson: JSON.stringify(resourcesToSave) })
-                            .then(resourceResult => {
-                                if (resourceResult && resourceResult.success) {
-                                    this.showToast('Success', 'Strategy Resources saved successfully', 'success');
-                                } else {
-                                    this.showToast('Error', 'Failed to save Strategy Resources: ' + (resourceResult && resourceResult.error ? resourceResult.error : ''), 'error');
-                                }
-                                return result;
-                            })
-                            .catch(error => {
-                                this.showToast('Error', 'Error saving Strategy Resources: ' + (error && error.body && error.body.message ? error.body.message : error), 'error');
-                                throw error;
-                            });
-                    }
-                    return result;
+            });
+        }
+        
+        // Budget Data
+        if (partner.abatementExtra.budgetData) {
+            Object.keys(partner.abatementExtra.budgetData).forEach(strategyName => {
+                partner.abatementExtra.budgetData[strategyName].forEach(budgetRow => {
+                    resourcesToSave.push({
+                        RecordTypeName: 'Budget Information',
+                        Strategy_Name__c: strategyName,
+                        Abatement_Strategies__c: abatementId,
+                        ...budgetRow
+                    });
                 });
-            }
-            return result;
-        })
-        .catch(error => {
-            this.showToast('Error', 'Failed to save abatement strategies: ' + (error && error.body && error.body.message ? error.body.message : error), 'error');
-            throw error;
-        });
-}
+            });
+        }
 
+        if (resourcesToSave.length === 0) {
+            return Promise.resolve();
+        }
+        
+        return saveStrategyResources({ resourcesJson: JSON.stringify(resourcesToSave) })
+            .then(result => {
+                if (result && result.success) {
+                    if (result.insertedIds && result.insertedIds.length > 0) {
+                        this.strategyResourcesIds.push(...result.insertedIds);
+                    }
+                } else {
+                    throw new Error(`Failed to save strategy resources for partner ${partnerIndex}: ${result.error}`);
+                }
+            });
+    }
+
+    // Save organization data
+    saveOrganizationData() {
+        // Get the latest budget data from step 4 component
+        const budgetComponent = this.template.querySelector('c-budget-information[data-step="4"]');
+        if (budgetComponent && typeof budgetComponent.getData === 'function') {
+            this.budgetInformationData = { ...budgetComponent.getData() };
+        }
+        
+        // Merge organization data with budget data for the same Funding_Application__c record
+        const combinedApplicationData = {
+            ...this.organizationData,
+            ...this.budgetInformationData,
+            Id: this.recordId // Include record ID if updating
+        };
+        
+        if (Object.keys(combinedApplicationData).length === 0) {
+            return Promise.resolve();
+        }
+        
+        return saveApplication({ application: combinedApplicationData })
+            .then(result => {
+                this.recordId = result.Id; // Update recordId for subsequent saves
+            })
+            .catch(error => {
+                throw error;
+            });
+    }
 
     // Validate all steps
     validateAllSteps() {
@@ -772,30 +633,6 @@ saveAbatementStrategiesData() {
             console.error('Error validating all steps:', error);
             return false;
         }
-    }
-
-    // Save application data
-    saveApplicationData(showToast = true) {
-        console.log('saveApplicationData START');
-        this.isLoading = true;
-        
-        saveApplication({ application: this.applicationData })
-            .then(result => {
-                // this.applicationData = { ...result };
-                this.recordId = result.Id;
-                
-                if (showToast) {
-                    this.showToast('Success', 'Application saved successfully', 'success');
-                }
-                this.isLoading = false;
-            })
-            .catch(error => {
-                if (showToast) {
-                    const errorMessage = error.body ? error.body.message : 'Unknown error occurred';
-                    this.showToast('Error', `Failed to save application: ${errorMessage}`, 'error');
-                }
-                this.isLoading = false;
-            });
     }
 
     // Handle errors
@@ -833,41 +670,43 @@ saveAbatementStrategiesData() {
     // Get data for each step
     get step1Data() { return { ...this.applicationData }; }
 
-    // Replace the existing step2Data getter with this
-get step2Data() { 
-    return { ...this.applicationData, ...this.technicalProposalData }; 
-}
+    get step2Data() { 
+        return { ...this.applicationData, ...this.technicalProposalData }; 
+    }
 
-get step3Data() { 
-    // Only return clean abatement data, don't include any leftover abatement fields from applicationData
-    const cleanApplicationData = { ...this.applicationData };
-    
-    // Remove any abatement-specific fields that might be lingering in applicationData
-    delete cleanApplicationData.coreStrategies;
-    delete cleanApplicationData.abatementStrategies;
-    delete cleanApplicationData.CoreStrategies__c;
-    delete cleanApplicationData.Core_Abatement_Strategies__c;
-    delete cleanApplicationData.strategyLineResources;
-    delete cleanApplicationData.personnelData;
-    delete cleanApplicationData.budgetData;
-    
-    const data = { 
-        ...cleanApplicationData, // Only organization data
-        ...this.abatementStrategiesData, 
-        ...this.abatementExtraData 
-    }; 
-    return data; 
-}
+    get step3Data() { 
+        // Only return clean abatement data
+        const cleanApplicationData = { ...this.applicationData };
+        
+        // Remove any abatement-specific fields that might be lingering in applicationData
+        delete cleanApplicationData.coreStrategies;
+        delete cleanApplicationData.abatementStrategies;
+        delete cleanApplicationData.CoreStrategies__c;
+        delete cleanApplicationData.Core_Abatement_Strategies__c;
+        delete cleanApplicationData.strategyLineResources;
+        delete cleanApplicationData.personnelData;
+        delete cleanApplicationData.budgetData;
+        
+        const data = { 
+            ...cleanApplicationData, // Only organization data
+            ...this.abatementStrategiesData, 
+            ...this.abatementExtraData 
+        }; 
+        return data; 
+    }
 
-get step4Data() { 
-    return { ...this.applicationData, ...this.budgetInformationData }; 
-}
+    get step4Data() { 
+        console.log('step4Data getter called with applicationData:', this.applicationData, 'and budgetInformationData:', this.budgetInformationData);
+        return { ...this.applicationData, ...this.budgetInformationData }; 
+    }
 
     // Show loading state properly
     get showSpinner() { return this.isLoading && !this.hasError; }
 
     // Show content when data is loaded and no errors
     get showContent() { return this.isDataLoaded && !this.hasError; }
+
+    get showSaveAndPreviewButton() { return this.currentStep === 4; }
 
     // Rendered callback
     renderedCallback() {
@@ -883,131 +722,38 @@ get step4Data() {
         this.initializeComponent();
     }
 
-    // Replace the existing     Partner method (around line 350) with this:
-handleAddPartner() {
-    try {
-        this.saveCurrentStepData();
-        
-        // Get the latest data from Technical Proposal component
-        const techComponent = this.template.querySelector('c-technical-proposal[data-step="2"]');
-        if (techComponent && typeof techComponent.getData === 'function') {
-            this.technicalProposalData = { ...techComponent.getData() };
-        }
-        
-        // Get the latest data from Abatement Strategies component
-        const abatementComponent = this.template.querySelector('c-abatement-strategies[data-step="3"]');
-        if (abatementComponent && typeof abatementComponent.getData === 'function') {
-            const abatementData = abatementComponent.getData();
-            this.abatementStrategiesData = { ...abatementData };
-        }
-
-        // Create partner data
-        const selectedAbatementStrategies = this.abatementStrategiesData.abatementStrategies || [];
-        const selectedCoreStrategies = this.abatementStrategiesData.coreStrategies || [];
-        
-        const filteredStrategyLineResources = {};
-        const filteredPersonnelData = {};
-        const filteredBudgetData = {};
-        
-        selectedAbatementStrategies.forEach(strategyKey => {
-            if (this.strategyLineResourcesData[strategyKey]) {
-                filteredStrategyLineResources[strategyKey] = this.strategyLineResourcesData[strategyKey];
-            }
-            if (this.abatementExtraData.personnelData && this.abatementExtraData.personnelData[strategyKey]) {
-                filteredPersonnelData[strategyKey] = this.abatementExtraData.personnelData[strategyKey];
-            }
-            if (this.abatementExtraData.budgetData && this.abatementExtraData.budgetData[strategyKey]) {
-                filteredBudgetData[strategyKey] = this.abatementExtraData.budgetData[strategyKey];
-            }
-        });
-
-        const partnerData = {
-            partnerIndex: this.isEditingExistingPartner ? this.editingPartnerIndex : this.currentPartnerIndex,
-            technicalProposal: { ...this.technicalProposalData },
-            abatementStrategies: {
-                coreStrategies: selectedCoreStrategies,
-                abatementStrategies: selectedAbatementStrategies,
-                CoreStrategies__c: selectedCoreStrategies.join(';'),
-                Core_Abatement_Strategies__c: selectedAbatementStrategies.join(';')
-            },
-            strategyLineResources: filteredStrategyLineResources,
-            abatementExtra: {
-                personnelData: filteredPersonnelData,
-                budgetData: filteredBudgetData
-            }
-        };
-        
-        const partnerName = this.technicalProposalData.PartnerName__c;
-        
-        if (this.isEditingExistingPartner) {
-            // Update existing partner
-            this.partners[this.editingPartnerIndex] = partnerData;
-            this.showToast('Success', `Partner "${partnerName}" updated successfully`, 'success');
-            this.isEditingExistingPartner = false;
-            this.editingPartnerIndex = -1;
-        } else {
-            // Add new partner
-            const existingPartnerIndex = this.partners.findIndex(partner => 
-                partner.technicalProposal.PartnerName__c === partnerName
-            );
-            
-            if (existingPartnerIndex === -1) {
-                this.partners.push(partnerData);
-                this.currentPartnerIndex++;
-                this.showToast('Success', `Partner "${partnerName}" added successfully`, 'success');
-            } else {
-                this.showToast('Error', `Partner "${partnerName}" already exists. Please use a different partner name.`, 'error');
+    // Handle Add Partner
+    handleAddPartner() {
+        try {
+            // Check if current partner data is already added
+            if (this.isCurrentPartnerAdded) {
+                // Navigate to step 2 and clear fields for new partner data
+                this.currentStep = 2;
+                this.updateStepStyles();
+                this.resetPartnerData();
+                this.showToast('Info', 'Form cleared for new partner data entry.', 'info');
                 return;
             }
-        }
-        
-        // Reset data for new partner
-        this.resetPartnerData();
-        
-        // Navigate to Technical Proposal step (Step 2)
-        this.currentStep = 2;
-        this.updateStepStyles();
-        
-    } catch (error) {
-        console.error('Error adding/updating partner:', error);
-        this.showToast('Error', 'Failed to add/update partner', 'error');
-    }
-}
 
-// Add current partner data if it exists (called when moving from step 3 to step 4)
-addCurrentPartnerIfExists() {
-    try {
-        // Get the latest data from Technical Proposal component
-        const techComponent = this.template.querySelector('c-technical-proposal[data-step="2"]');
-        if (techComponent && typeof techComponent.getData === 'function') {
-            this.technicalProposalData = { ...techComponent.getData() };
-        }
-        
-        // Get the latest data from Abatement Strategies component
-        const abatementComponent = this.template.querySelector('c-abatement-strategies[data-step="3"]');
-        if (abatementComponent && typeof abatementComponent.getData === 'function') {
-            const abatementData = abatementComponent.getData();
-            this.abatementStrategiesData = { ...abatementData };
-        }
+            this.saveCurrentStepData();
+            
+            // Get the latest data from Technical Proposal component
+            const techComponent = this.template.querySelector('c-technical-proposal[data-step="2"]');
+            if (techComponent && typeof techComponent.getData === 'function') {
+                this.technicalProposalData = { ...techComponent.getData() };
+            }
+            
+            // Get the latest data from Abatement Strategies component
+            const abatementComponent = this.template.querySelector('c-abatement-strategies[data-step="3"]');
+            if (abatementComponent && typeof abatementComponent.getData === 'function') {
+                const abatementData = abatementComponent.getData();
+                this.abatementStrategiesData = { ...abatementData };
+            }
 
-        // Check if there's actual data to add (not empty forms)
-        const hasTechnicalData = this.technicalProposalData && 
-            (this.technicalProposalData.PartnerName__c || 
-             this.technicalProposalData.GeographicAreaPopulationPoverty__c || 
-             this.technicalProposalData.Outline_Existing_Efforts_and_New_Expansi__c || 
-             this.technicalProposalData.Describe_Current_Budget_and_Funding_Sour__c);
-             
-        const hasAbatementData = this.abatementStrategiesData && 
-            (this.abatementStrategiesData.abatementStrategies || 
-             this.abatementStrategiesData.coreStrategies);
-
-        // Only add partner if there's actual data
-        if (hasTechnicalData || hasAbatementData) {
-            // FIXED: Only store selected strategies for this partner
+            // Create partner data
             const selectedAbatementStrategies = this.abatementStrategiesData.abatementStrategies || [];
             const selectedCoreStrategies = this.abatementStrategiesData.coreStrategies || [];
             
-            // Filter strategy line resources to only include selected ones
             const filteredStrategyLineResources = {};
             const filteredPersonnelData = {};
             const filteredBudgetData = {};
@@ -1024,9 +770,8 @@ addCurrentPartnerIfExists() {
                 }
             });
 
-            // Create partner object with ONLY selected data
             const partnerData = {
-                partnerIndex: this.currentPartnerIndex,
+                partnerIndex: this.isEditingExistingPartner ? this.editingPartnerIndex : this.currentPartnerIndex,
                 technicalProposal: { ...this.technicalProposalData },
                 abatementStrategies: {
                     coreStrategies: selectedCoreStrategies,
@@ -1041,363 +786,481 @@ addCurrentPartnerIfExists() {
                 }
             };
             
-            // Check if this partner data already exists in the partners array
-            // Compare by partner name and key data to prevent duplicates
             const partnerName = this.technicalProposalData.PartnerName__c;
-            const existingPartnerIndex = this.partners.findIndex(partner => 
-                partner.technicalProposal.PartnerName__c === partnerName
-            );
             
-            if (existingPartnerIndex === -1) {
-                // Partner doesn't exist, add it
-                this.partners.push(partnerData);
-                console.log('Partner added via Next button:', JSON.stringify(partnerData));
-                console.log('All Partners Data:', JSON.stringify(this.partners));
-                
-                // Show success message
-                this.showToast('Success', `Partner ${this.partners.length} added automatically when moving to next step.`, 'success');
+            if (this.isEditingExistingPartner) {
+                // Update existing partner
+                this.partners[this.editingPartnerIndex] = partnerData;
+                console.log('Updated existing partner at index:', this.editingPartnerIndex);
+                console.log('Updated partner data:', partnerData);
+                console.log('Final partners array after update:', this.partners);
+                this.showToast('Success', `Partner "${partnerName}" updated successfully`, 'success');
+                this.isEditingExistingPartner = false;
+                this.editingPartnerIndex = -1;
             } else {
-                // Partner already exists, update the existing partner data
-                this.partners[existingPartnerIndex] = partnerData;
-                console.log('Partner updated via Next button:', JSON.stringify(partnerData));
-                console.log('All Partners Data:', JSON.stringify(this.partners));
+                // Add new partner
+                const existingPartnerIndex = this.partners.findIndex(partner => 
+                    partner.technicalProposal.PartnerName__c === partnerName
+                );
                 
-                // Show info message
-                this.showToast('Info', `Partner data updated when moving to next step.`, 'info');
+                if (existingPartnerIndex === -1) {
+                    this.partners.push(partnerData);
+                    this.currentPartnerIndex++;
+                    console.log('Added new partner to partners array');
+                    console.log('New partner data:', partnerData);
+                    console.log('Final partners array after adding:', this.partners);
+                    console.log('Total partners count:', this.partners.length);
+                    console.log('Updated currentPartnerIndex:', this.currentPartnerIndex);
+                    this.showToast('Success', `Partner "${partnerName}" added successfully`, 'success');
+                    // Set flag to indicate current partner has been added
+                    this.isCurrentPartnerAdded = true;
+                } else {
+                    this.showToast('Error', `Partner "${partnerName}" already exists. Please use a different partner name.`, 'error');
+                    return;
+                }
             }
+            
+            // Single log for final partners array state
+            console.log('FINAL PARTNERS ARRAY:', JSON.stringify(this.partners));
+            
+            // Reset data for new partner
+            this.resetPartnerData();
+            
+            // Navigate to Technical Proposal step (Step 2)
+            this.currentStep = 2;
+            this.updateStepStyles();
+            
+        } catch (error) {
+            console.error('Error adding/updating partner:', error);
+            this.showToast('Error', 'Failed to add/update partner', 'error');
         }
-        
-    } catch (error) {
-        console.error('Error adding current partner:', error);
-        this.showToast('Error', 'Failed to add current partner data', 'error');
     }
-}
 
-// Reset partner-specific data
-// Replace the existing resetPartnerData method with this:
-resetPartnerData() {
-    console.log('resetPartnerData called');
-    this.technicalProposalData = {};
-    this.abatementStrategiesData = {};
-    this.strategyLineResourcesData = {};
-    this.abatementExtraData = {};
-
-    // Reset editing flags
-    this.isEditingExistingPartner = false;
-    this.editingPartnerIndex = -1;
-
-    // Also clear abatement-related fields from applicationData while preserving organization data
-const cleanedApplicationData = { ...this.applicationData };
-delete cleanedApplicationData.coreStrategies;
-delete cleanedApplicationData.abatementStrategies;
-delete cleanedApplicationData.CoreStrategies__c;
-delete cleanedApplicationData.Core_Abatement_Strategies__c;
-delete cleanedApplicationData.strategyLineResources;
-delete cleanedApplicationData.personnelData;
-delete cleanedApplicationData.budgetData;
-
-this.applicationData = cleanedApplicationData;
-    
-    // Clear the child components with a small delay to ensure proper clearing
-    setTimeout(() => {
-        this.clearChildComponentForms();
-        // Notify child components after clearing
-        setTimeout(() => {
-            this.notifyChildComponents();
-        }, 100);
-    }, 50);
-}
-
-// Clear forms in child components
-clearChildComponentForms() {
-    console.log('clearChildComponentForms called');
-    
-    // Clear Technical Proposal form
-    const techComponent = this.template.querySelector('c-technical-proposal[data-step="2"]');
-    if (techComponent && typeof techComponent.clearData === 'function') {
-        techComponent.clearData();
-    }
-    
-    // Clear Abatement Strategies form with force refresh
-    const abatementComponent = this.template.querySelector('c-abatement-strategies[data-step="3"]');
-    console.log('abatementComponent found:', abatementComponent);
-    console.log('abatementComponent type:', typeof abatementComponent);
-    
-    if (abatementComponent) {
-        console.log('abatementComponent methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(abatementComponent)));
-        console.log('handleAddPartnerFromParent exists:', typeof abatementComponent.handleAddPartnerFromParent);
-        
-        // Call handleAddPartnerFromParent to log variables before clearing
-        if (typeof abatementComponent.handleAddPartnerFromParent === 'function') {
-            console.log('Calling handleAddPartnerFromParent on abatementStrategies component');
-            try {
-                abatementComponent.handleAddPartnerFromParent();
-                console.log('handleAddPartnerFromParent called successfully');
-            } catch (error) {
-                console.error('Error calling handleAddPartnerFromParent:', error);
+    // Add current partner data if it exists (called when moving from step 3 to step 4)
+    addCurrentPartnerIfExists() {
+        try {
+            // Check if current partner data is already added
+            if (this.isCurrentPartnerAdded) {
+                return; // Don't add again if already added
             }
-        } else {
-            console.log('handleAddPartnerFromParent method not found on abatementComponent');
-        }
-        
-        // Clear the component data properly
-        if (typeof abatementComponent.clearData === 'function') {
-            abatementComponent.clearData();
-        }
-        
-        setTimeout(() => {
-            if (typeof abatementComponent.setData === 'function') {
-                // Create clean data object with only organization info
-                const cleanedApplicationData = { ...this.applicationData };
+
+            // Get the latest data from Technical Proposal component
+            const techComponent = this.template.querySelector('c-technical-proposal[data-step="2"]');
+            if (techComponent && typeof techComponent.getData === 'function') {
+                this.technicalProposalData = { ...techComponent.getData() };
+            }
+            
+            // Get the latest data from Abatement Strategies component
+            const abatementComponent = this.template.querySelector('c-abatement-strategies[data-step="3"]');
+            if (abatementComponent && typeof abatementComponent.getData === 'function') {
+                const abatementData = abatementComponent.getData();
+                this.abatementStrategiesData = { ...abatementData };
+            }
+
+            // Check if there's actual data to add (not empty forms)
+            const hasTechnicalData = this.technicalProposalData && 
+                (this.technicalProposalData.PartnerName__c || 
+                 this.technicalProposalData.GeographicAreaPopulationPoverty__c || 
+                 this.technicalProposalData.Outline_Existing_Efforts_and_New_Expansi__c || 
+                 this.technicalProposalData.Describe_Current_Budget_and_Funding_Sour__c);
+                 
+            const hasAbatementData = this.abatementStrategiesData && 
+                (this.abatementStrategiesData.abatementStrategies || 
+                 this.abatementStrategiesData.coreStrategies);
+
+            // Only add partner if there's actual data
+            if (hasTechnicalData || hasAbatementData) {
+                const selectedAbatementStrategies = this.abatementStrategiesData.abatementStrategies || [];
+                const selectedCoreStrategies = this.abatementStrategiesData.coreStrategies || [];
                 
-                // Remove abatement-specific fields from applicationData
-                delete cleanedApplicationData.coreStrategies;
-                delete cleanedApplicationData.abatementStrategies;
-                delete cleanedApplicationData.CoreStrategies__c;
-                delete cleanedApplicationData.Core_Abatement_Strategies__c;
-                delete cleanedApplicationData.strategyLineResources;
-                delete cleanedApplicationData.personnelData;
-                delete cleanedApplicationData.budgetData;
+                // Filter strategy line resources to only include selected ones
+                const filteredStrategyLineResources = {};
+                const filteredPersonnelData = {};
+                const filteredBudgetData = {};
                 
-                const emptyAbatementData = {
-                    ...cleanedApplicationData, // Keep organization info only
-                    coreStrategies: [],
-                    abatementStrategies: [],
-                    CoreStrategies__c: '',
-                    Core_Abatement_Strategies__c: '',
-                    strategyLineResources: {},
-                    personnelData: {},
-                    budgetData: {}
+                selectedAbatementStrategies.forEach(strategyKey => {
+                    if (this.strategyLineResourcesData[strategyKey]) {
+                        filteredStrategyLineResources[strategyKey] = this.strategyLineResourcesData[strategyKey];
+                    }
+                    if (this.abatementExtraData.personnelData && this.abatementExtraData.personnelData[strategyKey]) {
+                        filteredPersonnelData[strategyKey] = this.abatementExtraData.personnelData[strategyKey];
+                    }
+                    if (this.abatementExtraData.budgetData && this.abatementExtraData.budgetData[strategyKey]) {
+                        filteredBudgetData[strategyKey] = this.abatementExtraData.budgetData[strategyKey];
+                    }
+                });
+
+                // Create partner object with ONLY selected data
+                const partnerData = {
+                    partnerIndex: this.currentPartnerIndex,
+                    technicalProposal: { ...this.technicalProposalData },
+                    abatementStrategies: {
+                        coreStrategies: selectedCoreStrategies,
+                        abatementStrategies: selectedAbatementStrategies,
+                        CoreStrategies__c: selectedCoreStrategies.join(';'),
+                        Core_Abatement_Strategies__c: selectedAbatementStrategies.join(';')
+                    },
+                    strategyLineResources: filteredStrategyLineResources,
+                    abatementExtra: {
+                        personnelData: filteredPersonnelData,
+                        budgetData: filteredBudgetData
+                    }
                 };
                 
-                console.log('Setting empty abatement data:', JSON.stringify(emptyAbatementData));
-                abatementComponent.setData(emptyAbatementData);
+                // Check if this partner data already exists in the partners array
+                const partnerName = this.technicalProposalData.PartnerName__c;
+                const existingPartnerIndex = this.partners.findIndex(partner => 
+                    partner.technicalProposal.PartnerName__c === partnerName
+                );
                 
-                // Also clear the strategyLineResourcesData property directly
-                if (abatementComponent.strategyLineResourcesData) {
-                    abatementComponent.strategyLineResourcesData = {};
+                if (existingPartnerIndex === -1) {
+                    // Partner doesn't exist, add it
+                    this.partners.push(partnerData);
+                    this.currentPartnerIndex++; // Increment the partner index
+                    console.log('Auto-added partner to partners array');
+                    console.log('Auto-added partner data:', partnerData);
+                    console.log('Final partners array after auto-adding:', this.partners);
+                    console.log('Total partners count after auto-adding:', this.partners.length);
+                    console.log('Updated currentPartnerIndex:', this.currentPartnerIndex);
+                    this.showToast('Success', `Partner ${this.partners.length} added automatically when moving to next step.`, 'success');
+                    // Set flag to indicate current partner has been added
+                    this.isCurrentPartnerAdded = true;
+                } else {
+                    // Partner already exists, update the existing partner data
+                    this.partners[existingPartnerIndex] = partnerData;
+                    console.log('Auto-updated existing partner at index:', existingPartnerIndex);
+                    console.log('Auto-updated partner data:', partnerData);
+                    console.log('Final partners array after auto-update:', this.partners);
+                    this.showToast('Info', `Partner data updated when moving to next step.`, 'info');
+                    // Set flag to indicate current partner has been added
+                    this.isCurrentPartnerAdded = true;
                 }
             }
-        }, 100);
-    } else {
-        console.log('abatementComponent not found in DOM');
-    }
-}
-
-// Get all partners data for saving
-getAllPartnersData() {
-    // Check if there's current partner data that hasn't been added yet
-    let allPartners = [...this.partners];
-    
-    // If we're in step 3 and there's current data, include it (but check for duplicates)
-    if (this.currentStep === 3) {
-        const currentPartnerData = this.getCurrentPartnerData();
-        if (currentPartnerData) {
-            // Check if this partner data already exists in the partners array
-            const partnerName = currentPartnerData.technicalProposal.PartnerName__c;
-            const existingPartnerIndex = allPartners.findIndex(partner => 
-                partner.technicalProposal.PartnerName__c === partnerName
-            );
             
-            if (existingPartnerIndex === -1) {
-                // Partner doesn't exist, add it
-                allPartners.push(currentPartnerData);
-            } else {
-                // Partner already exists, update the existing partner data
-                allPartners[existingPartnerIndex] = currentPartnerData;
-            }
+            // Single log for final partners array state
+            console.log('FINAL PARTNERS ARRAY:', JSON.stringify(this.partners));
+            
+        } catch (error) {
+            console.error('Error adding current partner:', error);
+            this.showToast('Error', 'Failed to add current partner data', 'error');
         }
     }
-    
-    return {
-        partners: allPartners,
-        currentPartnerIndex: this.currentPartnerIndex,
-        totalPartners: allPartners.length
-    };
-}
 
-// Get current partner data if it exists
-getCurrentPartnerData() {
-    try {
-        // Get the latest data from Technical Proposal component
+    // Reset partner-specific data
+    resetPartnerData() {
+        this.technicalProposalData = {};
+        this.abatementStrategiesData = {};
+        this.strategyLineResourcesData = {};
+        this.abatementExtraData = {};
+
+        // Reset editing flags
+        this.isEditingExistingPartner = false;
+        this.editingPartnerIndex = -1;
+        
+        // Reset the flag to indicate current partner data is not added yet
+        this.isCurrentPartnerAdded = false;
+
+        // Also clear abatement-related fields from applicationData while preserving organization data
+        const cleanedApplicationData = { ...this.applicationData };
+        delete cleanedApplicationData.coreStrategies;
+        delete cleanedApplicationData.abatementStrategies;
+        delete cleanedApplicationData.CoreStrategies__c;
+        delete cleanedApplicationData.Core_Abatement_Strategies__c;
+        delete cleanedApplicationData.strategyLineResources;
+        delete cleanedApplicationData.personnelData;
+        delete cleanedApplicationData.budgetData;
+
+        this.applicationData = cleanedApplicationData;
+        
+        // Clear the child components with a small delay to ensure proper clearing
+        setTimeout(() => {
+            this.clearChildComponentForms();
+            // Notify child components after clearing
+            setTimeout(() => {
+                this.notifyChildComponents();
+            }, 100);
+        }, 50);
+    }
+
+    // Clear forms in child components
+    clearChildComponentForms() {
+        // Clear Technical Proposal form
         const techComponent = this.template.querySelector('c-technical-proposal[data-step="2"]');
-        let technicalData = {};
-        if (techComponent && typeof techComponent.getData === 'function') {
-            technicalData = { ...techComponent.getData() };
+        if (techComponent && typeof techComponent.clearData === 'function') {
+            techComponent.clearData();
         }
         
-        // Get the latest data from Abatement Strategies component
+        // Clear Abatement Strategies form with force refresh
         const abatementComponent = this.template.querySelector('c-abatement-strategies[data-step="3"]');
-        let abatementData = {};
-        if (abatementComponent && typeof abatementComponent.getData === 'function') {
-            abatementData = { ...abatementComponent.getData() };
-        }
-
-        // Check if there's actual data to return (not empty forms)
-        const hasTechnicalData = technicalData && 
-            (technicalData.PartnerName__c || 
-             technicalData.GeographicAreaPopulationPoverty__c || 
-             technicalData.Outline_Existing_Efforts_and_New_Expansi__c || 
-             technicalData.Describe_Current_Budget_and_Funding_Sour__c);
-             
-        const hasAbatementData = abatementData && 
-            (abatementData.abatementStrategies || 
-             abatementData.coreStrategies);
-
-        // Only return partner data if there's actual data
-        if (hasTechnicalData || hasAbatementData) {
-            // FIXED: Only store selected strategies for this partner
-            const selectedAbatementStrategies = abatementData.abatementStrategies || [];
-            const selectedCoreStrategies = abatementData.coreStrategies || [];
-            
-            // Filter strategy line resources to only include selected ones
-            const filteredStrategyLineResources = {};
-            const filteredPersonnelData = {};
-            const filteredBudgetData = {};
-            
-            selectedAbatementStrategies.forEach(strategyKey => {
-                if (this.strategyLineResourcesData[strategyKey]) {
-                    filteredStrategyLineResources[strategyKey] = this.strategyLineResourcesData[strategyKey];
-                }
-                if (this.abatementExtraData.personnelData && this.abatementExtraData.personnelData[strategyKey]) {
-                    filteredPersonnelData[strategyKey] = this.abatementExtraData.personnelData[strategyKey];
-                }
-                if (this.abatementExtraData.budgetData && this.abatementExtraData.budgetData[strategyKey]) {
-                    filteredBudgetData[strategyKey] = this.abatementExtraData.budgetData[strategyKey];
-                }
-            });
-
-            // Create partner object with ONLY selected data
-            return {
-                partnerIndex: this.currentPartnerIndex,
-                technicalProposal: { ...technicalData },
-                abatementStrategies: {
-                    coreStrategies: selectedCoreStrategies,
-                    abatementStrategies: selectedAbatementStrategies,
-                    CoreStrategies__c: selectedCoreStrategies.join(';'),
-                    Core_Abatement_Strategies__c: selectedAbatementStrategies.join(';')
-                },
-                strategyLineResources: filteredStrategyLineResources,
-                abatementExtra: {
-                    personnelData: filteredPersonnelData,
-                    budgetData: filteredBudgetData
-                }
-            };
-        }
         
-        return null;
-        
-    } catch (error) {
-        console.error('Error getting current partner data:', error);
-        return null;
+        if (abatementComponent) {
+            // Call handleAddPartnerFromParent to log variables before clearing
+            if (typeof abatementComponent.handleAddPartnerFromParent === 'function') {
+                try {
+                    abatementComponent.handleAddPartnerFromParent();
+                } catch (error) {
+                    console.error('Error calling handleAddPartnerFromParent:', error);
+                }
+            }
+            
+            // Clear the component data properly
+            if (typeof abatementComponent.clearData === 'function') {
+                abatementComponent.clearData();
+            }
+            
+            setTimeout(() => {
+                if (typeof abatementComponent.setData === 'function') {
+                    // Create clean data object with only organization info
+                    const cleanedApplicationData = { ...this.applicationData };
+                    
+                    // Remove abatement-specific fields from applicationData
+                    delete cleanedApplicationData.coreStrategies;
+                    delete cleanedApplicationData.abatementStrategies;
+                    delete cleanedApplicationData.CoreStrategies__c;
+                    delete cleanedApplicationData.Core_Abatement_Strategies__c;
+                    delete cleanedApplicationData.strategyLineResources;
+                    delete cleanedApplicationData.personnelData;
+                    delete cleanedApplicationData.budgetData;
+                    
+                    const emptyAbatementData = {
+                        ...cleanedApplicationData, // Keep organization info only
+                        coreStrategies: [],
+                        abatementStrategies: [],
+                        CoreStrategies__c: '',
+                        Core_Abatement_Strategies__c: '',
+                        strategyLineResources: {},
+                        personnelData: {},
+                        budgetData: {}
+                    };
+                    
+                    abatementComponent.setData(emptyAbatementData);
+                    
+                    // Also clear the strategyLineResourcesData property directly
+                    if (abatementComponent.strategyLineResourcesData) {
+                        abatementComponent.strategyLineResourcesData = {};
+                    }
+                }
+            }, 100);
+        }
     }
-}
 
-// NEW METHOD: Handle Save and Preview
-handleSaveAndPreview() {
-    try {
-        if (!this.validateAllSteps()) {
-            return;
-        }
+    // Get all partners data for saving
+    getAllPartnersData() {
+        // Check if there's current partner data that hasn't been added yet
+        let allPartners = [...this.partners];
         
-        // If we're in step 3, add current partner data before saving
+        // If we're in step 3 and there's current data, include it (but check for duplicates)
         if (this.currentStep === 3) {
-            this.addCurrentPartnerIfExists();
+            const currentPartnerData = this.getCurrentPartnerData();
+            if (currentPartnerData) {
+                // Check if this partner data already exists in the partners array
+                const partnerName = currentPartnerData.technicalProposal.PartnerName__c;
+                const existingPartnerIndex = allPartners.findIndex(partner => 
+                    partner.technicalProposal.PartnerName__c === partnerName
+                );
+                
+                if (existingPartnerIndex === -1) {
+                    // Partner doesn't exist, add it
+                    allPartners.push(currentPartnerData);
+                } else {
+                    // Partner already exists, update the existing partner data
+                    allPartners[existingPartnerIndex] = currentPartnerData;
+                }
+            }
         }
         
-        this.saveCurrentStepData();
-        this.preparePreviewData();
-        this.showPreviewModal = true;
-    } catch (error) {
-        this.showToast('Error', 'Failed to prepare preview', 'error');
-    }
-}
-
-// NEW METHOD: Prepare data for preview modal
-preparePreviewData() {
-    // Get the latest organization data
-    const orgComponent = this.template.querySelector('c-organization-information[data-step="1"]');
-    if (orgComponent && typeof orgComponent.getData === 'function') {
-        this.organizationData = { ...orgComponent.getData() };
+        // Single log for final partners array state
+        console.log('FINAL PARTNERS ARRAY:', JSON.stringify(allPartners));
+        
+        return {
+            partners: allPartners,
+            currentPartnerIndex: this.currentPartnerIndex,
+            totalPartners: allPartners.length
+        };
     }
 
-    // Get the latest budget data
-    const budgetComponent = this.template.querySelector('c-budget-information[data-step="4"]');
-    if (budgetComponent && typeof budgetComponent.getData === 'function') {
-        this.budgetInformationData = { ...budgetComponent.getData() };
+    // Get current partner data if it exists
+    getCurrentPartnerData() {
+        try {
+            // Check if current partner data is already added
+            if (this.isCurrentPartnerAdded) {
+                return null; // Don't return current data if already added
+            }
+
+            // Get the latest data from Technical Proposal component
+            const techComponent = this.template.querySelector('c-technical-proposal[data-step="2"]');
+            let technicalData = {};
+            if (techComponent && typeof techComponent.getData === 'function') {
+                technicalData = { ...techComponent.getData() };
+            }
+            
+            // Get the latest data from Abatement Strategies component
+            const abatementComponent = this.template.querySelector('c-abatement-strategies[data-step="3"]');
+            let abatementData = {};
+            if (abatementComponent && typeof abatementComponent.getData === 'function') {
+                abatementData = { ...abatementComponent.getData() };
+            }
+
+            // Check if there's actual data to return (not empty forms)
+            const hasTechnicalData = technicalData && 
+                (technicalData.PartnerName__c || 
+                 technicalData.GeographicAreaPopulationPoverty__c || 
+                 technicalData.Outline_Existing_Efforts_and_New_Expansi__c || 
+                 technicalData.Describe_Current_Budget_and_Funding_Sour__c);
+                 
+            const hasAbatementData = abatementData && 
+                (abatementData.abatementStrategies || 
+                 abatementData.coreStrategies);
+
+            // Only return partner data if there's actual data
+            if (hasTechnicalData || hasAbatementData) {
+                const selectedAbatementStrategies = abatementData.abatementStrategies || [];
+                const selectedCoreStrategies = abatementData.coreStrategies || [];
+                
+                // Filter strategy line resources to only include selected ones
+                const filteredStrategyLineResources = {};
+                const filteredPersonnelData = {};
+                const filteredBudgetData = {};
+                
+                selectedAbatementStrategies.forEach(strategyKey => {
+                    if (this.strategyLineResourcesData[strategyKey]) {
+                        filteredStrategyLineResources[strategyKey] = this.strategyLineResourcesData[strategyKey];
+                    }
+                    if (this.abatementExtraData.personnelData && this.abatementExtraData.personnelData[strategyKey]) {
+                        filteredPersonnelData[strategyKey] = this.abatementExtraData.personnelData[strategyKey];
+                    }
+                    if (this.abatementExtraData.budgetData && this.abatementExtraData.budgetData[strategyKey]) {
+                        filteredBudgetData[strategyKey] = this.abatementExtraData.budgetData[strategyKey];
+                    }
+                });
+
+                // Create partner object with ONLY selected data
+                return {
+                    partnerIndex: this.currentPartnerIndex,
+                    technicalProposal: { ...technicalData },
+                    abatementStrategies: {
+                        coreStrategies: selectedCoreStrategies,
+                        abatementStrategies: selectedAbatementStrategies,
+                        CoreStrategies__c: selectedCoreStrategies.join(';'),
+                        Core_Abatement_Strategies__c: selectedAbatementStrategies.join(';')
+                    },
+                    strategyLineResources: filteredStrategyLineResources,
+                    abatementExtra: {
+                        personnelData: filteredPersonnelData,
+                        budgetData: filteredBudgetData
+                    }
+                };
+            }
+            
+            return null;
+            
+        } catch (error) {
+            console.error('Error getting current partner data:', error);
+            return null;
+        }
     }
 
-    // Combine all organization data for preview
-    this.previewData = {
-        organizationInfo: {
-            ...this.organizationData,
-            ...this.budgetInformationData
-        },
-        partners: this.getAllPartnersData()
-    };
-}
+    // Handle Save and Preview
+    handleSaveAndPreview() {
+        try {
+            if (!this.validateAllSteps()) {
+                return;
+            }
+            
+            // If we're in step 3, add current partner data before saving
+            // Only add if not already added
+            if (this.currentStep === 3 && !this.isCurrentPartnerAdded) {
+                this.addCurrentPartnerIfExists();
+            }
+            
+            this.saveCurrentStepData();
+            this.preparePreviewData();
+            this.showPreviewModal = true;
+        } catch (error) {
+            this.showToast('Error', 'Failed to prepare preview', 'error');
+        }
+    }
 
-// NEW METHOD: Close preview modal
-handleCloseModal() {
-    this.showPreviewModal = false;
-}
+    // Prepare data for preview modal
+    preparePreviewData() {
+        // Get the latest organization data
+        const orgComponent = this.template.querySelector('c-organization-information[data-step="1"]');
+        if (orgComponent && typeof orgComponent.getData === 'function') {
+            this.organizationData = { ...orgComponent.getData() };
+        }
 
-// NEW METHOD: Get display value for picklist fields
-getPicklistDisplayValue(fieldName, value) {
-    if (!value || !this.picklistValues[fieldName]) return value || 'Not Specified';
-    
-    const option = this.picklistValues[fieldName].find(opt => opt.value === value);
-    return option ? option.label : value;
-}
+        // Get the latest budget data
+        const budgetComponent = this.template.querySelector('c-budget-information[data-step="4"]');
+        if (budgetComponent && typeof budgetComponent.getData === 'function') {
+            this.budgetInformationData = { ...budgetComponent.getData() };
+        }
 
-// NEW METHOD: Format display values for the modal
-// NEW METHOD: Format display values for the modal
-get formattedPreviewData() {
-    if (!this.previewData.organizationInfo) return {};
-    
-    const data = this.previewData.organizationInfo;
-    
-    return {
-        // Political Subdivision Information
-        requestType: this.getPicklistDisplayValue('requestType', data.RequestType__c),
-        nameOfPerson: data.NameOfPersonCompletingForm__c || 'Not Specified',
-        titleOfPerson: data.TitleOfPersonCompletingForm__c || 'Not Specified',
-        subdivisionName: data.Name || 'Not Specified',
-        subdivisionContact: data.PoliticalSubdivisionContactNumber__c || 'Not Specified',
-        subdivisionEmail: data.PoliticalSubdivisionEmail__c || 'Not Specified',
-        sceisVendor: data.SCEISVendorNumber__c || 'Not Specified',
-        entityType: this.getPicklistDisplayValue('entityType', data.EntityType__c),
-        entityApprove: this.getPicklistDisplayValue('entityApprove', data.DoesEntityApproveLineItems__c),
-        collaborating: this.getPicklistDisplayValue('collaborating', data.CollaboratingWithOtherGPSEntity__c),
-        litigating: this.getPicklistDisplayValue('litigating', data.WasEntityALitigatingSubdivision__c),
-        bellwether: this.getPicklistDisplayValue('bellwether', data.IsEntityAnSCBellwetherPlaintiff__c),
-        conflict: this.getPicklistDisplayValue('conflict', data.Any_Potential_Conflict_with_SC_Recovery__c),
+        // Combine all organization data for preview
+        this.previewData = {
+            organizationInfo: {
+                ...this.organizationData,
+                ...this.budgetInformationData
+            },
+            partners: this.getAllPartnersData()
+        };
+    }
+
+    // Close preview modal
+    handleCloseModal() {
+        this.showPreviewModal = false;
+    }
+
+    // Get display value for picklist fields
+    getPicklistDisplayValue(fieldName, value) {
+        if (!value || !this.picklistValues[fieldName]) return value || 'Not Specified';
         
-        // Payment Remit To Information
-        paymentAddressLine1: data.PaymentRemitToAddressLine1__c || 'Not Specified',
-        paymentAddressLine2: data.PaymentRemitToAddressLine2__c || '',
-        paymentCity: data.PaymentRemitToCity__c || 'Not Specified',
-        paymentState: this.getPicklistDisplayValue('paymentState', data.PaymentRemitToState__c),
-        paymentZip: data.PaymentRemitToZip__c || 'Not Specified',
-        
-        // Political Subdivision Address
-        subdivisionAddressLine1: data.AddressLine1__c || 'Not Specified',
-        subdivisionAddressLine2: data.AddressLine2__c || '',
-        subdivisionCity: data.City__c || 'Not Specified',
-        subdivisionState: this.getPicklistDisplayValue('subdivisionState', data.State__c),
-        subdivisionZip: data.Zip__c || 'Not Specified',
-        
-        // Application Point of Contact
-        programManagerName: data.ProgramManagerName__c || 'Not Specified',
-        programManagerEmail: data.ProgramManagerEmail__c || 'Not Specified',
-        programManagerPhone: data.ProgramManagerPhoneNumber__c || 'Not Specified',
-        fiscalManagerName: data.FiscalManagerTitle__c || 'Not Specified',
-        fiscalManagerEmail: data.FiscalManagerEmail__c || 'Not Specified',
-        fiscalManagerPhone: data.FiscalManagerPhoneNumber__c || 'Not Specified'
-    };
-}
+        const option = this.picklistValues[fieldName].find(opt => opt.value === value);
+        return option ? option.label : value;
+    }
 
-get isStep4() { return this.currentStep === 4; }
-get showSaveAndPreviewButton() { return this.currentStep === 4; }
-    
+    // Format display values for the modal
+    get formattedPreviewData() {
+        if (!this.previewData.organizationInfo) return {};
+        
+        const data = this.previewData.organizationInfo;
+        
+        return {
+            // Political Subdivision Information
+            requestType: this.getPicklistDisplayValue('requestType', data.RequestType__c),
+            nameOfPerson: data.NameOfPersonCompletingForm__c || 'Not Specified',
+            titleOfPerson: data.TitleOfPersonCompletingForm__c || 'Not Specified',
+            subdivisionName: data.Name || 'Not Specified',
+            subdivisionContact: data.PoliticalSubdivisionContactNumber__c || 'Not Specified',
+            subdivisionEmail: data.PoliticalSubdivisionEmail__c || 'Not Specified',
+            sceisVendor: data.SCEISVendorNumber__c || 'Not Specified',
+            entityType: this.getPicklistDisplayValue('entityType', data.EntityType__c),
+            entityApprove: this.getPicklistDisplayValue('entityApprove', data.DoesEntityApproveLineItems__c),
+            collaborating: this.getPicklistDisplayValue('collaborating', data.CollaboratingWithOtherGPSEntity__c),
+            litigating: this.getPicklistDisplayValue('litigating', data.WasEntityALitigatingSubdivision__c),
+            bellwether: this.getPicklistDisplayValue('bellwether', data.IsEntityAnSCBellwetherPlaintiff__c),
+            conflict: this.getPicklistDisplayValue('conflict', data.Any_Potential_Conflict_with_SC_Recovery__c),
+            
+            // Payment Remit To Information
+            paymentAddressLine1: data.PaymentRemitToAddressLine1__c || 'Not Specified',
+            paymentAddressLine2: data.PaymentRemitToAddressLine2__c || '',
+            paymentCity: data.PaymentRemitToCity__c || 'Not Specified',
+            paymentState: this.getPicklistDisplayValue('paymentState', data.PaymentRemitToState__c),
+            paymentZip: data.PaymentRemitToZip__c || 'Not Specified',
+            
+            // Political Subdivision Address
+            subdivisionAddressLine1: data.AddressLine1__c || 'Not Specified',
+            subdivisionAddressLine2: data.AddressLine2__c || '',
+            subdivisionCity: data.City__c || 'Not Specified',
+            subdivisionState: this.getPicklistDisplayValue('subdivisionState', data.State__c),
+            subdivisionZip: data.Zip__c || 'Not Specified',
+            
+            // Application Point of Contact
+            programManagerName: data.ProgramManagerName__c || 'Not Specified',
+            programManagerEmail: data.ProgramManagerEmail__c || 'Not Specified',
+            programManagerPhone: data.ProgramManagerPhoneNumber__c || 'Not Specified',
+            fiscalManagerName: data.FiscalManagerTitle__c || 'Not Specified',
+            fiscalManagerEmail: data.FiscalManagerEmail__c || 'Not Specified',
+            fiscalManagerPhone: data.FiscalManagerPhoneNumber__c || 'Not Specified'
+        };
+    }
 }
