@@ -735,6 +735,20 @@ export default class GpsApplication extends LightningElement {
             });
     }
 
+    // Load existing partners data from the database
+    loadExistingPartnersData() {
+        if (!this.recordId) {
+            return Promise.resolve();
+        }
+        
+        // This method would load existing partners from the database
+        // For now, we'll leave it as a placeholder since the current implementation
+        // doesn't seem to store partners in a way that can be easily loaded
+        // The partners are built up as the user progresses through the form
+        
+        return Promise.resolve();
+    }
+
     // Save organization data
     saveOrganizationData() {
         // Get the latest budget data from step 4 component
