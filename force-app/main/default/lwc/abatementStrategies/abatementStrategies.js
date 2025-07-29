@@ -537,6 +537,46 @@ get processedCoreStrategies() {
         const abatementOptions = this.mappedAbatementStrategies[coreStrategyValue] || [];
         const optionsToClear = abatementOptions.map(opt => opt.value);
     
+        // Collect IDs to be cleared before removing data
+        const strategyLineItemIdsToClear = [];
+        const strategyResourcesIdsToClear = [];
+        
+        optionsToClear.forEach(optionValue => {
+            // Check for strategy line item ID
+            if (this._strategyLineResourcesData[optionValue] && this._strategyLineResourcesData[optionValue].Id) {
+                strategyLineItemIdsToClear.push(this._strategyLineResourcesData[optionValue].Id);
+            }
+            
+            // Check for personnel data IDs
+            if (this.personnelData[optionValue]) {
+                this.personnelData[optionValue].forEach(personnel => {
+                    if (personnel.Id) {
+                        strategyResourcesIdsToClear.push(personnel.Id);
+                    }
+                });
+            }
+            
+            // Check for budget data IDs
+            if (this.budgetData[optionValue]) {
+                this.budgetData[optionValue].forEach(budget => {
+                    if (budget.Id) {
+                        strategyResourcesIdsToClear.push(budget.Id);
+                    }
+                });
+            }
+        });
+        
+        // Dispatch event to parent with IDs to be cleared
+        if (strategyLineItemIdsToClear.length > 0 || strategyResourcesIdsToClear.length > 0) {
+            this.dispatchEvent(new CustomEvent('strategyclear', {
+                detail: {
+                    strategyLineItemIds: strategyLineItemIdsToClear,
+                    strategyResourcesIds: strategyResourcesIdsToClear,
+                    clearedStrategies: optionsToClear
+                }
+            }));
+        }
+    
         // Remove all selected abatement strategies for this core strategy
         this.selectedAbatementStrategies = this.selectedAbatementStrategies.filter(
             item => !optionsToClear.includes(item)
@@ -586,6 +626,44 @@ get processedCoreStrategies() {
         const abatementValue = event.currentTarget.dataset.abatement;
         
         console.log('Clearing abatement option:', abatementValue);
+        
+        // Collect IDs to be cleared before removing data
+        const strategyLineItemIdsToClear = [];
+        const strategyResourcesIdsToClear = [];
+        
+        // Check for strategy line item ID
+        if (this._strategyLineResourcesData[abatementValue] && this._strategyLineResourcesData[abatementValue].Id) {
+            strategyLineItemIdsToClear.push(this._strategyLineResourcesData[abatementValue].Id);
+        }
+        
+        // Check for personnel data IDs
+        if (this.personnelData[abatementValue]) {
+            this.personnelData[abatementValue].forEach(personnel => {
+                if (personnel.Id) {
+                    strategyResourcesIdsToClear.push(personnel.Id);
+                }
+            });
+        }
+        
+        // Check for budget data IDs
+        if (this.budgetData[abatementValue]) {
+            this.budgetData[abatementValue].forEach(budget => {
+                if (budget.Id) {
+                    strategyResourcesIdsToClear.push(budget.Id);
+                }
+            });
+        }
+        
+        // Dispatch event to parent with IDs to be cleared
+        if (strategyLineItemIdsToClear.length > 0 || strategyResourcesIdsToClear.length > 0) {
+            this.dispatchEvent(new CustomEvent('strategyclear', {
+                detail: {
+                    strategyLineItemIds: strategyLineItemIdsToClear,
+                    strategyResourcesIds: strategyResourcesIdsToClear,
+                    clearedStrategies: [abatementValue]
+                }
+            }));
+        }
         
         // Filter out the deselected abatement strategy
         this.selectedAbatementStrategies = this.selectedAbatementStrategies.filter(

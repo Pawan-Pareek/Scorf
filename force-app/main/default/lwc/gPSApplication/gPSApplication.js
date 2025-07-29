@@ -12,6 +12,7 @@ import saveAbatementStrategies from '@salesforce/apex/GPSApplicationController.s
 import saveStrategyLineItems from '@salesforce/apex/GPSApplicationController.saveStrategyLineItems';
 import saveStrategyResources from '@salesforce/apex/GPSApplicationController.saveStrategyResources';
 import getStrategyResources from '@salesforce/apex/GPSApplicationController.getStrategyResources';
+import deleteAbatementStrategyAndChildren from '@salesforce/apex/GPSApplicationController.deleteAbatementStrategyAndChildren';
 
 // Static resource for logo
 import gpsLogo from '@salesforce/resourceUrl/ScorfBanner';
@@ -64,6 +65,8 @@ export default class GpsApplication extends LightningElement {
     @track abatementStrategiesIds = [];
     @track strategyLineItemIds = [];
     @track strategyResourcesIds = [];
+    @track clearedStrategyLineItemIds = [];
+    @track clearedStrategyResourcesIds = [];
 
     // Flag to track if current partner data has been added to partners array
     @track isCurrentPartnerAdded = false;
@@ -83,6 +86,52 @@ export default class GpsApplication extends LightningElement {
             ...this.strategyLineResourcesData,
             [strategyValue]: data
         };
+    }
+
+    // Handler for strategy clear events from abatement strategies component
+    handleStrategyClear(event) {
+        const { strategyLineItemIds, strategyResourcesIds, clearedStrategies } = event.detail;
+        
+        console.log('Strategy clear event received:', { strategyLineItemIds, strategyResourcesIds, clearedStrategies });
+        
+        // Store the IDs that are being cleared
+        if (strategyLineItemIds && strategyLineItemIds.length > 0) {
+            this.clearedStrategyLineItemIds = [...this.clearedStrategyLineItemIds, ...strategyLineItemIds];
+        }
+        
+        if (strategyResourcesIds && strategyResourcesIds.length > 0) {
+            this.clearedStrategyResourcesIds = [...this.clearedStrategyResourcesIds, ...strategyResourcesIds];
+        }
+        
+        // Check if current partner data exists in partners array and clear the corresponding data
+        if (this.partners.length > 0 && this.isCurrentPartnerAdded) {
+            // Find the current partner being edited
+            const currentPartnerIndex = this.editingPartnerIndex >= 0 ? this.editingPartnerIndex : this.partners.length - 1;
+            const currentPartner = this.partners[currentPartnerIndex];
+            
+            if (currentPartner && currentPartner.strategyLineResources) {
+                // Clear strategy line resources data for the cleared strategies
+                const updatedStrategyLineResources = { ...currentPartner.strategyLineResources };
+                clearedStrategies.forEach(strategy => {
+                    if (updatedStrategyLineResources[strategy]) {
+                        delete updatedStrategyLineResources[strategy];
+                    }
+                });
+                
+                // Update the partner's strategy line resources
+                this.partners[currentPartnerIndex] = {
+                    ...currentPartner,
+                    strategyLineResources: updatedStrategyLineResources
+                };
+                
+                console.log('Updated partner strategy line resources after clear:', this.partners[currentPartnerIndex]);
+            }
+        }
+        
+        console.log('Updated cleared IDs arrays:', {
+            clearedStrategyLineItemIds: this.clearedStrategyLineItemIds,
+            clearedStrategyResourcesIds: this.clearedStrategyResourcesIds
+        });
     }
 
     // Partner Table Methods
@@ -118,21 +167,47 @@ export default class GpsApplication extends LightningElement {
         this.showToast('Info', `Now editing partner: ${partnerToEdit.technicalProposal.PartnerName__c}`, 'info');
     }
 
-    handleDeletePartner(event) {
+    async handleDeletePartner(event) {
         const partnerIndex = parseInt(event.target.dataset.index);
-        const partnerName = this.partners[partnerIndex].technicalProposal.PartnerName__c;
+        const partner = this.partners[partnerIndex];
+        const partnerName = partner.technicalProposal.PartnerName__c;
         
         console.log('Deleting partner at index:', partnerIndex);
-        console.log('Partner to delete:', this.partners[partnerIndex]);
+        console.log('Partner to delete:', partner);
         console.log('Partners array before deletion:', this.partners);
         
-        // Remove partner from array
-        this.partners.splice(partnerIndex, 1);
-        
-        console.log('Partners array after deletion:', this.partners);
-        console.log('Total partners count after deletion:', this.partners.length);
-        
-        this.showToast('Success', `Partner "${partnerName}" deleted successfully`, 'success');
+        try {
+            // Check if the partner has an abatement strategy ID (exists in Salesforce)
+            if (partner.abatementStrategies && partner.abatementStrategies.Id) {
+                console.log('Partner has existing abatement strategy in Salesforce. Deleting from Salesforce first...');
+                
+                // Delete from Salesforce first
+                const deleteResult = await deleteAbatementStrategyAndChildren({ 
+                    abatementStrategyId: partner.abatementStrategies.Id 
+                });
+                
+                if (deleteResult.success) {
+                    console.log('Successfully deleted from Salesforce:', deleteResult.message);
+                    this.showToast('Success', `Partner "${partnerName}" and all related records deleted from Salesforce successfully`, 'success');
+                } else {
+                    console.error('Failed to delete from Salesforce:', deleteResult.error);
+                    this.showToast('Warning', `Partner "${partnerName}" removed from form but failed to delete from Salesforce: ${deleteResult.error}`, 'warning');
+                }
+            } else {
+                console.log('Partner does not exist in Salesforce. Removing from form only.');
+                this.showToast('Success', `Partner "${partnerName}" removed from form successfully`, 'success');
+            }
+            
+            // Remove partner from array
+            this.partners.splice(partnerIndex, 1);
+            
+            console.log('Partners array after deletion:', this.partners);
+            console.log('Total partners count after deletion:', this.partners.length);
+            
+        } catch (error) {
+            console.error('Error deleting partner:', error);
+            this.showToast('Error', `Failed to delete partner "${partnerName}": ${error.message}`, 'error');
+        }
 
         // Single log for final partners array state
         console.log('FINAL PARTNERS ARRAY:', JSON.stringify(this.partners));
@@ -150,6 +225,11 @@ export default class GpsApplication extends LightningElement {
             name: partner.technicalProposal.PartnerName__c || `Partner ${index + 1}`,
             index: index
         }));
+    }
+
+    // Check if there's only one partner to disable delete button
+    get isOnlyOnePartner() {
+        return this.partners.length <= 1;
     }
 
     // Lifecycle hook - loads data when component is inserted into DOM
@@ -1434,4 +1514,362 @@ export default class GpsApplication extends LightningElement {
             fiscalManagerPhone: data.FiscalManagerPhoneNumber__c || 'Not Specified'
         };
     }
+
+    //Save avd Next Button
+    get showSaveAndExitButton() { 
+    // Show on steps 1 and 3 as requested, but can be changed to show on all steps: return true;
+    return this.currentStep === 1 || this.currentStep === 3; 
+    }
+
+    handleSaveAndExit() {
+    try {
+        this.isLoading = true;
+        
+        // Save current step data without validation
+        this.saveCurrentStepData();
+        
+        // Always save all available data regardless of current step
+        this.saveAndExitAllData();
+    } catch (error) {
+        this.showToast('Error', 'Failed to save and exit', 'error');
+        this.isLoading = false;
+    }
+}
+
+// Save and exit - saves all form data from all steps
+saveAndExitAllData() {
+    // Get the latest data from all components regardless of current step
+    this.collectAllFormData();
+
+    // Save organization data first (includes step 1 and step 4 data)
+    const applicationData = {
+        ...this.organizationData,
+        ...this.budgetInformationData,
+        Id: this.recordId
+    };
+
+    let savePromise;
+    
+    // Save application data if there's any meaningful data
+    if (this.hasApplicationData(applicationData)) {
+        savePromise = saveApplication({ application: applicationData })
+            .then(result => {
+                this.recordId = result.Id;
+                console.log('Application data saved with ID:', this.recordId);
+                return Promise.resolve();
+            });
+    } else {
+        savePromise = Promise.resolve();
+    }
+
+    savePromise
+        .then(() => {
+            // Check if there's current partner data to save (from steps 2 and 3)
+            if (!this.isCurrentPartnerAdded && this.hasPartnerData()) {
+                this.addCurrentPartnerIfExists();
+            }
+            
+            // Save all partners data
+            return this.saveAllPartnersDataForExit();
+        })
+        .then(() => {
+            this.showToast('Success', 'All form data saved successfully. You can continue later.', 'success');
+            this.isLoading = false;
+            
+            // Optional: Redirect or close the form
+            // this.dispatchEvent(new CustomEvent('exit'));
+        })
+        .catch(error => {
+            console.error('Error in saveAndExitAllData:', error);
+            this.showToast('Error', 'Failed to save data: ' + (error.body?.message || error.message), 'error');
+            this.isLoading = false;
+        });
+}
+
+// Collect all form data from all available components
+collectAllFormData() {
+    // Get organization data (Step 1)
+    const orgComponent = this.template.querySelector('c-organization-information[data-step="1"]');
+    if (orgComponent && typeof orgComponent.getData === 'function') {
+        try {
+            this.organizationData = { ...orgComponent.getData() };
+            console.log('Collected organization data:', this.organizationData);
+        } catch (error) {
+            console.warn('Could not collect organization data:', error);
+        }
+    }
+
+    // Get technical proposal data (Step 2)
+    const techComponent = this.template.querySelector('c-technical-proposal[data-step="2"]');
+    if (techComponent && typeof techComponent.getData === 'function') {
+        try {
+            this.technicalProposalData = { ...techComponent.getData() };
+            console.log('Collected technical proposal data:', this.technicalProposalData);
+        } catch (error) {
+            console.warn('Could not collect technical proposal data:', error);
+        }
+    }
+
+    // Get abatement strategies data (Step 3)
+    const abatementComponent = this.template.querySelector('c-abatement-strategies[data-step="3"]');
+    if (abatementComponent && typeof abatementComponent.getData === 'function') {
+        try {
+            const abatementData = abatementComponent.getData();
+            this.abatementStrategiesData = { ...abatementData };
+            console.log('Collected abatement strategies data:', this.abatementStrategiesData);
+        } catch (error) {
+            console.warn('Could not collect abatement strategies data:', error);
+        }
+    }
+
+    // Get budget information data (Step 4)
+    const budgetComponent = this.template.querySelector('c-budget-information[data-step="4"]');
+    if (budgetComponent && typeof budgetComponent.getData === 'function') {
+        try {
+            this.budgetInformationData = { ...budgetComponent.getData() };
+            console.log('Collected budget information data:', this.budgetInformationData);
+        } catch (error) {
+            console.warn('Could not collect budget information data:', error);
+        }
+    }
+}
+
+// Check if there's meaningful application data to save
+hasApplicationData(applicationData) {
+    if (!applicationData) return false;
+    
+    // Count meaningful fields (exclude Id and empty values)
+    const meaningfulFields = Object.keys(applicationData).filter(key => 
+        key !== 'Id' && 
+        applicationData[key] !== null && 
+        applicationData[key] !== undefined && 
+        applicationData[key] !== ''
+    );
+    
+    return meaningfulFields.length > 0;
+}
+
+// Check if there's meaningful partner data to save
+hasPartnerData() {
+    const hasTechnicalData = this.technicalProposalData && 
+        Object.keys(this.technicalProposalData).some(key => 
+            this.technicalProposalData[key] !== null && 
+            this.technicalProposalData[key] !== undefined && 
+            this.technicalProposalData[key] !== ''
+        );
+        
+    const hasAbatementData = this.abatementStrategiesData && 
+        (this.abatementStrategiesData.abatementStrategies?.length > 0 || 
+         this.abatementStrategiesData.coreStrategies?.length > 0 ||
+         Object.keys(this.abatementStrategiesData).some(key => 
+            key !== 'abatementStrategies' && 
+            key !== 'coreStrategies' &&
+            this.abatementStrategiesData[key] !== null && 
+            this.abatementStrategiesData[key] !== undefined && 
+            this.abatementStrategiesData[key] !== ''
+         ));
+        
+    return hasTechnicalData || hasAbatementData;
+}
+
+// Save all partners data for exit (similar to saveAllPartnersData but with different error handling)
+saveAllPartnersDataForExit() {
+    if (!this.partners || this.partners.length === 0) {
+        return Promise.resolve();
+    }
+
+    console.log('Saving partners data for exit - Partners array:', JSON.stringify(this.partners));
+
+    // Process partners sequentially
+    let promise = Promise.resolve();
+    
+    this.partners.forEach((partner, index) => {
+        promise = promise.then(() => {
+            return this.savePartnerDataForExit(partner, index);
+        });
+    });
+    
+    return promise.then(() => {
+        console.log('All partners saved for exit - Partners array:', JSON.stringify(this.partners));
+    });
+}
+
+// Save individual partner data for exit (similar to savePartnerData but with different error handling)
+savePartnerDataForExit(partner, partnerIndex) {
+    // Prepare Abatement_Strategies__c data
+    const abatementData = {
+        Funding_Application__c: this.recordId,
+        ...partner.technicalProposal,
+        CoreStrategies__c: partner.abatementStrategies.CoreStrategies__c,
+        Core_Abatement_Strategies__c: partner.abatementStrategies.Core_Abatement_Strategies__c
+    };
+    
+    // Include the ID if it exists (for updates)
+    if (partner.abatementStrategies.Id) {
+        abatementData.Id = partner.abatementStrategies.Id;
+    }
+    
+    return saveAbatementStrategies({ abatement: JSON.stringify(abatementData) })
+        .then(result => {
+            if (result && result.success && result.record && result.record.Id) {
+                const abatementId = result.record.Id;
+                
+                // Update the partner's abatement strategy ID in the partners array
+                const partnerToUpdate = this.partners.find(p => p.partnerIndex === partner.partnerIndex);
+                if (partnerToUpdate) {
+                    console.log(`Updating partner ${partner.partnerIndex} with abatement ID: ${abatementId}`);
+                    partnerToUpdate.abatementStrategies.Id = abatementId;
+                    // Force reactivity by creating a new array
+                    this.partners = [...this.partners];
+                }
+                
+                // Save Strategy Line Items (optional for exit, but good to have)
+                const lineItemsPromise = this.savePartnerStrategyLineItemsForExit(partner, abatementId, partnerIndex);
+                
+                // Save Strategy Resources (optional for exit, but good to have)
+                const resourcesPromise = this.savePartnerStrategyResourcesForExit(partner, abatementId, partnerIndex);
+                
+                return Promise.all([lineItemsPromise, resourcesPromise]);
+            } else {
+                console.warn(`Failed to save abatement strategy for partner ${partnerIndex} during exit`);
+                return Promise.resolve(); // Don't fail the entire save process
+            }
+        })
+        .catch(error => {
+            console.warn(`Error saving partner ${partnerIndex} during exit:`, error);
+            return Promise.resolve(); // Don't fail the entire save process
+        });
+}
+
+// Save strategy line items for exit (non-blocking)
+savePartnerStrategyLineItemsForExit(partner, abatementId, partnerIndex) {
+    if (!partner.strategyLineResources || Object.keys(partner.strategyLineResources).length === 0) {
+        return Promise.resolve();
+    }
+
+    const transformedLineItems = {};
+    Object.keys(partner.strategyLineResources).forEach(key => {
+        const item = { ...partner.strategyLineResources[key] };
+        transformedLineItems[key] = item;
+    });
+    
+    return saveStrategyLineItems({
+        abatementId: abatementId,
+        lineItemsJson: JSON.stringify(transformedLineItems)
+    })
+    .then(result => {
+        if (result && result.success && result.strategyToIdMap) {
+            Object.keys(result.strategyToIdMap).forEach(strategyValue => {
+                const recordId = result.strategyToIdMap[strategyValue];
+                if (partner.strategyLineResources[strategyValue]) {
+                    partner.strategyLineResources[strategyValue].Id = recordId;
+                }
+            });
+            this.partners = [...this.partners];
+        }
+    })
+    .catch(error => {
+        console.warn(`Error saving strategy line items for partner ${partnerIndex} during exit:`, error);
+    });
+}
+
+// Save strategy resources for exit (non-blocking)
+savePartnerStrategyResourcesForExit(partner, abatementId, partnerIndex) {
+    if (!partner.abatementExtra || 
+        (!partner.abatementExtra.personnelData || Object.keys(partner.abatementExtra.personnelData).length === 0) &&
+        (!partner.abatementExtra.budgetData || Object.keys(partner.abatementExtra.budgetData).length === 0)) {
+        return Promise.resolve();
+    }
+
+    const resourcesToSave = [];
+    const resourceIndexMap = [];
+    
+    // Personnel Data
+    if (partner.abatementExtra.personnelData) {
+        Object.keys(partner.abatementExtra.personnelData).forEach(strategyName => {
+            partner.abatementExtra.personnelData[strategyName].forEach((personnelRow, index) => {
+                const resourceData = {
+                    RecordTypeName: 'Personnel Information',
+                    Strategy_Name__c: strategyName,
+                    Abatement_Strategies__c: abatementId,
+                    ...personnelRow
+                };
+                resourcesToSave.push(resourceData);
+                resourceIndexMap.push({
+                    type: 'personnel',
+                    strategyName: strategyName,
+                    index: index,
+                    originalId: personnelRow.id || null
+                });
+            });
+        });
+    }
+    
+    // Budget Data
+    if (partner.abatementExtra.budgetData) {
+        Object.keys(partner.abatementExtra.budgetData).forEach(strategyName => {
+            partner.abatementExtra.budgetData[strategyName].forEach((budgetRow, index) => {
+                const resourceData = {
+                    RecordTypeName: 'Budget Information',
+                    Strategy_Name__c: strategyName,
+                    Abatement_Strategies__c: abatementId,
+                    ...budgetRow
+                };
+                resourcesToSave.push(resourceData);
+                resourceIndexMap.push({
+                    type: 'budget',
+                    strategyName: strategyName,
+                    index: index,
+                    originalId: budgetRow.id || null
+                });
+            });
+        });
+    }
+
+    if (resourcesToSave.length === 0) {
+        return Promise.resolve();
+    }
+    
+    return saveStrategyResources({ resourcesJson: JSON.stringify(resourcesToSave) })
+        .then(result => {
+            if (result && result.success && result.insertedIds) {
+                // Update the partner's data with returned IDs
+                resourceIndexMap.forEach((resourceInfo, saveIndex) => {
+                    if (saveIndex < result.insertedIds.length) {
+                        const salesforceId = result.insertedIds[saveIndex];
+                        
+                        if (resourceInfo.type === 'personnel' && 
+                            partner.abatementExtra.personnelData[resourceInfo.strategyName]) {
+                            const personnelRecord = partner.abatementExtra.personnelData[resourceInfo.strategyName][resourceInfo.index];
+                            personnelRecord.Id = salesforceId;
+                            if (personnelRecord.id && personnelRecord.id !== salesforceId) {
+                                delete personnelRecord.id;
+                            }
+                        } else if (resourceInfo.type === 'budget' && 
+                                   partner.abatementExtra.budgetData[resourceInfo.strategyName]) {
+                            const budgetRecord = partner.abatementExtra.budgetData[resourceInfo.strategyName][resourceInfo.index];
+                            budgetRecord.Id = salesforceId;
+                            if (budgetRecord.id && budgetRecord.id !== salesforceId) {
+                                delete budgetRecord.id;
+                            }
+                        }
+                    }
+                });
+                
+                // Update the partners array
+                this.partners[partnerIndex] = {
+                    ...this.partners[partnerIndex],
+                    abatementExtra: {
+                        ...this.partners[partnerIndex].abatementExtra,
+                        personnelData: partner.abatementExtra.personnelData,
+                        budgetData: partner.abatementExtra.budgetData
+                    }
+                };
+            }
+        })
+        .catch(error => {
+            console.warn(`Error saving strategy resources for partner ${partnerIndex} during exit:`, error);
+        });
+}
+
 }

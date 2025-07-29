@@ -640,4 +640,73 @@ public static Map<String, Object> saveStrategyResources(String resourcesJson) {
         return result;
     }
 
+    @AuraEnabled
+    public static Map<String, Object> deleteAbatementStrategyAndChildren(String abatementStrategyId) {
+        System.debug('deleteAbatementStrategyAndChildren START');
+        Map<String, Object> result = new Map<String, Object>();
+        
+        try {
+            if (String.isBlank(abatementStrategyId)) {
+                result.put('success', false);
+                result.put('error', 'No abatement strategy ID provided');
+                return result;
+            }
+            
+            // First, check if the abatement strategy record exists
+            List<Abatement_Strategies__c> existingRecords = [
+                SELECT Id, Name 
+                FROM Abatement_Strategies__c 
+                WHERE Id = :abatementStrategyId 
+                LIMIT 1
+            ];
+            
+            if (existingRecords.isEmpty()) {
+                result.put('success', false);
+                result.put('error', 'Abatement strategy record not found');
+                return result;
+            }
+            
+            // Delete child records first (Strategy Line Items)
+            List<Strategy_Line_Items__c> strategyLineItems = [
+                SELECT Id 
+                FROM Strategy_Line_Items__c 
+                WHERE Abatement_Strategies__c = :abatementStrategyId
+            ];
+            
+            if (!strategyLineItems.isEmpty()) {
+                delete strategyLineItems;
+                System.debug('Deleted ' + strategyLineItems.size() + ' strategy line items');
+            }
+            
+            // Delete child records (Strategy Resources)
+            List<Strategy_Resources__c> strategyResources = [
+                SELECT Id 
+                FROM Strategy_Resources__c 
+                WHERE Abatement_Strategies__c = :abatementStrategyId
+            ];
+            
+            if (!strategyResources.isEmpty()) {
+                delete strategyResources;
+                System.debug('Deleted ' + strategyResources.size() + ' strategy resources');
+            }
+            
+            // Finally, delete the abatement strategy record
+            delete existingRecords[0];
+            System.debug('Deleted abatement strategy record: ' + abatementStrategyId);
+            
+            result.put('success', true);
+            result.put('message', 'Abatement strategy and all child records deleted successfully');
+            
+        } catch (Exception e) {
+            result.put('success', false);
+            result.put('error', e.getMessage());
+            System.debug('Error in deleteAbatementStrategyAndChildren: ' + e.getMessage());
+            System.debug('Exception type: ' + e.getTypeName());
+            System.debug('Stack trace: ' + e.getStackTraceString());
+        }
+        
+        System.debug('deleteAbatementStrategyAndChildren END');
+        return result;
+    }
+
 }

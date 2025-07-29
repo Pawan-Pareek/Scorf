@@ -75,6 +75,7 @@
                                 record-id={recordId}
                                 strategy-line-resources-data={strategyLineResourcesData}
                                 onstrategylineresourceschange={handleStrategyLineResourcesChange}
+                                onstrategyclear={handleStrategyClear}
                                 ondatachange={handleDataChange}>
                             </c-abatement-strategies>
                         </template>
@@ -110,6 +111,17 @@
                                     disabled={isLoading}>
                                 </lightning-button>
                             </template>
+
+                            <!-- Save and Exit button, visible on steps 1 and 3 -->
+    <template if:true={showSaveAndExitButton}>
+        <lightning-button 
+            variant="neutral" 
+            label="Save and Exit" 
+            onclick={handleSaveAndExit}
+            class="slds-m-left_x-small"
+            disabled={isLoading}>
+        </lightning-button>
+    </template>
 
                             <template if:true={isLastStep}>
                                 <lightning-button 
@@ -335,7 +347,8 @@
                                         <td data-label="Delete">
                                             <button class="slds-button slds-button_destructive" 
                                                     data-index={partner.index} 
-                                                    onclick={handleDeletePartner}>
+                                                    onclick={handleDeletePartner}
+                                                    disabled={isOnlyOnePartner}>
                                                 <lightning-icon icon-name="utility:delete" size="x-small" class="slds-m-right_x-small"></lightning-icon>
                                                 Delete
                                             </button>
