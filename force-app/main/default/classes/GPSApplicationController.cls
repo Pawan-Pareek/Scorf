@@ -355,17 +355,74 @@ public static Map<String, Object> saveAbatementStrategies(String abatement) {
         return result;
     }
 
+    @AuraEnabled(cacheable=true)
+    public static Map<String, Object> getStrategyLineItems(String abatementId) {
+        System.debug('getStrategyLineItems START');
+        Map<String, Object> result = new Map<String, Object>();
+        
+        try {
+            if (String.isBlank(abatementId)) {
+                result.put('success', true);
+                result.put('strategyLineItems', new Map<String, Object>());
+                return result;
+            }
+            
+            List<Strategy_Line_Items__c> lineItems = [
+                SELECT Id, Name__c, BudgetAmountForThePurchase__c, IsYourStrategyInitialContinuation__c,
+                       BudgetNarrative__c, ImplementationPlanForTheStrategy__c, ProvideTheOutcomeMeasures__c,
+                       ProvideTheProcessMeasures__c
+                FROM Strategy_Line_Items__c 
+                WHERE Abatement_Strategies__c = :abatementId
+            ];
+            
+            Map<String, Object> strategyLineItemsMap = new Map<String, Object>();
+            for (Strategy_Line_Items__c item : lineItems) {
+                Map<String, Object> itemData = new Map<String, Object>();
+                itemData.put('Id', item.Id);
+                itemData.put('Strategy_Value__c', item.Name__c);
+                itemData.put('BudgetAmountForThePurchase__c', item.BudgetAmountForThePurchase__c);
+                itemData.put('IsYourStrategyInitialContinuation__c', item.IsYourStrategyInitialContinuation__c);
+                itemData.put('BudgetNarrative__c', item.BudgetNarrative__c);
+                itemData.put('ImplementationPlanForTheStrategy__c', item.ImplementationPlanForTheStrategy__c);
+                itemData.put('ProvideTheOutcomeMeasures__c', item.ProvideTheOutcomeMeasures__c);
+                itemData.put('ProvideTheProcessMeasures__c', item.ProvideTheProcessMeasures__c);
+                
+                strategyLineItemsMap.put(item.Name__c, itemData);
+            }
+            
+            result.put('success', true);
+            result.put('strategyLineItems', strategyLineItemsMap);
+            
+        } catch (Exception e) {
+            result.put('success', false);
+            result.put('error', e.getMessage());
+            System.debug('Error in getStrategyLineItems: ' + e.getMessage());
+        }
+        System.debug('getStrategyLineItems END');
+        return result;
+    }
+
     @AuraEnabled
     public static Map<String, Object> saveStrategyLineItems(String abatementId, String lineItemsJson) {
         System.debug('saveStrategyLineItems START' + abatementId + ' ' + lineItemsJson);
         Map<String, Object> result = new Map<String, Object>();
         List<Strategy_Line_Items__c> itemsToUpsert = new List<Strategy_Line_Items__c>();
+        Map<String, String> strategyToIdMap = new Map<String, String>(); // Map strategy value to record ID
         try {
             Map<String, Object> lineItemsMap = (Map<String, Object>) JSON.deserializeUntyped(lineItemsJson);
             System.debug('lineItemsMap: ' + lineItemsMap);
             for (String key : lineItemsMap.keySet()) {
                 Map<String, Object> itemData = (Map<String, Object>)lineItemsMap.get(key);
                 Strategy_Line_Items__c sli = new Strategy_Line_Items__c();
+                
+                // Set Id if it exists and is valid
+                if (itemData.containsKey('Id')) {
+                    String idVal = (String)itemData.get('Id');
+                    if (idVal != null && (idVal.length() == 15 || idVal.length() == 18) && Pattern.matches('^[a-zA-Z0-9]+$', idVal)) {
+                        sli.Id = idVal;
+                    }
+                }
+                
                 // Map Strategy_Value__c to Name__c
                 if (itemData.containsKey('Strategy_Value__c')) {
                     sli.Name__c = (String)itemData.get('Strategy_Value__c');
@@ -390,8 +447,15 @@ public static Map<String, Object> saveAbatementStrategies(String abatement) {
                 itemsToUpsert.add(sli);
             }
             upsert itemsToUpsert;
+            
+            // Create mapping of strategy value to record ID
+            for (Strategy_Line_Items__c item : itemsToUpsert) {
+                strategyToIdMap.put(item.Name__c, item.Id);
+            }
+            
             result.put('success', true);
             result.put('message', 'Strategy Line Items saved successfully');
+            result.put('strategyToIdMap', strategyToIdMap);
         } catch (Exception e) {
             result.put('success', false);
             result.put('error', e.getMessage());

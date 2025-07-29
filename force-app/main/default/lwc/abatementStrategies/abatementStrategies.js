@@ -3,13 +3,39 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getAbatementPicklistValues from '@salesforce/apex/GPSApplicationController.getAbatementPicklistValues';
 //import saveAbatementStrategies from '@salesforce/apex/GPSApplicationController.saveAbatementStrategies';
 import getAbatementStrategiesRecord from '@salesforce/apex/GPSApplicationController.getAbatementStrategiesRecord';
+import getStrategyLineItems from '@salesforce/apex/GPSApplicationController.getStrategyLineItems';
 
 export default class AbatementStrategies extends LightningElement {
     @api applicationData = {};
     @api picklistValues = {};
     @api recordId;
     // Removed: @api strategyLineResourcesData;
-    @api strategyLineResourcesData;
+    @api 
+    get strategyLineResourcesData() {
+        return this._strategyLineResourcesData || {};
+    }
+    
+    set strategyLineResourcesData(value) {
+        this._strategyLineResourcesData = value;
+        // Process the data to ensure Id field exists
+        if (value && Object.keys(value).length > 0) {
+            const processedData = {};
+            Object.keys(value).forEach(key => {
+                const resourceData = value[key];
+                processedData[key] = {
+                    Id: resourceData.Id || null, // Ensure Id field exists
+                    BudgetAmountForThePurchase__c: resourceData.BudgetAmountForThePurchase__c || '',
+                    IsYourStrategyInitialContinuation__c: resourceData.IsYourStrategyInitialContinuation__c || '',
+                    BudgetNarrative__c: resourceData.BudgetNarrative__c || '',
+                    ImplementationPlanForTheStrategy__c: resourceData.ImplementationPlanForTheStrategy__c || '',
+                    ProvideTheOutcomeMeasures__c: resourceData.ProvideTheOutcomeMeasures__c || '',
+                    ProvideTheProcessMeasures__c: resourceData.ProvideTheProcessMeasures__c || '',
+                    Strategy_Value__c: resourceData.Strategy_Value__c || key
+                };
+            });
+            this._strategyLineResourcesData = processedData;
+        }
+    }
 
     @track coreStrategies = [];
     @track mappedAbatementStrategies = {};
@@ -26,7 +52,8 @@ export default class AbatementStrategies extends LightningElement {
         abatementStrategies: []
     };
 
-    @track strategyLineResourcesData = {};
+    @track existingRecordId = null;
+
     @track abatementOptionDataMap = {};
 
     @track personnelData = {}; // { abatementValue: [personnelRows] }
@@ -112,6 +139,9 @@ export default class AbatementStrategies extends LightningElement {
                     this.selectedCoreStrategies = record.CoreStrategies__c || [];
                     this.selectedAbatementStrategies = record.Core_Abatement_Strategies__c || [];
                     
+                    // Store the record ID for existing records
+                    this.existingRecordId = record.Id;
+                    
                     // Expand strategies that have selections
                     this.selectedCoreStrategies.forEach(strategy => {
                         // Extract letter from strategy value (e.g., "A: Something" -> "A")
@@ -119,11 +149,44 @@ export default class AbatementStrategies extends LightningElement {
                         this.expandedStrategies.add(letter);
                     });
                     
+                    // Load strategy line items data
+                    this.loadStrategyLineItemsData(record.Id);
+                    
                     this.updateComponentData();
                 }
             })
             .catch(error => {
                 console.error('Error loading existing data:', error);
+            });
+    }
+
+    loadStrategyLineItemsData(abatementId) {
+        if (!abatementId) return;
+        
+        getStrategyLineItems({ abatementId: abatementId })
+            .then(result => {
+                if (result.success && result.strategyLineItems) {
+                    // Process the data to ensure Id field exists
+                    const processedData = {};
+                    Object.keys(result.strategyLineItems).forEach(key => {
+                        const resourceData = result.strategyLineItems[key];
+                        processedData[key] = {
+                            Id: resourceData.Id || null, // Ensure Id field exists
+                            BudgetAmountForThePurchase__c: resourceData.BudgetAmountForThePurchase__c || '',
+                            IsYourStrategyInitialContinuation__c: resourceData.IsYourStrategyInitialContinuation__c || '',
+                            BudgetNarrative__c: resourceData.BudgetNarrative__c || '',
+                            ImplementationPlanForTheStrategy__c: resourceData.ImplementationPlanForTheStrategy__c || '',
+                            ProvideTheOutcomeMeasures__c: resourceData.ProvideTheOutcomeMeasures__c || '',
+                            ProvideTheProcessMeasures__c: resourceData.ProvideTheProcessMeasures__c || '',
+                            Strategy_Value__c: resourceData.Strategy_Value__c || key
+                        };
+                    });
+                    this._strategyLineResourcesData = processedData;
+                    console.log('Loaded strategy line items data:', this._strategyLineResourcesData);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading strategy line items data:', error);
             });
     }
 
@@ -382,8 +445,8 @@ get processedCoreStrategies() {
                 isSelected: isSelected,
                 subNumber: this.extractSubStrategyNumber(option.value) || (abateIdx + 1),
                 // Always include persisted data if it exists, regardless of selection
-                persistedData: this.strategyLineResourcesData && this.strategyLineResourcesData[option.value]
-                    ? { ...this.strategyLineResourcesData[option.value] }
+                persistedData: this._strategyLineResourcesData && this._strategyLineResourcesData[option.value]
+                    ? { ...this._strategyLineResourcesData[option.value] }
                     : {},
                 personnelRows: isSelected ? (this.personnelData[option.value] || []) : [],
                 budgetRows: isSelected ? (this.budgetData[option.value] || []) : []
@@ -480,13 +543,13 @@ get processedCoreStrategies() {
         );
     
         // Remove all associated strategy line item data
-        const updatedResources = { ...this.strategyLineResourcesData };
+        const updatedResources = { ...this._strategyLineResourcesData };
         optionsToClear.forEach(optionValue => {
             if (updatedResources[optionValue]) {
                 delete updatedResources[optionValue];
             }
         });
-        this.strategyLineResourcesData = updatedResources;
+        this._strategyLineResourcesData = updatedResources;
     
         // Clear personnel and budget data for all options
         const updatedPersonnelData = { ...this.personnelData };
@@ -505,7 +568,7 @@ get processedCoreStrategies() {
         this.budgetData = updatedBudgetData;
     
         // Debug logs to confirm cleared state
-        console.log('After clear, strategyLineResourcesData:', JSON.stringify(this.strategyLineResourcesData, null, 2));
+        console.log('After clear, strategyLineResourcesData:', JSON.stringify(this._strategyLineResourcesData, null, 2));
         console.log('After clear, personnelData:', this.personnelData);
         console.log('After clear, budgetData:', this.budgetData);
     
@@ -530,10 +593,10 @@ get processedCoreStrategies() {
         );
     
         // Remove the corresponding data from strategyLineResourcesData safely
-        if (this.strategyLineResourcesData && this.strategyLineResourcesData[abatementValue]) {
-            const updatedData = { ...this.strategyLineResourcesData };
+        if (this._strategyLineResourcesData && this._strategyLineResourcesData[abatementValue]) {
+            const updatedData = { ...this._strategyLineResourcesData };
             delete updatedData[abatementValue];
-            this.strategyLineResourcesData = updatedData;
+            this._strategyLineResourcesData = updatedData;
         }
     
         // Clear personnel data
@@ -581,6 +644,7 @@ get processedCoreStrategies() {
 
     updateComponentData() {
         this.componentData = {
+            Id: this.existingRecordId, // Include the ID (null if new record, actual ID if existing)
             coreStrategies: [...this.selectedCoreStrategies],
             abatementStrategies: [...this.selectedAbatementStrategies],
             CoreStrategies__c: this.selectedCoreStrategies.join(';'),
@@ -605,26 +669,28 @@ get processedCoreStrategies() {
         const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
 
         // Get current data or initialize
-        const currentData = this.strategyLineResourcesData[abatementValue] || {
-            BudgetAmountForThePurchase__c: '',
-            IsYourStrategyInitialContinuation__c: '',
-            BudgetNarrative__c: '',
-            ImplementationPlanForTheStrategy__c: '',
-            ProvideTheOutcomeMeasures__c: '',
-            ProvideTheProcessMeasures__c: '',
-            Strategy_Value__c: abatementValue
+        const currentData = this.strategyLineResourcesData[abatementValue] || {};
+        const defaultData = {
+            Id: currentData.Id || null, // Preserve existing Id or set to null
+            BudgetAmountForThePurchase__c: currentData.BudgetAmountForThePurchase__c || '',
+            IsYourStrategyInitialContinuation__c: currentData.IsYourStrategyInitialContinuation__c || '',
+            BudgetNarrative__c: currentData.BudgetNarrative__c || '',
+            ImplementationPlanForTheStrategy__c: currentData.ImplementationPlanForTheStrategy__c || '',
+            ProvideTheOutcomeMeasures__c: currentData.ProvideTheOutcomeMeasures__c || '',
+            ProvideTheProcessMeasures__c: currentData.ProvideTheProcessMeasures__c || '',
+            Strategy_Value__c: currentData.Strategy_Value__c || abatementValue
         };
 
         // Update the field
         const updatedData = {
-            ...currentData,
+            ...defaultData,
             [field]: value
         };
-        this.strategyLineResourcesData = {
-            ...this.strategyLineResourcesData,
+        this._strategyLineResourcesData = {
+            ...this._strategyLineResourcesData,
             [abatementValue]: updatedData
         };
-        console.log('strategyLineResourcesData updated:', JSON.stringify(this.strategyLineResourcesData));
+        console.log('strategyLineResourcesData updated:', JSON.stringify(this._strategyLineResourcesData));
         this.emitAbatementDataChange();
     }
 
@@ -647,7 +713,7 @@ get processedCoreStrategies() {
         // Send ALL data to parent, not just selected
         const abatementData = {
             ...this.componentData,
-            strategyLineResources: { ...this.strategyLineResourcesData }
+            strategyLineResources: { ...this._strategyLineResourcesData }
         };
         const personnelData = { ...this.personnelData };
         const budgetData = { ...this.budgetData };
@@ -675,6 +741,11 @@ get processedCoreStrategies() {
     @api
     setData(data) {
         if (data) {
+            // Restore the record ID if it exists
+            if (data.Id) {
+                this.existingRecordId = data.Id;
+            }
+            
             // Restore selected core and abatement strategies
             if (data.coreStrategies) {
                 this.selectedCoreStrategies = Array.isArray(data.coreStrategies) ? data.coreStrategies : data.coreStrategies.split(';');
@@ -683,7 +754,22 @@ get processedCoreStrategies() {
                 this.selectedAbatementStrategies = Array.isArray(data.abatementStrategies) ? data.abatementStrategies : data.abatementStrategies.split(';');
             }
             if (data.strategyLineResources) {
-                this.strategyLineResourcesData = { ...data.strategyLineResources };
+                // Ensure each strategy line resource has an Id field
+                const processedStrategyLineResources = {};
+                Object.keys(data.strategyLineResources).forEach(key => {
+                    const resourceData = data.strategyLineResources[key];
+                    processedStrategyLineResources[key] = {
+                        Id: resourceData.Id || null, // Ensure Id field exists
+                        BudgetAmountForThePurchase__c: resourceData.BudgetAmountForThePurchase__c || '',
+                        IsYourStrategyInitialContinuation__c: resourceData.IsYourStrategyInitialContinuation__c || '',
+                        BudgetNarrative__c: resourceData.BudgetNarrative__c || '',
+                        ImplementationPlanForTheStrategy__c: resourceData.ImplementationPlanForTheStrategy__c || '',
+                        ProvideTheOutcomeMeasures__c: resourceData.ProvideTheOutcomeMeasures__c || '',
+                        ProvideTheProcessMeasures__c: resourceData.ProvideTheProcessMeasures__c || '',
+                        Strategy_Value__c: resourceData.Strategy_Value__c || key
+                    };
+                });
+                this._strategyLineResourcesData = processedStrategyLineResources;
             }
             if (data.personnelData) {
                 this.personnelData = { ...data.personnelData };
@@ -783,8 +869,8 @@ getBudgetRecords(abatementValue) {
 
     // Getter to return the correct strategy line resource data for a given abatement option
     getStrategyLineResourceData(strategyValue) {
-        return this.strategyLineResourcesData && this.strategyLineResourcesData[strategyValue]
-            ? this.strategyLineResourcesData[strategyValue]
+        return this._strategyLineResourcesData && this._strategyLineResourcesData[strategyValue]
+            ? this._strategyLineResourcesData[strategyValue]
             : {};
     }
 
@@ -793,8 +879,8 @@ getBudgetRecords(abatementValue) {
         const map = {};
         this.processedCoreStrategies.forEach(strategy => {
             (strategy.abatementOptions || []).forEach(option => {
-                map[option.value] = this.strategyLineResourcesData && this.strategyLineResourcesData[option.value]
-                    ? this.strategyLineResourcesData[option.value]
+                map[option.value] = this._strategyLineResourcesData && this._strategyLineResourcesData[option.value]
+                    ? this._strategyLineResourcesData[option.value]
                     : {};
             });
         });
@@ -816,9 +902,10 @@ getBudgetRecords(abatementValue) {
         this.selectedCoreStrategies = [];
         this.selectedAbatementStrategies = [];
         this.expandedStrategies = new Set();
-        this.strategyLineResourcesData = {};
+        this._strategyLineResourcesData = {};
         this.personnelData = {};
         this.budgetData = {};
+        this.existingRecordId = null; // Reset the record ID
         this.componentData = {
             coreStrategies: [],
             abatementStrategies: []
@@ -841,7 +928,7 @@ getBudgetRecords(abatementValue) {
         console.log('applicationData:', JSON.stringify(this.applicationData));
         console.log('picklistValues:', JSON.stringify(this.picklistValues));
         console.log('recordId:', this.recordId);
-        console.log('strategyLineResourcesData:', JSON.stringify(this.strategyLineResourcesData));
+        console.log('strategyLineResourcesData:', JSON.stringify(this._strategyLineResourcesData));
         console.log('coreStrategies:', JSON.stringify(this.coreStrategies));
         console.log('mappedAbatementStrategies:', JSON.stringify(this.mappedAbatementStrategies));
         console.log('selectedCoreStrategies:', JSON.stringify(this.selectedCoreStrategies));
@@ -856,5 +943,22 @@ getBudgetRecords(abatementValue) {
         console.log('budgetData:', JSON.stringify(this.budgetData));
         console.log('personnelRows:', JSON.stringify(this.personnelRows));
         // If you want to log more, add here
+    }
+
+    @api
+    updateStrategyLineResourcesIds(strategyToIdMap) {
+        if (strategyToIdMap && typeof strategyToIdMap === 'object') {
+            Object.keys(strategyToIdMap).forEach(strategyValue => {
+                const recordId = strategyToIdMap[strategyValue];
+                if (this._strategyLineResourcesData[strategyValue]) {
+                    this._strategyLineResourcesData[strategyValue].Id = recordId;
+                }
+            });
+            
+            // Force reactivity
+            this._strategyLineResourcesData = { ...this._strategyLineResourcesData };
+            
+            console.log('Updated strategy line resources with IDs:', strategyToIdMap);
+        }
     }
 }

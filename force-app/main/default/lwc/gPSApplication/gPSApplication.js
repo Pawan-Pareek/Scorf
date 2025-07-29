@@ -448,7 +448,12 @@ export default class GpsApplication extends LightningElement {
             this.organizationData = { ...orgComponent.getData() };
         }
 
-        const partnersData = this.getAllPartnersData();
+        // If we're in step 3, add current partner data before saving
+        // Only add if not already added
+        if (this.currentStep === 3 && !this.isCurrentPartnerAdded) {
+            this.addCurrentPartnerIfExists();
+        }
+
         this.isLoading = true;
         
         // Save organization information first
@@ -458,6 +463,8 @@ export default class GpsApplication extends LightningElement {
                 return this.saveAllPartnersData();
             })
             .then(() => {
+                // Debug the final state after saving
+                this.debugPartnersState();
                 this.showToast('Success', 'Application saved successfully', 'success');
                 this.isLoading = false;
             })
@@ -469,23 +476,35 @@ export default class GpsApplication extends LightningElement {
     }
 
     saveAllPartnersData() {
-        // Get all partners data including current partner if it exists
-        const allPartnersData = this.getAllPartnersData();
-        
-        if (!allPartnersData.partners || allPartnersData.partners.length === 0) {
+        // Use the actual partners array instead of getting a copy
+        if (!this.partners || this.partners.length === 0) {
             return Promise.resolve();
         }
+
+        console.log('Before saving - Partners array:', JSON.stringify(this.partners));
 
         // Process partners sequentially
         let promise = Promise.resolve();
         
-        allPartnersData.partners.forEach((partner, index) => {
+        this.partners.forEach((partner, index) => {
             promise = promise.then(() => {
                 return this.savePartnerData(partner, index);
             });
         });
         
-        return promise;
+        return promise.then(() => {
+            console.log('After saving - Partners array:', JSON.stringify(this.partners));
+            
+            // After all partners are saved, update the current abatement strategies data
+            // with the latest IDs from the partners array
+            if (this.partners.length > 0) {
+                // Find the current partner's abatement strategies and update the component data
+                const currentPartner = this.partners.find(p => p.partnerIndex === this.currentPartnerIndex - 1);
+                if (currentPartner && currentPartner.abatementStrategies.Id) {
+                    this.abatementStrategiesData.Id = currentPartner.abatementStrategies.Id;
+                }
+            }
+        });
     }
 
     savePartnerData(partner, partnerIndex) {
@@ -497,11 +516,28 @@ export default class GpsApplication extends LightningElement {
             Core_Abatement_Strategies__c: partner.abatementStrategies.Core_Abatement_Strategies__c
         };
         
+        // Include the ID if it exists (for updates)
+        if (partner.abatementStrategies.Id) {
+            abatementData.Id = partner.abatementStrategies.Id;
+        }
+        
         return saveAbatementStrategies({ abatement: JSON.stringify(abatementData) })
             .then(result => {
                 if (result && result.success && result.record && result.record.Id) {
                     const abatementId = result.record.Id;
                     this.abatementStrategiesIds.push(abatementId);
+                    
+                    // Update the partner's abatement strategy ID in the partners array
+                    // Find the partner by partnerIndex instead of array index
+                    const partnerToUpdate = this.partners.find(p => p.partnerIndex === partner.partnerIndex);
+                    if (partnerToUpdate) {
+                        console.log(`Updating partner ${partner.partnerIndex} with abatement ID: ${abatementId}`);
+                        partnerToUpdate.abatementStrategies.Id = abatementId;
+                        // Force reactivity by creating a new array
+                        this.partners = [...this.partners];
+                    } else {
+                        console.log(`Partner with index ${partner.partnerIndex} not found in partners array`);
+                    }
                     
                     // Save Strategy Line Items
                     const lineItemsPromise = this.savePartnerStrategyLineItems(partner, abatementId, partnerIndex);
@@ -534,6 +570,21 @@ export default class GpsApplication extends LightningElement {
         })
         .then(result => {
             if (result && result.success) {
+                // Update strategy line resources with returned IDs
+                if (result.strategyToIdMap) {
+                    Object.keys(result.strategyToIdMap).forEach(strategyValue => {
+                        const recordId = result.strategyToIdMap[strategyValue];
+                        if (partner.strategyLineResources[strategyValue]) {
+                            partner.strategyLineResources[strategyValue].Id = recordId;
+                        }
+                    });
+                    
+                    // Force reactivity by creating a new array
+                    this.partners = [...this.partners];
+                    
+                    console.log(`Updated strategy line resources with IDs for partner ${partnerIndex}:`, result.strategyToIdMap);
+                }
+                
                 if (result.insertedIds && result.insertedIds.length > 0) {
                     this.strategyLineItemIds.push(...result.insertedIds);
                 }
@@ -774,6 +825,7 @@ export default class GpsApplication extends LightningElement {
                 partnerIndex: this.isEditingExistingPartner ? this.editingPartnerIndex : this.currentPartnerIndex,
                 technicalProposal: { ...this.technicalProposalData },
                 abatementStrategies: {
+                    Id: this.abatementStrategiesData.Id || null, // Include the ID from abatement data
                     coreStrategies: selectedCoreStrategies,
                     abatementStrategies: selectedAbatementStrategies,
                     CoreStrategies__c: selectedCoreStrategies.join(';'),
@@ -895,6 +947,7 @@ export default class GpsApplication extends LightningElement {
                     partnerIndex: this.currentPartnerIndex,
                     technicalProposal: { ...this.technicalProposalData },
                     abatementStrategies: {
+                        Id: this.abatementStrategiesData.Id || null, // Include the ID from abatement data
                         coreStrategies: selectedCoreStrategies,
                         abatementStrategies: selectedAbatementStrategies,
                         CoreStrategies__c: selectedCoreStrategies.join(';'),
@@ -906,6 +959,8 @@ export default class GpsApplication extends LightningElement {
                         budgetData: filteredBudgetData
                     }
                 };
+                
+                console.log('Adding current partner with data:', JSON.stringify(partnerData));
                 
                 // Check if this partner data already exists in the partners array
                 const partnerName = this.technicalProposalData.PartnerName__c;
@@ -1024,6 +1079,7 @@ export default class GpsApplication extends LightningElement {
                     
                     const emptyAbatementData = {
                         ...cleanedApplicationData, // Keep organization info only
+                        Id: null, // Reset the ID when clearing
                         coreStrategies: [],
                         abatementStrategies: [],
                         CoreStrategies__c: '',
@@ -1077,6 +1133,18 @@ export default class GpsApplication extends LightningElement {
             currentPartnerIndex: this.currentPartnerIndex,
             totalPartners: allPartners.length
         };
+    }
+
+    // Debug method to check current partners state
+    @api
+    debugPartnersState() {
+        console.log('=== DEBUG PARTNERS STATE ===');
+        console.log('Current partners array:', JSON.stringify(this.partners));
+        console.log('Current partner index:', this.currentPartnerIndex);
+        console.log('Is current partner added:', this.isCurrentPartnerAdded);
+        console.log('Current step:', this.currentStep);
+        console.log('Abatement strategies data:', JSON.stringify(this.abatementStrategiesData));
+        console.log('=== END DEBUG ===');
     }
 
     // Get current partner data if it exists
@@ -1139,6 +1207,7 @@ export default class GpsApplication extends LightningElement {
                     partnerIndex: this.currentPartnerIndex,
                     technicalProposal: { ...technicalData },
                     abatementStrategies: {
+                        Id: abatementData.Id || null, // Include the ID from abatement data
                         coreStrategies: selectedCoreStrategies,
                         abatementStrategies: selectedAbatementStrategies,
                         CoreStrategies__c: selectedCoreStrategies.join(';'),
