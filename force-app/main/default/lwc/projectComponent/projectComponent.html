@@ -1,3 +1,615 @@
 <template>
+    <div class="slds-card">
+        <!-- Header Section with Status Cards -->
+        <div class="slds-card__header">
+            <div class="slds-grid slds-grid_align-spread slds-gutters">
+                <!-- Approved Card -->
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="status-card approved-card">
+                        <div class="status-icon-container approved-bg">
+                            <lightning-icon icon-name="utility:check" alternative-text="Approved" size="medium" class="status-icon"></lightning-icon>
+                        </div>
+                        <div class="status-content">
+                            <div class="status-label">Approved</div>
+                            <div class="status-count">{projectData.approvedCount}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Rejected Card -->
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="status-card rejected-card">
+                        <div class="status-icon-container rejected-bg">
+                            <lightning-icon icon-name="utility:close" alternative-text="Rejected" size="medium" class="status-icon"></lightning-icon>
+                        </div>
+                        <div class="status-content">
+                            <div class="status-label">Rejected</div>
+                            <div class="status-count">{projectData.rejectedCount}</div>
+                            <template if:true={hasRejectedDot}>
+                                <div class="red-dot"></div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Revision Card -->
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="status-card revision-card">
+                        <div class="status-icon-container revision-bg">
+                            <lightning-icon icon-name="utility:preview" alternative-text="Revision" size="medium" class="status-icon"></lightning-icon>
+                        </div>
+                        <div class="status-content">
+                            <div class="status-label">Revision</div>
+                            <div class="status-count">{projectData.revisionCount}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Total Card -->
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="status-card total-card">
+                        <div class="status-icon-container total-bg">
+                            <lightning-icon icon-name="utility:table" alternative-text="Total" size="medium" class="status-icon"></lightning-icon>
+                        </div>
+                        <div class="status-content">
+                            <div class="status-label">Total</div>
+                            <div class="status-count">{projectData.totalCount}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- All Projects Section -->
+        <div class="slds-card__body slds-card__body_inner">
+            <div class="section-header">
+                <lightning-icon icon-name="utility:apps" alternative-text="All Projects" size="small" class="section-icon"></lightning-icon>
+                <h2 class="section-title">All Projects</h2>
+            </div>
+            
+            <!-- Data Table -->
+            <div class="slds-table_col-bordered slds-table_striped slds-no-row-hover table-container">
+                <table class="slds-table slds-table_bordered slds-table_fixed-layout">
+                    <thead>
+                        <tr class="slds-line-height_reset">
+                            <th class="slds-text-title_caps" scope="col" style="width: 60px;">
+                                <div class="slds-truncate">Sr. No.</div>
+                            </th>
+                            <th class="slds-text-title_caps" scope="col" style="width: 80px;">
+                                <div class="slds-truncate">Action</div>
+                            </th>
+                            <th class="slds-text-title_caps" scope="col" style="width: 120px;">
+                                <div class="slds-truncate">Application ID</div>
+                            </th>
+                            <th class="slds-text-title_caps" scope="col" style="width: 180px;">
+                                <div class="slds-truncate">Application Status</div>
+                            </th>
+                            <th class="slds-text-title_caps" scope="col" style="width: 140px;">
+                                <div class="slds-truncate">Submitted Date</div>
+                            </th>
+                            <th class="slds-text-title_caps" scope="col" style="width: 120px;">
+                                <div class="slds-truncate">Request Type</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={projectData.applications} for:item="app" for:index="index">
+                            <tr key={app.Id} class="table-row">
+                                <td data-label="Sr. No.">
+                                    <div class="slds-truncate">{app.serialNumber}</div>
+                                </td>
+                                <td data-label="Action">
+                                    <div class="action-buttons">
+                                        <template if:true={app.showEdit}>
+                                            <lightning-button-icon 
+                                                icon-name="utility:edit" 
+                                                alternative-text="Edit" 
+                                                title="Edit"
+                                                onclick={handleEdit}
+                                                data-id={app.Id}
+                                                variant="border-filled"
+                                                size="small">
+                                            </lightning-button-icon>
+                                        </template>
+                                        <template if:false={app.showEdit}>
+                                            <lightning-button-icon 
+                                                icon-name="utility:preview" 
+                                                alternative-text="View" 
+                                                title="View"
+                                                onclick={handleView}
+                                                data-id={app.Id}
+                                                variant="border-filled"
+                                                size="small">
+                                            </lightning-button-icon>
+                                        </template>
+                                    </div>
+                                </td>
+                                <td data-label="Application ID">
+                                    <div class="slds-truncate">{app.Name}</div>
+                                </td>
+                                <td data-label="Application Status">
+                                    <div class="slds-truncate">{app.ApplicationStatus__c}</div>
+                                </td>
+                                <td data-label="Submitted Date">
+                                    <div class="slds-truncate">{app.formattedDate}</div>
+                                </td>
+                                <td data-label="Request Type">
+                                    <div class="slds-truncate">{app.RequestType__c}</div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+<template if:true={isModalOpen}>
+    <div class="modal-backdrop" onclick={handleModalBackdropClick}>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 class="modal-title">Application Details</h2>
+                <lightning-button-icon 
+                    icon-name="utility:close" 
+                    alternative-text="Close" 
+                    onclick={closeModal}
+                    class="modal-close-btn">
+                </lightning-button-icon>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Political Subdivision Information Section -->
+                <div class="info-section">
+                    <div class="section-header-modal">
+                        <lightning-icon icon-name="utility:groups" size="small" class="section-icon-modal"></lightning-icon>
+                        <h3 class="section-title-modal">Political Subdivision Information</h3>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Indicate whether this request is for funds from the Guaranteed Political Subdivision Fund (GPS for/on behalf of participating political subdivisions only) or Discretionary Subfund (DSF)? :</label>
+                                <span class="field-value">{selectedApplication.RequestType__c}</span>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">Does The Requesting Entity Approve Line-Item Severability Throughout The Application? :</label>
+                                <span class="field-value">{selectedApplication.DoesEntityApproveLineItems__c}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Name of Individual Completing the Application :</label>
+                                <span class="field-value">{selectedApplication.NameOfPersonCompletingForm__c}</span>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">Are You Collaborating With Other GPS? :</label>
+                                <span class="field-value">{selectedApplication.CollaboratingWithOtherGPSEntity__c}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Title of Individual Completing the Application :</label>
+                                <span class="field-value">Program Manager</span>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">Was the requesting Entity a litigating subdivision? :</label>
+                                <span class="field-value">{selectedApplication.WasEntityALitigatingSubdivision__c}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Political Subdivision Name :</label>
+                                <span class="field-value">Midlands Wellness Foundation</span>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">Is the requesting Entity a South Carolina Bellwether Plaintiff? :</label>
+                                <span class="field-value">{selectedApplication.IsEntityAnSCBellwetherPlaintiff__c}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Political Subdivision Contact Number :</label>
+                                <span class="field-value">123-456-7876</span>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">Does the requesting Entity, or any of its board members or employees, have any personal, financial, or other relationship with any Member of the SC Opioid Recovery Fund Board that may reasonably be viewed as a conflict of interest for that Member? :</label>
+                                <span class="field-value">{selectedApplication.Any_Potential_Conflict_with_SC_Recovery__c}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Political Subdivision Email :</label>
+                                <span class="field-value">mishruti@uciny.com</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">SCEIS Vendor Number :</label>
+                                <span class="field-value">{selectedApplication.SCEISVendorNumber__c}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Entity Type :</label>
+                                <span class="field-value">{selectedApplication.EntityType__c}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Remit To Section -->
+                <div class="info-section">
+                    <div class="section-header-modal">
+                        <lightning-icon icon-name="utility:payment_gateway" size="small" class="section-icon-modal"></lightning-icon>
+                        <h3 class="section-title-modal">Payment Remit To(As per SCEIS)</h3>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Address Line 1 :</label>
+                                <span class="field-value">{selectedApplication.PaymentRemitToAddressLine1__c}</span>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">Address Line 2 :</label>
+                                <span class="field-value">{selectedApplication.PaymentRemitToAddressLine2__c}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">City :</label>
+                                <span class="field-value">{selectedApplication.PaymentRemitToCity__c}</span>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">State :</label>
+                                <span class="field-value">{selectedApplication.PaymentRemitToState__c}</span>
+                            </div>
+                        </div>
+
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Zip :</label>
+                                <span class="field-value">{selectedApplication.PaymentRemitToZip__c}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Political Subdivision Address -->
+                <div class="info-section">
+                    <div class="section-header-modal">
+                        <lightning-icon icon-name="utility:payment_gateway" size="small" class="section-icon-modal"></lightning-icon>
+                        <h3 class="section-title-modal">Political Subdivision Address</h3>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Address Line 1 :</label>
+                                <span class="field-value">{selectedApplication.AddressLine1__c}</span>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">Address Line 2 :</label>
+                                <span class="field-value">{selectedApplication.AddressLine2__c}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">City :</label>
+                                <span class="field-value">{selectedApplication.City__c}</span>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">State :</label>
+                                <span class="field-value">{selectedApplication.State__c}</span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Zip :</label>
+                                <span class="field-value">{selectedApplication.Zip__c}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    <!-- Application Point of Contact -->
+                <div class="info-section">
+                    <div class="section-header-modal">
+                        <lightning-icon icon-name="utility:payment_gateway" size="small" class="section-icon-modal"></lightning-icon>
+                        <h3 class="section-title-modal">Application Point of Contact</h3>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Project Manager Name :</label>
+                                <span class="field-value">{selectedApplication.ProgramManagerName__c}</span>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">Project Manager PhoneNumber :</label>
+                                <span class="field-value">{selectedApplication.ProgramManagerPhoneNumber__c}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Project Manager Email</label>
+                                <span class="field-value">{selectedApplication.ProgramManagerEmail__c}</span>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">Fiscal Manager Title :</label>
+                                <span class="field-value">{selectedApplication.FiscalManagerTitle__c}</span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Fiscal Manager Phone Number :</label>
+                                <span class="field-value">{selectedApplication.FiscalManagerPhoneNumber__c}</span>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">Fiscal Manager Email :</label>
+                                <span class="field-value">{selectedApplication.FiscalManagerEmail__c}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Partner Table Section -->
+<div class="info-section">
+    <div class="section-header-modal">
+        <lightning-icon icon-name="utility:groups" size="small" class="section-icon-modal"></lightning-icon>
+        <h3 class="section-title-modal">Partner Table</h3>
+    </div>
     
+    <div class="partner-table-container">
+        <table class="slds-table slds-table_bordered">
+            <thead>
+                <tr>
+                    <th scope="col">Sr No.</th>
+                    <th scope="col">Partner Name</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template for:each={partnerData} for:item="partner">
+                    <tr key={partner.id}>
+                        <td>{partner.serialNumber}</td>
+                        <td>{partner.partnerName}</td>
+                        <td>
+                            <lightning-button 
+                                label="View" 
+                                variant="brand" 
+                                size="small"
+                                onclick={handlePartnerView}
+                                data-id={partner.id}>
+                            </lightning-button>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Budget Information Section -->
+<div class="info-section">
+    <div class="section-header-modal" onclick={toggleBudgetInfo} style="cursor: pointer;">
+        <lightning-icon 
+    icon-name={budgetIconName} 
+    size="small" 
+    class="section-icon-modal">
+</lightning-icon>
+        <h3 class="section-title-modal">Budget Information</h3>
+    </div>
+    
+    <template if:true={isBudgetExpanded}>
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-field">
+                    <label class="field-label">Total Project Budget :</label>
+                    <span class="field-value">{selectedApplication.Total_Project_Budget__c}</span>
+                </div>
+                <div class="info-field">
+                    <label class="field-label">Minus Estimated Carry Forward Amount :</label>
+                    <span class="field-value">{selectedApplication.MinusEstimatedCarryForwardAmount__c}</span>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-field">
+                    <label class="field-label">Minus Estimated Interest Earned :</label>
+                    <span class="field-value">{selectedApplication.MinusEstimatedInterestEarned__c}</span>
+                </div>
+                <div class="info-field">
+                    <label class="field-label">Total Amount Requested :</label>
+                    <span class="field-value">{selectedApplication.Total_Amount_Requested__c}</span>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+            </div>
+        </div>
+    </div>
+
+    
+</template>
+
+<!-- Partner Modal -->
+<template if:true={isPartnerModalOpen}>
+    <div class="modal-backdrop" onclick={handlePartnerModalBackdropClick}>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 class="modal-title">Partner Details - {selectedPartnerName}</h2>
+                <lightning-button-icon 
+                    icon-name="utility:close" 
+                    alternative-text="Close" 
+                    onclick={closePartnerModal}
+                    class="modal-close-btn">
+                </lightning-button-icon>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Abatement Strategies Section -->
+                <template for:each={selectedPartnerStrategies} for:item="strategyData">
+                    <div key={strategyData.strategy.Id} class="info-section strategy-section">
+                        <!-- Partner Name Header -->
+                        <div class="partner-header">
+                            <lightning-icon icon-name="utility:groups" size="small" class="partner-icon"></lightning-icon>
+                            <h3 class="partner-name">{strategyData.strategy.PartnerName__c}</h3>
+                        </div>
+                        
+                        <!-- Technical Proposal Dropdown -->
+                        <div class="dropdown-section">
+                            <div class="dropdown-header" onclick={toggleTechnicalProposal} data-id={strategyData.strategy.Id}>
+                                <lightning-icon icon-name={getTechnicalProposalIcon} size="small" class="dropdown-icon"></lightning-icon>
+                                <h4 class="dropdown-title">Technical Proposal</h4>
+                            </div>
+                            <template if:true={isTechnicalProposalExpanded}>
+                                <div class="dropdown-content">
+                                    <div class="info-grid">
+                                        <div class="info-field">
+                                            <label class="field-label">Geographic Area Population Poverty:</label>
+                                            <span class="field-value">{strategyData.strategy.GeographicAreaPopulationPoverty__c}</span>
+                                        </div>
+                                        <div class="info-field">
+                                            <label class="field-label">Outline Existing Efforts and New Expansion:</label>
+                                            <span class="field-value">{strategyData.strategy.Outline_Existing_Efforts_and_New_Expansi__c}</span>
+                                        </div>
+                                        <div class="info-field">
+                                            <label class="field-label">Describe Current Budget and Funding Source:</label>
+                                            <span class="field-value">{strategyData.strategy.Describe_Current_Budget_and_Funding_Sour__c}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        <!-- Strategies Dropdown -->
+                        <div class="dropdown-section">
+                            <div class="dropdown-header" onclick={toggleStrategySection} data-id={strategyData.strategy.Id}>
+                                <lightning-icon icon-name={getStrategyIcon} size="small" class="dropdown-icon"></lightning-icon>
+                                <h4 class="dropdown-title">Strategies</h4>
+                            </div>
+                            <template if:true={isStrategyExpanded}>
+                                <div class="dropdown-content">
+                                    <!-- Core Strategies Info -->
+                                    <div class="info-grid">
+                                        <div class="info-field">
+                                            <label class="field-label">Core Strategies:</label>
+                                            <span class="field-value">{strategyData.strategy.CoreStrategies__c}</span>
+                                        </div>
+                                        <div class="info-field">
+                                            <label class="field-label">Core Abatement Strategies:</label>
+                                            <span class="field-value">{strategyData.strategy.Core_Abatement_Strategies__c}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Strategy Line Items -->
+                                    <template for:each={strategyData.lineItems} for:item="lineItem">
+                                        <div key={lineItem.Id} class="strategy-line-item">
+                                            <h5 class="line-item-title">Strategy Line Item</h5>
+                                            <div class="info-grid">
+                                                <div class="info-field">
+                                                    <label class="field-label">Is Your Strategy Initial Continuation:</label>
+                                                    <span class="field-value">{lineItem.IsYourStrategyInitialContinuation__c}</span>
+                                                </div>
+                                                <div class="info-field">
+                                                    <label class="field-label">Implementation Plan:</label>
+                                                    <span class="field-value">{lineItem.ImplementationPlanForTheStrategy__c}</span>
+                                                </div>
+                                                <div class="info-field">
+                                                    <label class="field-label">Process Measures:</label>
+                                                    <span class="field-value">{lineItem.ProvideTheProcessMeasures__c}</span>
+                                                </div>
+                                                <div class="info-field">
+                                                    <label class="field-label">Outcome Measures:</label>
+                                                    <span class="field-value">{lineItem.ProvideTheOutcomeMeasures__c}</span>
+                                                </div>
+                                                <div class="info-field">
+                                                    <label class="field-label">Budget Amount:</label>
+                                                    <span class="field-value">{lineItem.BudgetAmountForThePurchase__c}</span>
+                                                </div>
+                                                <div class="info-field">
+                                                    <label class="field-label">Budget Narrative:</label>
+                                                    <span class="field-value">{lineItem.BudgetNarrative__c}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    
+                                    <!-- Strategy Resources -->
+                                    <template for:each={strategyData.resources} for:item="resource">
+                                        <div key={resource.Id} class="strategy-resource">
+                                            <h5 class="resource-title">Strategy Resources</h5>
+                                            
+                                            <!-- Personnel Section -->
+                                            <div class="resource-subsection">
+                                                <h6 class="subsection-title">Personnel</h6>
+                                                <div class="info-grid">
+                                                    <div class="info-field">
+                                                        <label class="field-label">Personnel Name:</label>
+                                                        <span class="field-value">{resource.PersonnelName__c}</span>
+                                                    </div>
+                                                    <div class="info-field">
+                                                        <label class="field-label">Personnel Position:</label>
+                                                        <span class="field-value">{resource.PersonnelPosition__c}</span>
+                                                    </div>
+                                                    <div class="info-field">
+                                                        <label class="field-label">Total Charged to Award:</label>
+                                                        <span class="field-value">{resource.PersonnelTotalChargedToAward__c}</span>
+                                                    </div>
+                                                    <div class="info-field">
+                                                        <label class="field-label">Level of Effort:</label>
+                                                        <span class="field-value">{resource.PersonnelLevelOfEffort__c}</span>
+                                                    </div>
+                                                    <div class="info-field">
+                                                        <label class="field-label">Annual Salary:</label>
+                                                        <span class="field-value">{resource.PersonnelKeyStaffAnnualSalary__c}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Budget Section -->
+                                            <div class="resource-subsection">
+                                                <h6 class="subsection-title">Budget</h6>
+                                                <div class="info-grid">
+                                                    <div class="info-field">
+                                                        <label class="field-label">Budget Item:</label>
+                                                        <span class="field-value">{resource.BudgetItem__c}</span>
+                                                    </div>
+                                                    <div class="info-field">
+                                                        <label class="field-label">Budget Purpose:</label>
+                                                        <span class="field-value">{resource.BudgetPurpose__c}</span>
+                                                    </div>
+                                                    <div class="info-field">
+                                                        <label class="field-label">Budget Total Charged:</label>
+                                                        <span class="field-value">{resource.BudgetTotalChargedToAward__c}</span>
+                                                    </div>
+                                                    <div class="info-field">
+                                                        <label class="field-label">Budget Calculation:</label>
+                                                        <span class="field-value">{resource.BudgetCalculation__c}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>
 </template>

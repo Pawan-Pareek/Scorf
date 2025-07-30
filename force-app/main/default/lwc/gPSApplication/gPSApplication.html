@@ -123,14 +123,7 @@
         </lightning-button>
     </template>
 
-                            <template if:true={isLastStep}>
-                                <lightning-button 
-                                    variant="brand" 
-                                    label="Save Application" 
-                                    onclick={handleSave}
-                                    disabled={isLoading}>
-                                </lightning-button>
-                            </template>
+
 
                             <!-- Add this button next to the existing Save button, but only show on step 4 -->
 <template if:true={showSaveAndPreviewButton}>
@@ -290,6 +283,32 @@
                     </section>
                 </div>
 
+                <!-- Overall Budget Information Section -->
+                <div class="slds-accordion slds-m-top_medium">
+                    <section class="slds-accordion__section slds-is-open">
+                        <div class="slds-accordion__summary">
+                            <h3 class="slds-accordion__summary-heading">
+                                <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
+                                    <lightning-icon icon-name="standard:currency" size="small" class="slds-m-right_small"></lightning-icon>
+                                    Overall Budget Information
+                                </span>
+                            </h3>
+                        </div>
+                        <div class="slds-accordion__content">
+                            <div class="slds-grid slds-wrap slds-p-around_medium">
+                                <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+                                    <p><strong>Total Project Budget :</strong> {formattedPreviewData.totalProjectBudget}</p>
+                                    <p><strong>Minus Estimated Carry Forward Amount :</strong> {formattedPreviewData.minusEstimatedCarryForward}</p>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <p><strong>Minus Estimated Interest Earned :</strong> {formattedPreviewData.minusEstimatedInterestEarned}</p>
+                                    <p><strong>Total Amount Requested :</strong> {formattedPreviewData.totalAmountRequested}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
                     <!-- Partner Table Section -->
 <div class="slds-accordion slds-m-top_medium">
     <section class="slds-accordion__section slds-is-open">
@@ -367,6 +386,62 @@
             </div>
         </div>
 
+                <!-- Budget Information Section -->
+                <div class="slds-accordion slds-m-top_medium">
+                    <section class="slds-accordion__section slds-is-open">
+                        <div class="slds-accordion__summary">
+                            <h3 class="slds-accordion__summary-heading">
+                                <span class="slds-accordion__summary-content" style="background-color: #d3d3d3; color: black; padding: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+                                    <span style="display: flex; align-items: center;">
+                                        <lightning-icon icon-name="standard:currency" size="small" class="slds-m-right_small"></lightning-icon>
+                                        Budget Information
+                                    </span>
+                                    <lightning-icon icon-name="utility:chevrondown" size="small"></lightning-icon>
+                                </span>
+                            </h3>
+                        </div>
+                        <div class="slds-accordion__content">
+                            <div class="slds-p-around_medium">
+                                <!-- Checkbox and Consent Text -->
+                                <div class="slds-form-element slds-m-bottom_medium">
+                                    <div class="slds-form-element__control">
+                                        <lightning-input 
+                                            type="checkbox" 
+                                            name="consentCheckbox" 
+                                            label="By submitting this form, I confirm that I have read and understood the provided information, and I consent to the processing of my data in accordance with the stated terms."
+                                            checked={consentChecked}
+                                            onchange={handleConsentChange}>
+                                        </lightning-input>
+                                    </div>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="slds-grid slds-grid_align-center slds-m-top_medium">
+                                    <div class="slds-col slds-size_1-of-2 slds-p-right_x-small">
+                                        <lightning-button 
+                                            variant="brand" 
+                                            label="Edit" 
+                                            icon-name="utility:edit"
+                                            onclick={handleEditBudget}
+                                            class="slds-button_full">
+                                        </lightning-button>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-p-left_x-small">
+                                        <lightning-button 
+                                            variant="brand" 
+                                            label="Submit" 
+                                            icon-name="utility:save"
+                                            onclick={handleSubmitBudget}
+                                            disabled={isSubmitDisabled}
+                                            class="slds-button_full">
+                                        </lightning-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
         <!-- Partner View Modal -->
 <template if:true={showPartnerViewModal}>
     <section role="dialog" tabindex="-1" aria-labelledby="partner-modal-heading" aria-modal="true" class="slds-modal slds-fade-in-open">
@@ -415,6 +490,115 @@
                             </div>
                         </section>
                     </div>
+
+                    <!-- Strategy Line Resources Section -->
+                    <template if:true={selectedPartnerData.strategyLineResources}>
+                        <div class="slds-accordion slds-m-top_medium">
+                            <section class="slds-accordion__section slds-is-open">
+                                <div class="slds-accordion__summary">
+                                    <h3 class="slds-accordion__summary-heading">
+                                        <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem;">
+                                            Strategy Line Resources
+                                        </span>
+                                    </h3>
+                                </div>
+                                <div class="slds-accordion__content slds-p-around_medium">
+                                    <template for:each={formattedStrategyLineResourcesList} for:item="strategy">
+                                        <div key={strategy.key} class="slds-box slds-m-bottom_medium">
+                                            <h4 class="slds-text-heading_small slds-m-bottom_small">{strategy.strategyName}</h4>
+                                            <div class="slds-grid slds-wrap">
+                                                <div class="slds-col slds-size_1-of-2">
+                                                    <p><strong>Budget Amount:</strong> {strategy.formattedBudgetAmount}</p>
+                                                    <p><strong>Initial or Continuation:</strong> {strategy.formattedInitialContinuation}</p>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2">
+                                                    <p><strong>Budget Narrative:</strong> {strategy.formattedBudgetNarrative}</p>
+                                                    <p><strong>Implementation Plan:</strong> {strategy.formattedImplementationPlan}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </section>
+                        </div>
+                    </template>
+
+                    <!-- Personnel Information Section -->
+                    <template if:true={selectedPartnerData.abatementExtra.personnelData}>
+                        <div class="slds-accordion slds-m-top_medium">
+                            <section class="slds-accordion__section slds-is-open">
+                                <div class="slds-accordion__summary">
+                                    <h3 class="slds-accordion__summary-heading">
+                                        <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem;">
+                                            Personnel Information
+                                        </span>
+                                    </h3>
+                                </div>
+                                <div class="slds-accordion__content slds-p-around_medium">
+                                    <template for:each={formattedPersonnelDataList} for:item="personnel">
+                                        <div key={personnel.key} class="slds-box slds-m-bottom_medium">
+                                            <h4 class="slds-text-heading_small slds-m-bottom_small">{personnel.strategyName}</h4>
+                                            <template for:each={personnel.data} for:item="person" for:index="index">
+                                                <div key={person.key} class="slds-m-bottom_small">
+                                                    <h5 class="slds-text-heading_small">Person {index}</h5>
+                                                    <div class="slds-grid slds-wrap">
+                                                        <div class="slds-col slds-size_1-of-2">
+                                                            <p><strong>Name:</strong> {person.formattedName}</p>
+                                                            <p><strong>Title:</strong> {person.formattedTitle}</p>
+                                                            <p><strong>Email:</strong> {person.formattedEmail}</p>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2">
+                                                            <p><strong>Phone:</strong> {person.formattedPhone}</p>
+                                                            <p><strong>Role:</strong> {person.formattedRole}</p>
+                                                            <p><strong>FTE:</strong> {person.formattedFTE}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </section>
+                        </div>
+                    </template>
+
+                    <!-- Budget Information Section -->
+                    <template if:true={selectedPartnerData.abatementExtra.budgetData}>
+                        <div class="slds-accordion slds-m-top_medium">
+                            <section class="slds-accordion__section slds-is-open">
+                                <div class="slds-accordion__summary">
+                                    <h3 class="slds-accordion__summary-heading">
+                                        <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem;">
+                                            Budget Information
+                                        </span>
+                                    </h3>
+                                </div>
+                                <div class="slds-accordion__content slds-p-around_medium">
+                                    <template for:each={formattedBudgetDataList} for:item="budget">
+                                        <div key={budget.key} class="slds-box slds-m-bottom_medium">
+                                            <h4 class="slds-text-heading_small slds-m-bottom_small">{budget.strategyName}</h4>
+                                            <template for:each={budget.data} for:item="budgetItem" for:index="index">
+                                                <div key={budgetItem.key} class="slds-m-bottom_small">
+                                                    <h5 class="slds-text-heading_small">Budget Item {index}</h5>
+                                                    <div class="slds-grid slds-wrap">
+                                                        <div class="slds-col slds-size_1-of-2">
+                                                            <p><strong>Description:</strong> {budgetItem.formattedDescription}</p>
+                                                            <p><strong>Amount:</strong> {budgetItem.formattedAmount}</p>
+                                                            <p><strong>Category:</strong> {budgetItem.formattedCategory}</p>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2">
+                                                            <p><strong>Vendor:</strong> {budgetItem.formattedVendor}</p>
+                                                            <p><strong>Justification:</strong> {budgetItem.formattedJustification}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </section>
+                        </div>
+                    </template>
                 </template>
             </div>
             <footer class="slds-modal__footer">

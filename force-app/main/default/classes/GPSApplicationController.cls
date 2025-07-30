@@ -709,4 +709,129 @@ public static Map<String, Object> saveStrategyResources(String resourcesJson) {
         return result;
     }
 
+//     @AuraEnabled
+// public static Map<String, Object> deleteRecordsByIds(String recordsToDelete) {
+//     System.debug('deleteRecordsByIds START');
+//     System.debug('recordsToDelete parameter: ' + recordsToDelete);
+//     Map<String, Object> result = new Map<String, Object>();
+    
+//     try {
+//         System.debug('recordsToDelete JSON: ' + recordsToDelete);
+        
+//         if (String.isBlank(recordsToDelete)) {
+//             System.debug('ERROR: recordsToDelete is blank');
+//             result.put('success', false);
+//             result.put('error', 'No records to delete provided');
+//             return result;
+//         }
+        
+//         // Parse the JSON string to get the records to delete
+//         List<Object> recordsToDeleteList = (List<Object>) JSON.deserializeUntyped(recordsToDelete);
+//         System.debug('Parsed recordsToDeleteList: ' + recordsToDeleteList);
+//         System.debug('Number of records to delete: ' + recordsToDeleteList.size());
+        
+//         if (recordsToDeleteList.isEmpty()) {
+//             System.debug('ERROR: recordsToDeleteList is empty after parsing');
+//             result.put('success', false);
+//             result.put('error', 'No records to delete');
+//             return result;
+//         }
+        
+//         List<Strategy_Line_Items__c> strategyLineItemsToDelete = new List<Strategy_Line_Items__c>();
+//         List<Strategy_Resources__c> strategyResourcesToDelete = new List<Strategy_Resources__c>();
+        
+//         // Separate records by object type
+//         for (Object recordObj : recordsToDeleteList) {
+//             try {
+//                 Map<String, Object> record = (Map<String, Object>) recordObj;
+//                 String recordId = (String) record.get('Id');
+//                 String objectType = (String) record.get('ObjectType');
+                
+//                 System.debug('Processing record - Id: ' + recordId + ', ObjectType: ' + objectType);
+                
+//                 if (String.isNotBlank(recordId)) {
+//                     // Validate the ID format
+//                     if (!Pattern.matches('[a-zA-Z0-9]{15,18}', recordId)) {
+//                         System.debug('WARNING: Invalid ID format: ' + recordId);
+//                         continue;
+//                     }
+                    
+//                     if (objectType == 'Strategy_Line_Items__c') {
+//                         strategyLineItemsToDelete.add(new Strategy_Line_Items__c(Id = Id.valueOf(recordId)));
+//                         System.debug('Added to strategyLineItemsToDelete: ' + recordId);
+//                     } else if (objectType == 'Strategy_Resources__c') {
+//                         strategyResourcesToDelete.add(new Strategy_Resources__c(Id = Id.valueOf(recordId)));
+//                         System.debug('Added to strategyResourcesToDelete: ' + recordId);
+//                     } else {
+//                         System.debug('WARNING: Unknown object type: ' + objectType);
+//                     }
+//                 } else {
+//                     System.debug('WARNING: Record ID is blank for record: ' + record);
+//                 }
+//             } catch (Exception e) {
+//                 System.debug('ERROR processing record: ' + e.getMessage());
+//                 System.debug('Record that caused error: ' + recordObj);
+//             }
+//         }
+        
+//         System.debug('strategyLineItemsToDelete size: ' + strategyLineItemsToDelete.size());
+//         System.debug('strategyResourcesToDelete size: ' + strategyResourcesToDelete.size());
+        
+//         // Validate that records exist before deletion
+//         List<Id> strategyLineItemIds = new List<Id>();
+//         List<Id> strategyResourceIds = new List<Id>();
+        
+//         for (Strategy_Line_Items__c item : strategyLineItemsToDelete) {
+//             strategyLineItemIds.add(item.Id);
+//         }
+//         for (Strategy_Resources__c resource : strategyResourcesToDelete) {
+//             strategyResourceIds.add(resource.Id);
+//         }
+        
+//         // Check if strategy line items exist
+//         List<Strategy_Line_Items__c> existingLineItems = [
+//             SELECT Id FROM Strategy_Line_Items__c 
+//             WHERE Id IN :strategyLineItemIds
+//         ];
+//         System.debug('Found existing strategy line items: ' + existingLineItems.size());
+        
+//         // Check if strategy resources exist
+//         List<Strategy_Resources__c> existingResources = [
+//             SELECT Id FROM Strategy_Resources__c 
+//             WHERE Id IN :strategyResourceIds
+//         ];
+//         System.debug('Found existing strategy resources: ' + existingResources.size());
+        
+//         // Delete strategy line items
+//         if (!existingLineItems.isEmpty()) {
+//             System.debug('Attempting to delete strategy line items: ' + existingLineItems);
+//             delete existingLineItems;
+//             System.debug('Successfully deleted ' + existingLineItems.size() + ' strategy line items');
+//         }
+        
+//         // Delete strategy resources
+//         if (!existingResources.isEmpty()) {
+//             System.debug('Attempting to delete strategy resources: ' + existingResources);
+//             delete existingResources;
+//             System.debug('Successfully deleted ' + existingResources.size() + ' strategy resources');
+//         }
+        
+//         Integer totalDeleted = existingLineItems.size() + existingResources.size();
+//         System.debug('Total records deleted: ' + totalDeleted);
+        
+//         result.put('success', true);
+//         result.put('message', 'Successfully deleted ' + totalDeleted + ' record(s)');
+        
+//     } catch (Exception e) {
+//         System.debug('EXCEPTION in deleteRecordsByIds: ' + e.getMessage());
+//         System.debug('Exception type: ' + e.getTypeName());
+//         System.debug('Stack trace: ' + e.getStackTraceString());
+//         result.put('success', false);
+//         result.put('error', e.getMessage());
+//     }
+    
+//     System.debug('deleteRecordsByIds END - Result: ' + result);
+//     return result;
+// }
+
 }

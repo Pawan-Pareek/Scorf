@@ -65,8 +65,6 @@ export default class GpsApplication extends LightningElement {
     @track abatementStrategiesIds = [];
     @track strategyLineItemIds = [];
     @track strategyResourcesIds = [];
-    @track clearedStrategyLineItemIds = [];
-    @track clearedStrategyResourcesIds = [];
 
     // Flag to track if current partner data has been added to partners array
     @track isCurrentPartnerAdded = false;
@@ -79,6 +77,9 @@ export default class GpsApplication extends LightningElement {
     @track editingPartnerIndex = -1;
     @track isEditingExistingPartner = false;
 
+    // Budget Information properties
+    @track consentChecked = false;
+
     // Handler for bubbling event from strategyLineResources
     handleStrategyLineResourcesChange(event) {
         const { strategyValue, data } = event.detail;
@@ -90,18 +91,9 @@ export default class GpsApplication extends LightningElement {
 
     // Handler for strategy clear events from abatement strategies component
     handleStrategyClear(event) {
-        const { strategyLineItemIds, strategyResourcesIds, clearedStrategies } = event.detail;
+        const { clearedStrategies } = event.detail;
         
-        console.log('Strategy clear event received:', { strategyLineItemIds, strategyResourcesIds, clearedStrategies });
-        
-        // Store the IDs that are being cleared
-        if (strategyLineItemIds && strategyLineItemIds.length > 0) {
-            this.clearedStrategyLineItemIds = [...this.clearedStrategyLineItemIds, ...strategyLineItemIds];
-        }
-        
-        if (strategyResourcesIds && strategyResourcesIds.length > 0) {
-            this.clearedStrategyResourcesIds = [...this.clearedStrategyResourcesIds, ...strategyResourcesIds];
-        }
+        console.log('Strategy clear event received:', { clearedStrategies });
         
         // Check if current partner data exists in partners array and clear the corresponding data
         if (this.partners.length > 0 && this.isCurrentPartnerAdded) {
@@ -127,11 +119,6 @@ export default class GpsApplication extends LightningElement {
                 console.log('Updated partner strategy line resources after clear:', this.partners[currentPartnerIndex]);
             }
         }
-        
-        console.log('Updated cleared IDs arrays:', {
-            clearedStrategyLineItemIds: this.clearedStrategyLineItemIds,
-            clearedStrategyResourcesIds: this.clearedStrategyResourcesIds
-        });
     }
 
     // Partner Table Methods
@@ -841,6 +828,7 @@ export default class GpsApplication extends LightningElement {
         const combinedApplicationData = {
             ...this.organizationData,
             ...this.budgetInformationData,
+            ...this.applicationData,
             Id: this.recordId // Include record ID if updating
         };
         
@@ -1461,12 +1449,173 @@ export default class GpsApplication extends LightningElement {
         this.showPreviewModal = false;
     }
 
+    // Budget Information handlers
+    handleConsentChange(event) {
+        this.consentChecked = event.target.checked;
+    }
+
+    handleEditBudget() {
+        // Navigate to step 4 (Budget Information step)
+        this.currentStep = 1;
+        this.updateStepStyles();
+        this.showPreviewModal = false;
+        this.notifyChildComponents();
+    }
+
+    handleSubmitBudget() {
+        if (!this.consentChecked) {
+            this.showToast('Error', 'Please check the consent checkbox before submitting.', 'error');
+            return;
+        }
+        
+        try {
+            // Validate all steps before saving
+            if (!this.validateAllSteps()) {
+                this.showToast('Error', 'Please complete all required fields before submitting.', 'error');
+                return;
+            }
+            
+            // Set ApplicationStatus__c to Submitted
+            this.applicationData.ApplicationStatus__c = 'Submitted';
+            
+            // If we're in step 3, add current partner data before saving
+            // Only add if not already added
+            if (this.currentStep === 3 && !this.isCurrentPartnerAdded) {
+                this.addCurrentPartnerIfExists();
+            }
+            
+            // Save current step data
+            this.saveCurrentStepData();
+            
+            // Use the existing save functionality to save application to Salesforce
+            this.saveAllApplicationData();
+            
+            // Close the preview modal after successful save
+            this.showPreviewModal = false;
+            
+        } catch (error) {
+            console.error('Error in handleSubmitBudget:', error);
+            this.showToast('Error', 'Failed to save application to Salesforce', 'error');
+        }
+    }
+
+    // Computed property to determine if submit button should be disabled
+    get isSubmitDisabled() {
+        return !this.consentChecked;
+    }
+
     // Get display value for picklist fields
     getPicklistDisplayValue(fieldName, value) {
         if (!value || !this.picklistValues[fieldName]) return value || 'Not Specified';
         
         const option = this.picklistValues[fieldName].find(opt => opt.value === value);
         return option ? option.label : value;
+    }
+
+    // Getter for strategy line resources list for modal display
+    get strategyLineResourcesList() {
+        if (!this.selectedPartnerData || !this.selectedPartnerData.strategyLineResources) {
+            return [];
+        }
+        
+        return Object.keys(this.selectedPartnerData.strategyLineResources).map(strategyKey => ({
+            key: strategyKey,
+            strategyName: strategyKey,
+            data: this.selectedPartnerData.strategyLineResources[strategyKey]
+        }));
+    }
+
+    // Getter for personnel data list for modal display
+    get personnelDataList() {
+        if (!this.selectedPartnerData || !this.selectedPartnerData.abatementExtra || !this.selectedPartnerData.abatementExtra.personnelData) {
+            return [];
+        }
+        
+        return Object.keys(this.selectedPartnerData.abatementExtra.personnelData).map(strategyKey => ({
+            key: strategyKey,
+            strategyName: strategyKey,
+            data: this.selectedPartnerData.abatementExtra.personnelData[strategyKey]
+        }));
+    }
+
+    // Getter for formatted personnel data list for modal display
+    get formattedPersonnelDataList() {
+        if (!this.selectedPartnerData || !this.selectedPartnerData.abatementExtra || !this.selectedPartnerData.abatementExtra.personnelData) {
+            return [];
+        }
+        
+        return Object.keys(this.selectedPartnerData.abatementExtra.personnelData).map(strategyKey => {
+            const personnelArray = this.selectedPartnerData.abatementExtra.personnelData[strategyKey];
+            return {
+                key: strategyKey,
+                strategyName: strategyKey,
+                data: personnelArray.map(person => ({
+                    ...person,
+                    formattedName: person.Name__c || 'Not Specified',
+                    formattedTitle: person.Title__c || 'Not Specified',
+                    formattedEmail: person.Email__c || 'Not Specified',
+                    formattedPhone: person.Phone__c || 'Not Specified',
+                    formattedRole: person.Role__c || 'Not Specified',
+                    formattedFTE: person.FTE__c || 'Not Specified'
+                }))
+            };
+        });
+    }
+
+    // Getter for budget data list for modal display
+    get budgetDataList() {
+        if (!this.selectedPartnerData || !this.selectedPartnerData.abatementExtra || !this.selectedPartnerData.abatementExtra.budgetData) {
+            return [];
+        }
+        
+        return Object.keys(this.selectedPartnerData.abatementExtra.budgetData).map(strategyKey => ({
+            key: strategyKey,
+            strategyName: strategyKey,
+            data: this.selectedPartnerData.abatementExtra.budgetData[strategyKey]
+        }));
+    }
+
+    // Getter for formatted budget data list for modal display
+    get formattedBudgetDataList() {
+        if (!this.selectedPartnerData || !this.selectedPartnerData.abatementExtra || !this.selectedPartnerData.abatementExtra.budgetData) {
+            return [];
+        }
+        
+        return Object.keys(this.selectedPartnerData.abatementExtra.budgetData).map(strategyKey => {
+            const budgetArray = this.selectedPartnerData.abatementExtra.budgetData[strategyKey];
+            return {
+                key: strategyKey,
+                strategyName: strategyKey,
+                data: budgetArray.map(budgetItem => ({
+                    ...budgetItem,
+                    formattedDescription: budgetItem.Description__c || 'Not Specified',
+                    formattedAmount: budgetItem.Amount__c ? `$${parseFloat(budgetItem.Amount__c).toLocaleString()}` : 'Not Specified',
+                    formattedCategory: budgetItem.Category__c || 'Not Specified',
+                    formattedVendor: budgetItem.Vendor__c || 'Not Specified',
+                    formattedJustification: budgetItem.Justification__c || 'Not Specified'
+                }))
+            };
+        });
+    }
+
+    // Getter for formatted strategy line resources list for modal display
+    get formattedStrategyLineResourcesList() {
+        if (!this.selectedPartnerData || !this.selectedPartnerData.strategyLineResources) {
+            return [];
+        }
+        
+        return Object.keys(this.selectedPartnerData.strategyLineResources).map(strategyKey => {
+            const data = this.selectedPartnerData.strategyLineResources[strategyKey];
+            return {
+                key: strategyKey,
+                strategyName: strategyKey,
+                data: data,
+                formattedBudgetAmount: data.BudgetAmountForThePurchase__c ? `$${parseFloat(data.BudgetAmountForThePurchase__c).toLocaleString()}` : 'Not Specified',
+                formattedInitialContinuation: data.IsYourStrategyInitialContinuation__c || 'Not Specified',
+                formattedBudgetNarrative: data.BudgetNarrative__c || 'Not Specified',
+                formattedImplementationPlan: data.ImplementationPlan__c || 'Not Specified'
+            };
+        });
     }
 
     // Format display values for the modal
@@ -1511,7 +1660,13 @@ export default class GpsApplication extends LightningElement {
             programManagerPhone: data.ProgramManagerPhoneNumber__c || 'Not Specified',
             fiscalManagerName: data.FiscalManagerTitle__c || 'Not Specified',
             fiscalManagerEmail: data.FiscalManagerEmail__c || 'Not Specified',
-            fiscalManagerPhone: data.FiscalManagerPhoneNumber__c || 'Not Specified'
+            fiscalManagerPhone: data.FiscalManagerPhoneNumber__c || 'Not Specified',
+            
+            // Budget Information
+            totalProjectBudget: data.Total_Project_Budget__c ? `$${parseFloat(data.Total_Project_Budget__c).toLocaleString()}` : 'Not Specified',
+            minusEstimatedCarryForward: data.MinusEstimatedCarryForwardAmount__c ? `$${parseFloat(data.MinusEstimatedCarryForwardAmount__c).toLocaleString()}` : 'Not Specified',
+            minusEstimatedInterestEarned: data.MinusEstimatedInterestEarned__c ? `$${parseFloat(data.MinusEstimatedInterestEarned__c).toLocaleString()}` : 'Not Specified',
+            totalAmountRequested: data.Total_Amount_Requested__c ? `$${parseFloat(data.Total_Amount_Requested__c).toLocaleString()}` : 'Not Specified'
         };
     }
 
@@ -1524,6 +1679,9 @@ export default class GpsApplication extends LightningElement {
     handleSaveAndExit() {
     try {
         this.isLoading = true;
+        
+        // Set ApplicationStatus__c to Draft
+        this.applicationData.ApplicationStatus__c = 'Draft';
         
         // Save current step data without validation
         this.saveCurrentStepData();
@@ -1545,6 +1703,7 @@ saveAndExitAllData() {
     const applicationData = {
         ...this.organizationData,
         ...this.budgetInformationData,
+        ...this.applicationData,
         Id: this.recordId
     };
 
@@ -1585,6 +1744,9 @@ saveAndExitAllData() {
             this.isLoading = false;
         });
 }
+
+// Delete cleared records from Salesforce
+
 
 // Collect all form data from all available components
 collectAllFormData() {

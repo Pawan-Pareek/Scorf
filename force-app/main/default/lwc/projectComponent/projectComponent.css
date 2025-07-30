@@ -1,0 +1,368 @@
+/* Status Cards Styling */
+.status-card {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e5e5;
+    height: 80px;
+}
+
+.status-icon-container {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.approved-bg {
+    background-color: #d4f7d4;
+}
+
+.rejected-bg {
+    background-color: #e8d4f7;
+}
+
+.revision-bg {
+    background-color: #d4e8f7;
+}
+
+.total-bg {
+    background-color: #f7e8d4;
+}
+
+.status-icon {
+    --sds-c-icon-color-foreground-default: white;
+}
+
+.status-content {
+    flex: 1;
+    position: relative;
+}
+
+.status-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.status-count {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+.red-dot {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 8px;
+    background-color: #ff6b6b;
+    border-radius: 50%;
+}
+
+/* Section Header */
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 8px 0;
+}
+
+.section-icon {
+    margin-right: 8px;
+    --sds-c-icon-color-foreground-default: #0176d3;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #0176d3;
+    margin: 0;
+}
+
+/* Table Styling */
+.table-container {
+    margin-top: 16px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e5e5e5;
+}
+
+.slds-table {
+    background: white;
+}
+
+.slds-table thead th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+    padding: 12px 8px;
+    border-bottom: 2px solid #e5e5e5;
+}
+
+.table-row:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.table-row:nth-child(odd) {
+    background-color: white;
+}
+
+.slds-table tbody td {
+    padding: 12px 8px;
+    vertical-align: middle;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .slds-grid {
+        flex-direction: column;
+    }
+    
+    .slds-col {
+        margin-bottom: 8px;
+    }
+    
+    .status-card {
+        height: auto;
+        min-height: 60px;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+    }
+}
+
+/* Card Hover Effects */
+.status-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+/* Table Row Hover */
+.table-row:hover {
+    background-color: #f0f8ff !important;
+    cursor: pointer;
+}
+
+/* Modal Styles */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-container {
+    background: white;
+    border-radius: 8px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e5e5e5;
+    background-color: #1b396a;
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.modal-close-btn {
+    background: transparent;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.info-section {
+    margin-bottom: 24px;
+}
+
+.section-header-modal {
+    display: flex;
+    align-items: center;
+    background-color: #1b396a;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+.section-icon-modal {
+    margin-right: 8px;
+}
+
+.section-title-modal {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.info-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.field-label {
+    font-weight: 600;
+    color: #1b396a;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.field-value {
+    color: #333;
+    background-color: #f3f3f3;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Strategy Section Styles */
+.strategy-section {
+    border: 2px solid #1b396a;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.partner-header {
+    background: linear-gradient(135deg, #1b396a, #2563eb);
+    color: white;
+    padding: 16px 20px;
+    border-radius: 6px 6px 0 0;
+    display: flex;
+    align-items: center;
+}
+
+.partner-icon {
+    margin-right: 12px;
+}
+
+.partner-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.dropdown-section {
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.dropdown-header {
+    background-color: #f8f9fa;
+    padding: 12px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.dropdown-header:hover {
+    background-color: #e9ecef;
+}
+
+.dropdown-icon {
+    margin-right: 8px;
+}
+
+.dropdown-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: #1b396a;
+}
+
+.dropdown-content {
+    padding: 20px;
+    background-color: white;
+}
+
+.strategy-line-item, .strategy-resource {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 0;
+    border-left: 4px solid #1b396a;
+}
+
+.line-item-title, .resource-title {
+    color: #1b396a;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+}
+
+.resource-subsection {
+    margin: 16px 0;
+    padding: 12px;
+    background-color: white;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.subsection-title {
+    color: #495057;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+    .info-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-container {
+        max-width: 95vw;
+        margin: 20px;
+    }
+}

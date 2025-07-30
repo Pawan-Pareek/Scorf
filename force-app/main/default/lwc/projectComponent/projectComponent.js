@@ -1,3 +1,212 @@
-import { LightningElement } from 'lwc';
+import { LightningElement, wire, track } from 'lwc';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { NavigationMixin } from 'lightning/navigation';
+import getProjectData from '@salesforce/apex/ProjectComponentController.getProjectData';
+import getApplicationDetails from '@salesforce/apex/ProjectComponentController.getApplicationDetails';
+import getPartnerData from '@salesforce/apex/ProjectComponentController.getPartnerData';
+import getAbatementStrategies from '@salesforce/apex/ProjectComponentController.getAbatementStrategies';
 
-export default class ProjectComponent extends LightningElement {}
+export default class ProjectComponent extends NavigationMixin(LightningElement) {
+
+    @track abatementStrategies = [];
+    @track expandedStrategies = new Set();
+    @track expandedTechnicalProposals = new Set();
+
+    @track partnerData = [];
+    @track isBudgetExpanded = false;
+    @track isPartnerModalOpen = false;
+    @track selectedPartnerStrategies = [];
+    @track selectedPartnerName = '';
+
+    @track isModalOpen = false;
+    @track selectedApplication = {};
+
+    @track projectData = {
+        approvedCount: 0,
+        rejectedCount: 0,
+        revisionCount: 0,
+        totalCount: 0,
+        applications: []
+    };
+
+    @wire(getProjectData)
+    wiredProjectData({ error, data }) {
+        if (data) {
+            this.projectData = {
+                ...data,
+                applications: data.applications.map((app, index) => ({
+                    ...app,
+                    serialNumber: index + 1,
+                    showEdit: app.ApplicationStatus__c === 'Draft' || app.ApplicationStatus__c === 'Revisions requested',
+                    formattedDate: this.formatDate(app.CreatedDate)
+                }))
+            };
+        } else if (error) {
+            this.showToast('Error', 'Error loading project data: ' + error.body.message, 'error');
+        }
+    }
+
+    get hasRejectedDot() {
+        return this.projectData.rejectedCount > 0;
+    }
+
+    formatDate(dateTimeString) {
+        if (!dateTimeString) return '';
+        
+        const date = new Date(dateTimeString);
+        
+        if (isNaN(date.getTime())) return '';
+        
+        const options = { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        };
+        return date.toLocaleDateString('en-US', options);
+    }
+
+    handleEdit(event) {
+        const recordId = event.target.dataset.id;
+        this[NavigationMixin.Navigate]({
+            type: 'standard__recordPage',
+            attributes: {
+                recordId: recordId,
+                objectApiName: 'Funding_Application__c',
+                actionName: 'edit'
+            }
+        });
+    }
+
+    showToast(title, message, variant) {
+        const event = new ShowToastEvent({
+            title: title,
+            message: message,
+            variant: variant
+        });
+        this.dispatchEvent(event);
+    }
+
+    async handleView(event) {
+        const recordId = event.target.dataset.id;
+        try {
+            const appDetails = await getApplicationDetails({ applicationId: recordId });
+            const partnerInfo = await this.loadPartnerData(recordId);
+            const abatementInfo = await this.loadAbatementStrategies(recordId);
+
+            this.selectedApplication = appDetails;
+            this.partnerData = partnerInfo;
+            this.abatementStrategies = abatementInfo;
+            this.isModalOpen = true;
+
+        } catch (error) {
+            this.showToast('Error', 'Error loading application details: ' + (error.body ? error.body.message : error.message), 'error');
+        }
+    }
+
+    closeModal() {
+        this.isModalOpen = false;
+        this.selectedApplication = {};
+        this.partnerData = [];
+        this.abatementStrategies = [];
+    }
+
+    handleModalBackdropClick(event) {
+        if (event.target === event.currentTarget) {
+            this.closeModal();
+        }
+    }
+
+    async loadPartnerData(applicationId) {
+        try {
+            const data = await getPartnerData({ applicationId: applicationId });
+            return data.map((partner, index) => ({
+                ...partner,
+                serialNumber: index + 1
+            }));
+        } catch (error) {
+            this.showToast('Error', 'Error loading partner data: ' + error.body.message, 'error');
+            return [];
+        }
+    }
+
+    async loadAbatementStrategies(applicationId) {
+        try {
+            const data = await getAbatementStrategies({ applicationId: applicationId });
+            return data;
+        } catch (error) {
+            this.showToast('Error', 'Error loading abatement strategies: ' + error.body.message, 'error');
+            return [];
+        }
+    }
+
+    handlePartnerView(event) {
+        const partnerId = event.target.dataset.id;
+        const partner = this.partnerData.find(p => p.id === partnerId);
+        
+        if (partner) {
+            this.selectedPartnerName = partner.partnerName;
+            // Filter strategies for this specific partner
+            this.selectedPartnerStrategies = this.abatementStrategies.filter(
+                strategy => strategy.strategy.Id === partnerId
+            );
+            this.isPartnerModalOpen = true;
+        }
+    }
+
+    closePartnerModal() {
+        this.isPartnerModalOpen = false;
+        this.selectedPartnerStrategies = [];
+        this.selectedPartnerName = '';
+    }
+
+    handlePartnerModalBackdropClick(event) {
+        if (event.target === event.currentTarget) {
+            this.closePartnerModal();
+        }
+    }
+
+    toggleBudgetInfo() {
+        this.isBudgetExpanded = !this.isBudgetExpanded;
+    }
+
+    get budgetIconName() {
+        return this.isBudgetExpanded ? 'utility:chevrondown' : 'utility:chevronright';
+    }
+
+    // Keep this logic for the Technical Proposal dropdown
+    toggleTechnicalProposal(event) {
+        const strategyId = event.currentTarget.dataset.id;
+        if (this.expandedTechnicalProposals.has(strategyId)) {
+            this.expandedTechnicalProposals.delete(strategyId);
+        } else {
+            this.expandedTechnicalProposals.add(strategyId);
+        }
+        this.expandedTechnicalProposals = new Set(this.expandedTechnicalProposals);
+    }
+
+    isTechnicalProposalExpanded(strategyId) {
+        return this.expandedTechnicalProposals.has(strategyId);
+    }
+
+    toggleStrategySection(event) {
+        const strategyId = event.currentTarget.dataset.id;
+        if (this.expandedStrategies.has(strategyId)) {
+            this.expandedStrategies.delete(strategyId);
+        } else {
+            this.expandedStrategies.add(strategyId);
+        }
+        this.expandedStrategies = new Set(this.expandedStrategies);
+    }
+
+    isStrategyExpanded(strategyId) {
+        return this.expandedStrategies.has(strategyId);
+    }
+
+    getStrategyIcon(strategyId) {
+        return this.isStrategyExpanded(strategyId) ? 'utility:chevrondown' : 'utility:chevronright';
+    }
+
+    getTechnicalProposalIcon(strategyId) {
+        return this.isTechnicalProposalExpanded(strategyId) ? 'utility:chevrondown' : 'utility:chevronright';
+    }
+}
