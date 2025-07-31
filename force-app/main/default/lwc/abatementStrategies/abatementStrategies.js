@@ -5,6 +5,7 @@ import getAbatementPicklistValues from '@salesforce/apex/GPSApplicationControlle
 import getAbatementStrategiesRecord from '@salesforce/apex/GPSApplicationController.getAbatementStrategiesRecord';
 import getStrategyLineItems from '@salesforce/apex/GPSApplicationController.getStrategyLineItems';
 
+
 export default class AbatementStrategies extends LightningElement {
     @api applicationData = {};
     @api picklistValues = {};
@@ -132,6 +133,8 @@ export default class AbatementStrategies extends LightningElement {
     loadExistingData() {
         if (!this.recordId) return;
         
+        console.log('Loading existing data for recordId:', this.recordId);
+        
         getAbatementStrategiesRecord({ recordId: this.recordId })
             .then(result => {
                 if (result.success && result.record) {
@@ -141,6 +144,7 @@ export default class AbatementStrategies extends LightningElement {
                     
                     // Store the record ID for existing records
                     this.existingRecordId = record.Id;
+                    console.log('Set existingRecordId to:', this.existingRecordId);
                     
                     // Expand strategies that have selections
                     this.selectedCoreStrategies.forEach(strategy => {
@@ -153,6 +157,8 @@ export default class AbatementStrategies extends LightningElement {
                     this.loadStrategyLineItemsData(record.Id);
                     
                     this.updateComponentData();
+                } else {
+                    console.log('No existing record found for recordId:', this.recordId);
                 }
             })
             .catch(error => {
@@ -528,6 +534,16 @@ get processedCoreStrategies() {
             }
         }
 
+        // Clear strategy line resources data for strategies that are no longer selected
+        const updatedStrategyLineResources = { ...this._strategyLineResourcesData };
+        Object.keys(updatedStrategyLineResources).forEach(strategyKey => {
+            if (!this.selectedAbatementStrategies.includes(strategyKey)) {
+                delete updatedStrategyLineResources[strategyKey];
+                console.log('Cleared strategy line resources for deselected strategy:', strategyKey);
+            }
+        });
+        this._strategyLineResourcesData = updatedStrategyLineResources;
+
         this.updateComponentData();
         this.emitAbatementDataChange(); // Notify parent of all changes
     }
@@ -626,18 +642,41 @@ get processedCoreStrategies() {
         const abatementValue = event.currentTarget.dataset.abatement;
         
         console.log('Clearing abatement option:', abatementValue);
+        console.log('Current strategy line resources data:', this._strategyLineResourcesData);
         
         // Collect IDs to be cleared before removing data
         const strategyLineItemIdsToClear = [];
         const strategyResourcesIdsToClear = [];
         
-        // Check for strategy line item ID
-        if (this._strategyLineResourcesData[abatementValue] && this._strategyLineResourcesData[abatementValue].Id) {
-            strategyLineItemIdsToClear.push(this._strategyLineResourcesData[abatementValue].Id);
+        // Check for strategy line item IDs - iterate through all strategy line items
+        if (this._strategyLineResourcesData) {
+            Object.keys(this._strategyLineResourcesData).forEach(strategyKey => {
+                const strategyData = this._strategyLineResourcesData[strategyKey];
+                console.log('Checking strategy key:', strategyKey, 'strategy data:', strategyData);
+                
+                // Check if this strategy line item belongs to the abatement strategy being cleared
+                // The strategy key should match the abatement value, or we need to check if the strategy value matches
+                if (strategyData && strategyData.Id) {
+                    // Check if the strategy key matches the abatement value
+                    if (strategyKey === abatementValue) {
+                        console.log('Found strategy line item ID to delete (key match):', strategyData.Id);
+                        strategyLineItemIdsToClear.push(strategyData.Id);
+                    }
+                    // Also check if the Strategy_Value__c field matches the abatement value
+                    else if (strategyData.Strategy_Value__c === abatementValue) {
+                        console.log('Found strategy line item ID to delete (value match):', strategyData.Id);
+                        strategyLineItemIdsToClear.push(strategyData.Id);
+                    }
+                }
+            });
         }
+        
+        console.log('Strategy line item IDs to clear:', strategyLineItemIdsToClear);
+        console.log('Total strategy line items found:', strategyLineItemIdsToClear.length);
         
         // Check for personnel data IDs
         if (this.personnelData[abatementValue]) {
+            console.log('Personnel data for abatement value:', abatementValue, this.personnelData[abatementValue]);
             this.personnelData[abatementValue].forEach(personnel => {
                 if (personnel.Id) {
                     strategyResourcesIdsToClear.push(personnel.Id);
@@ -647,12 +686,16 @@ get processedCoreStrategies() {
         
         // Check for budget data IDs
         if (this.budgetData[abatementValue]) {
+            console.log('Budget data for abatement value:', abatementValue, this.budgetData[abatementValue]);
             this.budgetData[abatementValue].forEach(budget => {
                 if (budget.Id) {
                     strategyResourcesIdsToClear.push(budget.Id);
                 }
             });
         }
+        
+        console.log('Strategy resources IDs to clear:', strategyResourcesIdsToClear);
+        console.log('Total strategy resources found:', strategyResourcesIdsToClear.length);
         
         // Dispatch event to parent with IDs to be cleared
         if (strategyLineItemIdsToClear.length > 0 || strategyResourcesIdsToClear.length > 0) {
@@ -728,6 +771,10 @@ get processedCoreStrategies() {
             CoreStrategies__c: this.selectedCoreStrategies.join(';'),
             Core_Abatement_Strategies__c: this.selectedAbatementStrategies.join(';')
         };
+        
+        // Log the component data for debugging
+        console.log('Updated component data with ID:', this.existingRecordId);
+        console.log('Component data:', this.componentData);
     }
 
     notifyParent() {
@@ -788,15 +835,27 @@ get processedCoreStrategies() {
 
     // Emit a single datachange event upward with all abatement data
     emitAbatementDataChange() {
-        // Send ALL data to parent, not just selected
+        // Filter strategy line resources to only include selected ones
+        const filteredStrategyLineResources = {};
+        this.selectedAbatementStrategies.forEach(strategyKey => {
+            if (this._strategyLineResourcesData[strategyKey]) {
+                filteredStrategyLineResources[strategyKey] = this._strategyLineResourcesData[strategyKey];
+            }
+        });
+
+        // Send filtered data to parent
         const abatementData = {
             ...this.componentData,
-            strategyLineResources: { ...this._strategyLineResourcesData }
+            Id: this.existingRecordId, // Ensure ID is included
+            strategyLineResources: filteredStrategyLineResources
         };
         const personnelData = { ...this.personnelData };
         const budgetData = { ...this.budgetData };
 
         // Log the data being sent to the parent
+        console.log('Emitting abatementData to parent with ID:', this.existingRecordId);
+        console.log('Selected strategies:', this.selectedAbatementStrategies);
+        console.log('Filtered strategy line resources:', Object.keys(filteredStrategyLineResources));
         console.log('Emitting abatementData to parent:', JSON.stringify(abatementData));
         console.log('Emitting personnelData to parent:', JSON.stringify(personnelData));
         console.log('Emitting budgetData to parent:', JSON.stringify(budgetData));
@@ -818,10 +877,14 @@ get processedCoreStrategies() {
     // Public methods for parent component
     @api
     setData(data) {
+        console.log('setData called with data:', JSON.stringify(data));
         if (data) {
             // Restore the record ID if it exists
             if (data.Id) {
                 this.existingRecordId = data.Id;
+                console.log('Restored existingRecordId from data:', this.existingRecordId);
+            } else {
+                console.log('No Id found in data, keeping existingRecordId as:', this.existingRecordId);
             }
             
             // Restore selected core and abatement strategies
@@ -856,6 +919,7 @@ get processedCoreStrategies() {
                 this.budgetData = { ...data.budgetData };
             }
             this.updateComponentData();
+            console.log('After setData, existingRecordId is:', this.existingRecordId);
             // Do NOT expand anything here!
             // this.expandedStrategies = new Set(); // <-- Removed to preserve expanded state
         }

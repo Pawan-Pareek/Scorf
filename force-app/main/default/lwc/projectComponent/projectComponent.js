@@ -67,12 +67,11 @@ export default class ProjectComponent extends NavigationMixin(LightningElement) 
 
     handleEdit(event) {
         const recordId = event.target.dataset.id;
+        // Navigate to the GPSApplication__c page with the recordId in URL
         this[NavigationMixin.Navigate]({
-            type: 'standard__recordPage',
+            type: 'standard__webPage',
             attributes: {
-                recordId: recordId,
-                objectApiName: 'Funding_Application__c',
-                actionName: 'edit'
+                url: `/gps-application?recordId=${recordId}`
             }
         });
     }
@@ -184,9 +183,9 @@ export default class ProjectComponent extends NavigationMixin(LightningElement) 
         this.expandedTechnicalProposals = new Set(this.expandedTechnicalProposals);
     }
 
-    isTechnicalProposalExpanded(strategyId) {
-        return this.expandedTechnicalProposals.has(strategyId);
-    }
+    get isTechnicalProposalExpanded() {
+    return this.expandedTechnicalProposals.size > 0;
+}
 
     toggleStrategySection(event) {
         const strategyId = event.currentTarget.dataset.id;
@@ -198,15 +197,15 @@ export default class ProjectComponent extends NavigationMixin(LightningElement) 
         this.expandedStrategies = new Set(this.expandedStrategies);
     }
 
-    isStrategyExpanded(strategyId) {
-        return this.expandedStrategies.has(strategyId);
-    }
+    get isStrategyExpanded() {
+    return this.expandedStrategies.size > 0;
+}
 
-    getStrategyIcon(strategyId) {
-        return this.isStrategyExpanded(strategyId) ? 'utility:chevrondown' : 'utility:chevronright';
-    }
+    get getStrategyIcon() {
+    return this.isStrategyExpanded ? 'utility:chevrondown' : 'utility:chevronright';
+}
 
-    getTechnicalProposalIcon(strategyId) {
-        return this.isTechnicalProposalExpanded(strategyId) ? 'utility:chevrondown' : 'utility:chevronright';
-    }
+    get getTechnicalProposalIcon() {
+    return this.isTechnicalProposalExpanded ? 'utility:chevrondown' : 'utility:chevronright';
+}
 }

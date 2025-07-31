@@ -26,6 +26,7 @@ export default class TechnicalProposal extends LightningElement {
     setData(data) {
         if (!this.ignoreParentData && data) {
             this.formData = {
+                Id: data.Id || null, // Preserve the ID field
                 PartnerName__c: data.PartnerName__c || '',
                 GeographicAreaPopulationPoverty__c: data.GeographicAreaPopulationPoverty__c || '',
                 Outline_Existing_Efforts_and_New_Expansi__c: data.Outline_Existing_Efforts_and_New_Expansi__c || '',
@@ -36,6 +37,7 @@ export default class TechnicalProposal extends LightningElement {
         } else if (!this.ignoreParentData && Object.keys(data).length === 0) {
             // If data is an empty object, clear all fields
             this.formData = {
+                Id: null,
                 PartnerName__c: '',
                 GeographicAreaPopulationPoverty__c: '',
                 Outline_Existing_Efforts_and_New_Expansi__c: '',

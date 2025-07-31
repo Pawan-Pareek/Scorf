@@ -133,20 +133,31 @@ public with sharing class ProjectComponentController {
     public static List<AbatementStrategyData> getAbatementStrategies(Id applicationId) {
         try {
             List<Abatement_Strategies__c> strategies = [
-                SELECT Id, PartnerName__c, GeographicAreaPopulationPoverty__c, 
-                       Outline_Existing_Efforts_and_New_Expansi__c, Describe_Current_Budget_and_Funding_Sour__c
-                FROM Abatement_Strategies__c 
-                WHERE Funding_Application__c = :applicationId
-                ORDER BY CreatedDate
-            ];
+    SELECT Id, PartnerName__c, GeographicAreaPopulationPoverty__c, 
+           Outline_Existing_Efforts_and_New_Expansi__c, Describe_Current_Budget_and_Funding_Sour__c,
+           CoreStrategies__c, Core_Abatement_Strategies__c,
+           (SELECT Id, IsYourStrategyInitialContinuation__c, ImplementationPlanForTheStrategy__c,
+                   ProvideTheProcessMeasures__c, ProvideTheOutcomeMeasures__c,
+                   BudgetAmountForThePurchase__c, BudgetNarrative__c
+            FROM Strategy_Line_Items__r),
+           (SELECT Id, PersonnelName__c, PersonnelPosition__c, PersonnelTotalChargedToAward__c,
+                   PersonnelLevelOfEffort__c, PersonnelKeyStaffAnnualSalary__c,
+                   BudgetItem__c, BudgetPurpose__c, BudgetTotalChargedToAward__c, BudgetCalculation__c
+            FROM Strategy_Resources__r)
+    FROM Abatement_Strategies__c 
+    WHERE Funding_Application__c = :applicationId
+    ORDER BY CreatedDate
+];
             
             List<AbatementStrategyData> strategyDataList = new List<AbatementStrategyData>();
             
             for (Abatement_Strategies__c strategy : strategies) {
-                AbatementStrategyData data = new AbatementStrategyData();
-                data.strategy = strategy;
-                strategyDataList.add(data);
-            }
+    AbatementStrategyData data = new AbatementStrategyData();
+    data.strategy = strategy;
+    data.lineItems = strategy.Strategy_Line_Items__r;
+    data.resources = strategy.Strategy_Resources__r;
+    strategyDataList.add(data);
+}
             
             return strategyDataList;
         } catch (Exception e) {
@@ -156,6 +167,13 @@ public with sharing class ProjectComponentController {
 
     // Updated wrapper class - no longer needs related lists
     public class AbatementStrategyData {
-        @AuraEnabled public Abatement_Strategies__c strategy { get; set; }
+    @AuraEnabled public Abatement_Strategies__c strategy { get; set; }
+    @AuraEnabled public List<Strategy_Line_Items__c> lineItems { get; set; }
+    @AuraEnabled public List<Strategy_Resources__c> resources { get; set; }
+    
+    public AbatementStrategyData() {
+        this.lineItems = new List<Strategy_Line_Items__c>();
+        this.resources = new List<Strategy_Resources__c>();
     }
+}
 }

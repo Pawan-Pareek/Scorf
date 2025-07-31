@@ -3,6 +3,7 @@
 
 import { LightningElement, api, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { NavigationMixin } from 'lightning/navigation';
 
 // Apex methods from the controller
 import getPicklistValues from '@salesforce/apex/GPSApplicationController.getPicklistValues';
@@ -13,11 +14,12 @@ import saveStrategyLineItems from '@salesforce/apex/GPSApplicationController.sav
 import saveStrategyResources from '@salesforce/apex/GPSApplicationController.saveStrategyResources';
 import getStrategyResources from '@salesforce/apex/GPSApplicationController.getStrategyResources';
 import deleteAbatementStrategyAndChildren from '@salesforce/apex/GPSApplicationController.deleteAbatementStrategyAndChildren';
+import deleteRecordsByIds from '@salesforce/apex/GPSApplicationController.deleteRecordsByIds';
 
 // Static resource for logo
 import gpsLogo from '@salesforce/resourceUrl/ScorfBanner';
 
-export default class GpsApplication extends LightningElement {
+export default class GpsApplication extends NavigationMixin(LightningElement) {
     // Set logo from static resource
     logoUrl = gpsLogo;
     
@@ -90,10 +92,58 @@ export default class GpsApplication extends LightningElement {
     }
 
     // Handler for strategy clear events from abatement strategies component
-    handleStrategyClear(event) {
-        const { clearedStrategies } = event.detail;
+    async handleStrategyClear(event) {
+        const { strategyLineItemIds, strategyResourcesIds, clearedStrategies } = event.detail;
         
-        console.log('Strategy clear event received:', { clearedStrategies });
+        console.log('Strategy clear event received:', { strategyLineItemIds, strategyResourcesIds, clearedStrategies });
+        console.log('Strategy line item IDs count:', strategyLineItemIds ? strategyLineItemIds.length : 0);
+        console.log('Strategy resources IDs count:', strategyResourcesIds ? strategyResourcesIds.length : 0);
+        
+        // Delete strategy line items and strategy resources from Salesforce if they exist
+        if ((strategyLineItemIds && strategyLineItemIds.length > 0) || (strategyResourcesIds && strategyResourcesIds.length > 0)) {
+            try {
+                // Prepare records to delete
+                const recordsToDelete = [];
+                
+                // Add strategy line items to delete
+                if (strategyLineItemIds && strategyLineItemIds.length > 0) {
+                    strategyLineItemIds.forEach(id => {
+                        recordsToDelete.push({
+                            Id: id,
+                            ObjectType: 'Strategy_Line_Items__c'
+                        });
+                    });
+                }
+                
+                // Add strategy resources to delete
+                if (strategyResourcesIds && strategyResourcesIds.length > 0) {
+                    strategyResourcesIds.forEach(id => {
+                        recordsToDelete.push({
+                            Id: id,
+                            ObjectType: 'Strategy_Resources__c'
+                        });
+                    });
+                }
+                
+                console.log('Records to delete:', recordsToDelete);
+                
+                // Call the Apex method to delete records
+                const deleteResult = await deleteRecordsByIds({ 
+                    recordsToDelete: JSON.stringify(recordsToDelete) 
+                });
+                
+                if (deleteResult.success) {
+                    console.log('Successfully deleted records from Salesforce:', deleteResult.message);
+                    this.showToast('Success', 'Strategy line items and resources deleted from Salesforce successfully', 'success');
+                } else {
+                    console.error('Failed to delete records from Salesforce:', deleteResult.error);
+                    this.showToast('Warning', `Strategy cleared from form but failed to delete from Salesforce: ${deleteResult.error}`, 'warning');
+                }
+            } catch (error) {
+                console.error('Error deleting records from Salesforce:', error);
+                this.showToast('Warning', `Strategy cleared from form but failed to delete from Salesforce: ${error.message}`, 'warning');
+            }
+        }
         
         // Check if current partner data exists in partners array and clear the corresponding data
         if (this.partners.length > 0 && this.isCurrentPartnerAdded) {
@@ -119,6 +169,18 @@ export default class GpsApplication extends LightningElement {
                 console.log('Updated partner strategy line resources after clear:', this.partners[currentPartnerIndex]);
             }
         }
+        
+        // Also clear the strategy line resources data from the component's strategyLineResourcesData
+        if (this.strategyLineResourcesData && Object.keys(this.strategyLineResourcesData).length > 0) {
+            const updatedStrategyLineResourcesData = { ...this.strategyLineResourcesData };
+            clearedStrategies.forEach(strategy => {
+                if (updatedStrategyLineResourcesData[strategy]) {
+                    delete updatedStrategyLineResourcesData[strategy];
+                }
+            });
+            this.strategyLineResourcesData = updatedStrategyLineResourcesData;
+            console.log('Cleared strategy line resources data from component:', this.strategyLineResourcesData);
+        }
     }
 
     // Partner Table Methods
@@ -140,7 +202,7 @@ export default class GpsApplication extends LightningElement {
         const partnerToEdit = this.partners[partnerIndex];
         
         // Set technical proposal data
-        this.technicalProposalData = { ...partnerToEdit.technicalProposal };
+        this.technicalProposalData = { ...partnerToEdit.abatementStrategies };
         
         // Set abatement strategies data
         this.abatementStrategiesData = { ...partnerToEdit.abatementStrategies };
@@ -151,13 +213,13 @@ export default class GpsApplication extends LightningElement {
         this.currentStep = 2;
         this.updateStepStyles();
         
-        this.showToast('Info', `Now editing partner: ${partnerToEdit.technicalProposal.PartnerName__c}`, 'info');
+        this.showToast('Info', `Now editing partner: ${partnerToEdit.abatementStrategies.PartnerName__c}`, 'info');
     }
 
     async handleDeletePartner(event) {
         const partnerIndex = parseInt(event.target.dataset.index);
         const partner = this.partners[partnerIndex];
-        const partnerName = partner.technicalProposal.PartnerName__c;
+        const partnerName = partner.abatementStrategies.PartnerName__c;
         
         console.log('Deleting partner at index:', partnerIndex);
         console.log('Partner to delete:', partner);
@@ -209,7 +271,7 @@ export default class GpsApplication extends LightningElement {
     get partnerTableData() {
         return this.partners.map((partner, index) => ({
             id: index,
-            name: partner.technicalProposal.PartnerName__c || `Partner ${index + 1}`,
+            name: partner.abatementStrategies.PartnerName__c || `Partner ${index + 1}`,
             index: index
         }));
     }
@@ -222,6 +284,37 @@ export default class GpsApplication extends LightningElement {
     // Lifecycle hook - loads data when component is inserted into DOM
     connectedCallback() {
         this.initializeComponent();
+        this.handleUrlParameters();
+    }
+
+    // Handle URL parameters to get recordId if not passed as API property
+    handleUrlParameters() {
+        if (!this.recordId) {
+            // First try to get from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const recordIdFromUrl = urlParams.get('recordId');
+            console.log('URL Parameters:', window.location.search);
+            console.log('RecordId from URL:', recordIdFromUrl);
+            
+            if (recordIdFromUrl) {
+                this.recordId = recordIdFromUrl;
+                console.log('Setting recordId from URL:', this.recordId);
+                // Re-initialize component with the recordId from URL
+                this.initializeComponent();
+                return;
+            }
+            
+            // Then try to get from navigation state
+            const currentPageReference = this[NavigationMixin.GenerateUrl](this[NavigationMixin.GetPageReference]());
+            if (currentPageReference && currentPageReference.state && currentPageReference.state.recordId) {
+                this.recordId = currentPageReference.state.recordId;
+                console.log('Setting recordId from navigation state:', this.recordId);
+                // Re-initialize component with the recordId from navigation state
+                this.initializeComponent();
+            }
+        } else {
+            console.log('RecordId already set:', this.recordId);
+        }
     }
 
     // Initialize component with proper error handling
@@ -246,8 +339,10 @@ export default class GpsApplication extends LightningElement {
 
     // Load application data
     loadApplicationData() {
+        console.log('Loading application data for recordId:', this.recordId);
         getApplication({ recordId: this.recordId })
             .then(result => {
+                console.log('Application data loaded:', result);
                 if (result) {
                     this.applicationData = { ...result };
                     
@@ -260,9 +355,12 @@ export default class GpsApplication extends LightningElement {
                         ElectronicSignature__c: result.ElectronicSignature__c || ''
                     };
                     
+                    console.log('Budget information extracted:', this.budgetInformationData);
+                    
                     // Load existing partners data if available
                     this.loadExistingPartnersData();
                 } else {
+                    console.log('No application data found for recordId:', this.recordId);
                     this.applicationData = {};
                     this.budgetInformationData = {};
                 }
@@ -270,6 +368,7 @@ export default class GpsApplication extends LightningElement {
                 this.checkIfAllDataLoaded();
             })
             .catch(error => {
+                console.error('Error loading application data:', error);
                 this.applicationLoaded = true;
                 this.applicationData = {};
                 this.budgetInformationData = {};
@@ -330,13 +429,27 @@ export default class GpsApplication extends LightningElement {
             
             if (stepType === 'abatementStrategies') {
                 this.abatementStrategiesData = { ...abatementStrategies };
+                console.log('Received abatement strategies data with ID:', abatementStrategies.Id);
+                console.log('Full abatement strategies data:', JSON.stringify(abatementStrategies));
+                
                 this.abatementExtraData = {
                     personnelData: personnelData || {},
                     budgetData: budgetData || {}
                 };
                 
+                // Only store strategy line resources for currently selected strategies
                 if (abatementStrategies && abatementStrategies.strategyLineResources) {
-                    this.strategyLineResourcesData = { ...abatementStrategies.strategyLineResources };
+                    const selectedStrategies = abatementStrategies.abatementStrategies || [];
+                    const filteredStrategyLineResources = {};
+                    
+                    selectedStrategies.forEach(strategyKey => {
+                        if (abatementStrategies.strategyLineResources[strategyKey]) {
+                            filteredStrategyLineResources[strategyKey] = abatementStrategies.strategyLineResources[strategyKey];
+                        }
+                    });
+                    
+                    this.strategyLineResourcesData = filteredStrategyLineResources;
+                    console.log('Filtered strategy line resources for selected strategies:', Object.keys(filteredStrategyLineResources));
                 }
                 
                 // Reset flag when user starts entering new abatement strategies data
@@ -448,7 +561,11 @@ export default class GpsApplication extends LightningElement {
         try {
             const currentStepComponent = this.template.querySelector(`[data-step="${this.currentStep}"]`);
             if (currentStepComponent && typeof currentStepComponent.setData === 'function') {
-                if (this.currentStep === 3 && this.abatementStrategiesData) {
+                if (this.currentStep === 2) {
+                    // For step 2 (technical proposal), use step2Data which includes both applicationData and technicalProposalData
+                    console.log('Setting data for step 2 with step2Data:', this.step2Data);
+                    currentStepComponent.setData(this.step2Data);
+                } else if (this.currentStep === 3 && this.abatementStrategiesData) {
                     const dataToPass = {
                         ...this.applicationData,
                         ...this.abatementStrategiesData,
@@ -582,7 +699,7 @@ export default class GpsApplication extends LightningElement {
         // Prepare Abatement_Strategies__c data
         const abatementData = {
             Funding_Application__c: this.recordId,
-            ...partner.technicalProposal,
+            ...partner.abatementStrategies,
             CoreStrategies__c: partner.abatementStrategies.CoreStrategies__c,
             Core_Abatement_Strategies__c: partner.abatementStrategies.Core_Abatement_Strategies__c
         };
@@ -590,7 +707,13 @@ export default class GpsApplication extends LightningElement {
         // Include the ID if it exists (for updates)
         if (partner.abatementStrategies.Id) {
             abatementData.Id = partner.abatementStrategies.Id;
+            console.log('Including existing ID for update:', partner.abatementStrategies.Id);
+        } else {
+            console.log('No existing ID found - will create new record');
         }
+        
+        console.log('Final abatement data to save:', abatementData);
+        console.log('Partner data being saved:', JSON.stringify(partner));
         
         return saveAbatementStrategies({ abatement: JSON.stringify(abatementData) })
             .then(result => {
@@ -911,7 +1034,8 @@ export default class GpsApplication extends LightningElement {
         const data = { 
             ...cleanApplicationData, // Only organization data
             ...this.abatementStrategiesData, 
-            ...this.abatementExtraData 
+            ...this.abatementExtraData,
+            strategyLineResources: this.strategyLineResourcesData // Include strategy line resources data
         }; 
         return data; 
     }
@@ -993,9 +1117,14 @@ export default class GpsApplication extends LightningElement {
 
             const partnerData = {
                 partnerIndex: this.isEditingExistingPartner ? this.editingPartnerIndex : this.currentPartnerIndex,
-                technicalProposal: { ...this.technicalProposalData },
                 abatementStrategies: {
                     Id: this.abatementStrategiesData.Id || null, // Include the ID from abatement data
+                    // Merge technical proposal fields into abatementStrategies
+                    PartnerName__c: this.technicalProposalData.PartnerName__c || '',
+                    GeographicAreaPopulationPoverty__c: this.technicalProposalData.GeographicAreaPopulationPoverty__c || '',
+                    Outline_Existing_Efforts_and_New_Expansi__c: this.technicalProposalData.Outline_Existing_Efforts_and_New_Expansi__c || '',
+                    Describe_Current_Budget_and_Funding_Sour__c: this.technicalProposalData.Describe_Current_Budget_and_Funding_Sour__c || '',
+                    // Abatement strategies fields
                     coreStrategies: selectedCoreStrategies,
                     abatementStrategies: selectedAbatementStrategies,
                     CoreStrategies__c: selectedCoreStrategies.join(';'),
@@ -1011,7 +1140,12 @@ export default class GpsApplication extends LightningElement {
             const partnerName = this.technicalProposalData.PartnerName__c;
             
             if (this.isEditingExistingPartner) {
-                // Update existing partner
+                // Update existing partner - preserve the existing ID
+                const existingPartner = this.partners[this.editingPartnerIndex];
+                if (existingPartner.abatementStrategies && existingPartner.abatementStrategies.Id) {
+                    partnerData.abatementStrategies.Id = existingPartner.abatementStrategies.Id;
+                    console.log('Preserved existing abatement strategy ID for update:', existingPartner.abatementStrategies.Id);
+                }
                 this.partners[this.editingPartnerIndex] = partnerData;
                 console.log('Updated existing partner at index:', this.editingPartnerIndex);
                 console.log('Updated partner data:', partnerData);
@@ -1022,7 +1156,7 @@ export default class GpsApplication extends LightningElement {
             } else {
                 // Add new partner
                 const existingPartnerIndex = this.partners.findIndex(partner => 
-                    partner.technicalProposal.PartnerName__c === partnerName
+                    partner.abatementStrategies.PartnerName__c === partnerName
                 );
                 
                 if (existingPartnerIndex === -1) {
@@ -1037,8 +1171,18 @@ export default class GpsApplication extends LightningElement {
                     // Set flag to indicate current partner has been added
                     this.isCurrentPartnerAdded = true;
                 } else {
-                    this.showToast('Error', `Partner "${partnerName}" already exists. Please use a different partner name.`, 'error');
-                    return;
+                    // Partner already exists, update it instead of showing error
+                    const existingPartner = this.partners[existingPartnerIndex];
+                    if (existingPartner.abatementStrategies && existingPartner.abatementStrategies.Id) {
+                        partnerData.abatementStrategies.Id = existingPartner.abatementStrategies.Id;
+                        console.log('Preserved existing abatement strategy ID for update:', existingPartner.abatementStrategies.Id);
+                    }
+                    this.partners[existingPartnerIndex] = partnerData;
+                    console.log('Updated existing partner at index:', existingPartnerIndex);
+                    console.log('Updated partner data:', partnerData);
+                    this.showToast('Success', `Partner "${partnerName}" updated successfully`, 'success');
+                    // Set flag to indicate current partner has been added
+                    this.isCurrentPartnerAdded = true;
                 }
             }
             
@@ -1112,12 +1256,17 @@ export default class GpsApplication extends LightningElement {
                     }
                 });
 
-                // Create partner object with ONLY selected data
+                // Create partner object with merged technicalProposal and abatementStrategies
                 const partnerData = {
                     partnerIndex: this.currentPartnerIndex,
-                    technicalProposal: { ...this.technicalProposalData },
                     abatementStrategies: {
                         Id: this.abatementStrategiesData.Id || null, // Include the ID from abatement data
+                        // Merge technical proposal fields into abatementStrategies
+                        PartnerName__c: this.technicalProposalData.PartnerName__c || '',
+                        GeographicAreaPopulationPoverty__c: this.technicalProposalData.GeographicAreaPopulationPoverty__c || '',
+                        Outline_Existing_Efforts_and_New_Expansi__c: this.technicalProposalData.Outline_Existing_Efforts_and_New_Expansi__c || '',
+                        Describe_Current_Budget_and_Funding_Sour__c: this.technicalProposalData.Describe_Current_Budget_and_Funding_Sour__c || '',
+                        // Abatement strategies fields
                         coreStrategies: selectedCoreStrategies,
                         abatementStrategies: selectedAbatementStrategies,
                         CoreStrategies__c: selectedCoreStrategies.join(';'),
@@ -1131,11 +1280,12 @@ export default class GpsApplication extends LightningElement {
                 };
                 
                 console.log('Adding current partner with data:', JSON.stringify(partnerData));
+                console.log('Abatement strategy ID in partner data:', partnerData.abatementStrategies.Id);
                 
                 // Check if this partner data already exists in the partners array
                 const partnerName = this.technicalProposalData.PartnerName__c;
                 const existingPartnerIndex = this.partners.findIndex(partner => 
-                    partner.technicalProposal.PartnerName__c === partnerName
+                    partner.abatementStrategies.PartnerName__c === partnerName
                 );
                 
                 if (existingPartnerIndex === -1) {
@@ -1152,6 +1302,12 @@ export default class GpsApplication extends LightningElement {
                     this.isCurrentPartnerAdded = true;
                 } else {
                     // Partner already exists, update the existing partner data
+                    // Preserve the existing ID to ensure update instead of insert
+                    const existingPartner = this.partners[existingPartnerIndex];
+                    if (existingPartner.abatementStrategies && existingPartner.abatementStrategies.Id) {
+                        partnerData.abatementStrategies.Id = existingPartner.abatementStrategies.Id;
+                        console.log('Preserved existing abatement strategy ID for update:', existingPartner.abatementStrategies.Id);
+                    }
                     this.partners[existingPartnerIndex] = partnerData;
                     console.log('Auto-updated existing partner at index:', existingPartnerIndex);
                     console.log('Auto-updated partner data:', partnerData);
@@ -1280,9 +1436,9 @@ export default class GpsApplication extends LightningElement {
             const currentPartnerData = this.getCurrentPartnerData();
             if (currentPartnerData) {
                 // Check if this partner data already exists in the partners array
-                const partnerName = currentPartnerData.technicalProposal.PartnerName__c;
+                const partnerName = currentPartnerData.abatementStrategies.PartnerName__c;
                 const existingPartnerIndex = allPartners.findIndex(partner => 
-                    partner.technicalProposal.PartnerName__c === partnerName
+                    partner.abatementStrategies.PartnerName__c === partnerName
                 );
                 
                 if (existingPartnerIndex === -1) {
@@ -1372,12 +1528,17 @@ export default class GpsApplication extends LightningElement {
                     }
                 });
 
-                // Create partner object with ONLY selected data
+                // Create partner object with merged technicalProposal and abatementStrategies
                 return {
                     partnerIndex: this.currentPartnerIndex,
-                    technicalProposal: { ...technicalData },
                     abatementStrategies: {
                         Id: abatementData.Id || null, // Include the ID from abatement data
+                        // Merge technical proposal fields into abatementStrategies
+                        PartnerName__c: technicalData.PartnerName__c || '',
+                        GeographicAreaPopulationPoverty__c: technicalData.GeographicAreaPopulationPoverty__c || '',
+                        Outline_Existing_Efforts_and_New_Expansi__c: technicalData.Outline_Existing_Efforts_and_New_Expansi__c || '',
+                        Describe_Current_Budget_and_Funding_Sour__c: technicalData.Describe_Current_Budget_and_Funding_Sour__c || '',
+                        // Abatement strategies fields
                         coreStrategies: selectedCoreStrategies,
                         abatementStrategies: selectedAbatementStrategies,
                         CoreStrategies__c: selectedCoreStrategies.join(';'),
@@ -1861,7 +2022,7 @@ savePartnerDataForExit(partner, partnerIndex) {
     // Prepare Abatement_Strategies__c data
     const abatementData = {
         Funding_Application__c: this.recordId,
-        ...partner.technicalProposal,
+        ...partner.abatementStrategies,
         CoreStrategies__c: partner.abatementStrategies.CoreStrategies__c,
         Core_Abatement_Strategies__c: partner.abatementStrategies.Core_Abatement_Strategies__c
     };

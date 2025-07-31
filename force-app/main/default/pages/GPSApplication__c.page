@@ -1,0 +1,15 @@
+<apex:page showHeader="false" sidebar="false" standardStylesheets="false" applyBodyTag="false" applyHtmlTag="false">
+    <html>
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>GPS Application</title>
+            <apex:slds />
+        </head>
+        <body>
+            <div class="slds-scope">
+                <c:gPSApplication recordId="{!$CurrentPage.parameters.recordId}" />
+            </div>
+        </body>
+    </html>
+</apex:page> 

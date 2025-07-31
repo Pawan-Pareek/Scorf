@@ -32,8 +32,7 @@ describe('c-gps-application', () => {
         // Act - simulate adding a partner
         element.partners = [{
             partnerIndex: 0,
-            technicalProposal: { PartnerName__c: 'Test Partner' },
-            abatementStrategies: {},
+            abatementStrategies: { PartnerName__c: 'Test Partner' },
             strategyLineResources: {},
             abatementExtra: {}
         }];
@@ -54,8 +53,7 @@ describe('c-gps-application', () => {
         // Act - simulate having partners and then deleting them
         element.partners = [{
             partnerIndex: 0,
-            technicalProposal: { PartnerName__c: 'Test Partner' },
-            abatementStrategies: {},
+            abatementStrategies: { PartnerName__c: 'Test Partner' },
             strategyLineResources: {},
             abatementExtra: {}
         }];
@@ -140,8 +138,7 @@ describe('c-gps-application', () => {
         // Act
         element.partners = [{
             partnerIndex: 0,
-            technicalProposal: { PartnerName__c: 'Test Partner' },
-            abatementStrategies: {},
+            abatementStrategies: { PartnerName__c: 'Test Partner' },
             strategyLineResources: {},
             abatementExtra: {}
         }];
@@ -162,8 +159,7 @@ describe('c-gps-application', () => {
         // Act
         element.partners = [{
             partnerIndex: 0,
-            technicalProposal: { PartnerName__c: 'Test Partner' },
-            abatementStrategies: {},
+            abatementStrategies: { PartnerName__c: 'Test Partner' },
             strategyLineResources: {},
             abatementExtra: {}
         }];
@@ -199,8 +195,7 @@ describe('c-gps-application', () => {
         // Act
         element.partners = [{
             partnerIndex: 0,
-            technicalProposal: { PartnerName__c: 'Test Partner' },
-            abatementStrategies: {},
+            abatementStrategies: { PartnerName__c: 'Test Partner' },
             strategyLineResources: {},
             abatementExtra: {}
         }];

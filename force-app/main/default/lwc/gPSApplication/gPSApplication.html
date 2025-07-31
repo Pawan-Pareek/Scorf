@@ -454,7 +454,7 @@
                 <h2 id="partner-modal-heading" class="slds-modal__title slds-hyphenate">Partner Details</h2>
             </header>
             <div class="slds-modal__content slds-p-around_medium">
-                <template if:true={selectedPartnerData.technicalProposal}>
+                <template if:true={selectedPartnerData.abatementStrategies}>
                     <!-- Technical Proposal Section -->
                     <div class="slds-accordion">
                         <section class="slds-accordion__section slds-is-open">
@@ -466,10 +466,10 @@
                                 </h3>
                             </div>
                             <div class="slds-accordion__content slds-p-around_medium">
-                                <p><strong>Partner Name:</strong> {selectedPartnerData.technicalProposal.PartnerName__c}</p>
-                                <p><strong>Geographic Area:</strong> {selectedPartnerData.technicalProposal.GeographicAreaPopulationPoverty__c}</p>
-                                <p><strong>Existing Efforts:</strong> {selectedPartnerData.technicalProposal.Outline_Existing_Efforts_and_New_Expansi__c}</p>
-                                <p><strong>Budget Description:</strong> {selectedPartnerData.technicalProposal.Describe_Current_Budget_and_Funding_Sour__c}</p>
+                                <p><strong>Partner Name:</strong> {selectedPartnerData.abatementStrategies.PartnerName__c}</p>
+                                <p><strong>Geographic Area:</strong> {selectedPartnerData.abatementStrategies.GeographicAreaPopulationPoverty__c}</p>
+                                <p><strong>Existing Efforts:</strong> {selectedPartnerData.abatementStrategies.Outline_Existing_Efforts_and_New_Expansi__c}</p>
+                                <p><strong>Budget Description:</strong> {selectedPartnerData.abatementStrategies.Describe_Current_Budget_and_Funding_Sour__c}</p>
                             </div>
                         </section>
                     </div>
@@ -607,9 +607,8 @@
         </div>
     </section>
     <div class="slds-backdrop slds-backdrop_open"></div>
-</template>
-    </section>
-</div>
+</template>    </section>
+        </div>
 
             </div>
             <footer class="slds-modal__footer">
@@ -621,5 +620,5 @@
 
 
 
-</template>
-</template>
+</template></template>
+
