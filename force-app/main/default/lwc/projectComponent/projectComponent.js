@@ -71,7 +71,7 @@ export default class ProjectComponent extends NavigationMixin(LightningElement) 
         this[NavigationMixin.Navigate]({
             type: 'standard__webPage',
             attributes: {
-                url: `/gps-application?recordId=${recordId}`
+                url: `/s/gps-application?recordId=${recordId}`
             }
         });
     }

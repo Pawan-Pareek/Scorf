@@ -15,6 +15,7 @@ import saveStrategyResources from '@salesforce/apex/GPSApplicationController.sav
 import getStrategyResources from '@salesforce/apex/GPSApplicationController.getStrategyResources';
 import deleteAbatementStrategyAndChildren from '@salesforce/apex/GPSApplicationController.deleteAbatementStrategyAndChildren';
 import deleteRecordsByIds from '@salesforce/apex/GPSApplicationController.deleteRecordsByIds';
+import getAbatementStrategies from '@salesforce/apex/ProjectComponentController.getAbatementStrategies';
 
 // Static resource for logo
 import gpsLogo from '@salesforce/resourceUrl/ScorfBanner';
@@ -70,6 +71,9 @@ export default class GpsApplication extends NavigationMixin(LightningElement) {
 
     // Flag to track if current partner data has been added to partners array
     @track isCurrentPartnerAdded = false;
+    
+    // Flag to track if this is a new application (no recordId)
+    @track isNewApplication = false;
 
     // Preview Modal properties
     @track showPreviewModal = false;
@@ -283,14 +287,29 @@ export default class GpsApplication extends NavigationMixin(LightningElement) {
 
     // Lifecycle hook - loads data when component is inserted into DOM
     connectedCallback() {
+    // Small delay to ensure navigation context is available
+    setTimeout(() => {
         this.initializeComponent();
-        this.handleUrlParameters();
-    }
+    }, 100);
+}
 
     // Handle URL parameters to get recordId if not passed as API property
     handleUrlParameters() {
-        if (!this.recordId) {
-            // First try to get from URL parameters
+    if (!this.recordId) {
+        try {
+            // First try to get from navigation state (for state-based navigation)
+            try {
+                const pageRef = this[NavigationMixin.GetPageReference]();
+                if (pageRef && pageRef.state && pageRef.state.recordId) {
+                    this.recordId = pageRef.state.recordId;
+                    console.log('Setting recordId from navigation state:', this.recordId);
+                    return;
+                }
+            } catch (navError) {
+                console.log('Navigation state not available, trying URL parameters:', navError.message);
+            }
+            
+            // Fallback: try to get from URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const recordIdFromUrl = urlParams.get('recordId');
             console.log('URL Parameters:', window.location.search);
@@ -299,82 +318,109 @@ export default class GpsApplication extends NavigationMixin(LightningElement) {
             if (recordIdFromUrl) {
                 this.recordId = recordIdFromUrl;
                 console.log('Setting recordId from URL:', this.recordId);
-                // Re-initialize component with the recordId from URL
-                this.initializeComponent();
                 return;
             }
             
-            // Then try to get from navigation state
-            const currentPageReference = this[NavigationMixin.GenerateUrl](this[NavigationMixin.GetPageReference]());
-            if (currentPageReference && currentPageReference.state && currentPageReference.state.recordId) {
-                this.recordId = currentPageReference.state.recordId;
-                console.log('Setting recordId from navigation state:', this.recordId);
-                // Re-initialize component with the recordId from navigation state
-                this.initializeComponent();
-            }
-        } else {
-            console.log('RecordId already set:', this.recordId);
+            console.log('No recordId found in state or URL - proceeding as new application');
+            
+        } catch (error) {
+            console.log('Error checking parameters:', error.message);
         }
+    } else {
+        console.log('RecordId already set:', this.recordId);
     }
+}
 
+// Add this getter method in your component
+get currentPageReference() {
+    try {
+        return this[NavigationMixin.GetPageReference]();
+    } catch (error) {
+        console.log('Could not get page reference:', error.message);
+        return null;
+    }
+}
     // Initialize component with proper error handling
     initializeComponent() {
-        try {
-            this.isLoading = true;
-            this.hasError = false;
+    try {
+        this.isLoading = true;
+        this.hasError = false;
+        
+        // Handle URL parameters first
+        this.handleUrlParameters();
+        
+        console.log('Initializing component with recordId:', this.recordId);
+        
+        // Load application data if recordId exists
+        if (this.recordId) {
+            console.log('RecordId found, loading application data...');
+            this.isNewApplication = false;
+            this.loadApplicationData();
+        } else {
+            // If no recordId, mark application as loaded and start with blank form
+            console.log('No recordId found, starting with blank form for new application...');
+            this.isNewApplication = true;
+            this.applicationLoaded = true;
+            this.applicationData = {};
+            this.budgetInformationData = {};
+            this.technicalProposalData = {};
+            this.abatementStrategiesData = {};
+            this.strategyLineResourcesData = {};
+            this.abatementExtraData = {};
+            this.partners = [];
+            this.currentPartnerIndex = 0;
+            this.isCurrentPartnerAdded = false;
+            this.checkIfAllDataLoaded();
             
-            // Load application data if recordId exists
-            if (this.recordId) {
-                this.loadApplicationData();
-            } else {
-                // If no recordId, mark application as loaded
-                this.applicationLoaded = true;
-                this.applicationData = {};
-                this.checkIfAllDataLoaded();
-            }
-        } catch (error) {
-            this.handleError('Failed to initialize application form', error);
+            // Show a welcome message for new applications
+            setTimeout(() => {
+                if (this.isNewApplication) {
+                    this.showToast('Info', 'Welcome! You can start creating a new GPS application. Fill out the organization information to begin.', 'info');
+                }
+            }, 1000); // Delay to ensure component is fully loaded
         }
+    } catch (error) {
+        this.handleError('Failed to initialize application form', error);
     }
+}
 
     // Load application data
-    loadApplicationData() {
+    async loadApplicationData() {
         console.log('Loading application data for recordId:', this.recordId);
-        getApplication({ recordId: this.recordId })
-            .then(result => {
-                console.log('Application data loaded:', result);
-                if (result) {
-                    this.applicationData = { ...result };
-                    
-                    // Extract budget information data from the loaded application data
-                    this.budgetInformationData = {
-                        Total_Project_Budget__c: result.Total_Project_Budget__c || '',
-                        MinusEstimatedCarryForwardAmount__c: result.MinusEstimatedCarryForwardAmount__c || '',
-                        MinusEstimatedInterestEarned__c: result.MinusEstimatedInterestEarned__c || '',
-                        Total_Amount_Requested__c: result.Total_Amount_Requested__c || '',
-                        ElectronicSignature__c: result.ElectronicSignature__c || ''
-                    };
-                    
-                    console.log('Budget information extracted:', this.budgetInformationData);
-                    
-                    // Load existing partners data if available
-                    this.loadExistingPartnersData();
-                } else {
-                    console.log('No application data found for recordId:', this.recordId);
-                    this.applicationData = {};
-                    this.budgetInformationData = {};
-                }
-                this.applicationLoaded = true;
-                this.checkIfAllDataLoaded();
-            })
-            .catch(error => {
-                console.error('Error loading application data:', error);
-                this.applicationLoaded = true;
+        try {
+            const result = await getApplication({ recordId: this.recordId });
+            console.log('Application data loaded:', result);
+            if (result) {
+                this.applicationData = { ...result };
+                
+                // Extract budget information data from the loaded application data
+                this.budgetInformationData = {
+                    Total_Project_Budget__c: result.Total_Project_Budget__c || '',
+                    MinusEstimatedCarryForwardAmount__c: result.MinusEstimatedCarryForwardAmount__c || '',
+                    MinusEstimatedInterestEarned__c: result.MinusEstimatedInterestEarned__c || '',
+                    Total_Amount_Requested__c: result.Total_Amount_Requested__c || '',
+                    ElectronicSignature__c: result.ElectronicSignature__c || ''
+                };
+                
+                console.log('Budget information extracted:', this.budgetInformationData);
+                
+                // Load existing partners data if available
+                await this.loadExistingPartnersData();
+            } else {
+                console.log('No application data found for recordId:', this.recordId);
                 this.applicationData = {};
                 this.budgetInformationData = {};
-                this.checkIfAllDataLoaded();
-                this.showToast('Warning', 'Could not load existing application data. Starting with blank form.', 'warning');
-            });
+            }
+            this.applicationLoaded = true;
+            this.checkIfAllDataLoaded();
+        } catch (error) {
+            console.error('Error loading application data:', error);
+            this.applicationLoaded = true;
+            this.applicationData = {};
+            this.budgetInformationData = {};
+            this.checkIfAllDataLoaded();
+            this.showToast('Warning', 'Could not load existing application data. Starting with blank form.', 'warning');
+        }
     }
 
     // Wire Apex method to load all picklist values
@@ -392,17 +438,24 @@ export default class GpsApplication extends NavigationMixin(LightningElement) {
         }
     }
 
-    // Check if all required data is loaded
     checkIfAllDataLoaded() {
-        if (this.picklistLoaded && this.applicationLoaded) {
-            this.isDataLoaded = true;
-            this.isLoading = false;
-            this.notifyChildComponents();
-        }
+    console.log('Checking if all data loaded - picklistLoaded:', this.picklistLoaded, 'applicationLoaded:', this.applicationLoaded);
+    console.log('Current recordId:', this.recordId, 'isNewApplication:', this.isNewApplication);
+    
+    if (this.picklistLoaded && this.applicationLoaded) {
+        console.log('All data loaded, setting component as ready...');
+        this.isDataLoaded = true;
+        this.isLoading = false;
+        this.notifyChildComponents();
+    } else {
+        console.log('Still waiting for data to load...');
+        console.log('Missing: picklistLoaded?', !this.picklistLoaded, 'applicationLoaded?', !this.applicationLoaded);
     }
+}
 
     // Notify child components that data is ready
     notifyChildComponents() {
+        console.log('Notifying child components that data is ready...');
         setTimeout(() => {
             this.passDataToCurrentStep();
         }, 100);
@@ -559,28 +612,37 @@ export default class GpsApplication extends NavigationMixin(LightningElement) {
     // Pass data to current step component
     passDataToCurrentStep() {
         try {
+            console.log('Passing data to current step:', this.currentStep);
             const currentStepComponent = this.template.querySelector(`[data-step="${this.currentStep}"]`);
+            
             if (currentStepComponent && typeof currentStepComponent.setData === 'function') {
                 if (this.currentStep === 2) {
                     // For step 2 (technical proposal), use step2Data which includes both applicationData and technicalProposalData
                     console.log('Setting data for step 2 with step2Data:', this.step2Data);
                     currentStepComponent.setData(this.step2Data);
-                } else if (this.currentStep === 3 && this.abatementStrategiesData) {
+                } else if (this.currentStep === 3) {
+                    // For step 3, always pass data even if abatementStrategiesData is empty
                     const dataToPass = {
                         ...this.applicationData,
                         ...this.abatementStrategiesData,
                         ...this.abatementExtraData
                     };
+                    console.log('Setting data for step 3:', dataToPass);
                     currentStepComponent.setData(dataToPass);
                 } else if (this.currentStep === 4) {
                     // For step 4, use step4Data which includes both applicationData and budgetInformationData
                     console.log('Setting data for step 4 with step4Data:', this.step4Data);
                     currentStepComponent.setData(this.step4Data);
                 } else {
+                    // For step 1, pass applicationData
+                    console.log('Setting data for step 1:', this.applicationData);
                     currentStepComponent.setData(this.applicationData);
                 }
+            } else {
+                console.log('Current step component not found or setData method not available');
             }
         } catch (error) {
+            console.error('Error passing data to step:', error);
             this.showToast('Error', 'Failed to pass data to step', 'error');
         }
     }
@@ -926,17 +988,145 @@ export default class GpsApplication extends NavigationMixin(LightningElement) {
     }
 
     // Load existing partners data from the database
-    loadExistingPartnersData() {
+    async loadExistingPartnersData() {
         if (!this.recordId) {
             return Promise.resolve();
         }
         
-        // This method would load existing partners from the database
-        // For now, we'll leave it as a placeholder since the current implementation
-        // doesn't seem to store partners in a way that can be easily loaded
-        // The partners are built up as the user progresses through the form
+        console.log('Loading existing partners data for application:', this.recordId);
         
-        return Promise.resolve();
+        try {
+            const abatementStrategiesData = await getAbatementStrategies({ applicationId: this.recordId });
+            console.log('Abatement strategies data loaded:', abatementStrategiesData);
+            
+            if (abatementStrategiesData && abatementStrategiesData.length > 0) {
+                // Process each abatement strategy and convert to partner format
+                this.partners = [];
+                this.currentPartnerIndex = 0;
+                
+                abatementStrategiesData.forEach((strategyData, index) => {
+                    const strategy = strategyData.strategy;
+                    const lineItems = strategyData.lineItems || [];
+                    const resources = strategyData.resources || [];
+                    
+                    // Convert strategy line items to the expected format
+                    const strategyLineResources = {};
+                    lineItems.forEach(lineItem => {
+                        strategyLineResources[lineItem.Name__c] = {
+                            Id: lineItem.Id,
+                            Strategy_Value__c: lineItem.Name__c,
+                            BudgetAmountForThePurchase__c: lineItem.BudgetAmountForThePurchase__c,
+                            IsYourStrategyInitialContinuation__c: lineItem.IsYourStrategyInitialContinuation__c,
+                            BudgetNarrative__c: lineItem.BudgetNarrative__c,
+                            ImplementationPlanForTheStrategy__c: lineItem.ImplementationPlanForTheStrategy__c,
+                            ProvideTheOutcomeMeasures__c: lineItem.ProvideTheOutcomeMeasures__c,
+                            ProvideTheProcessMeasures__c: lineItem.ProvideTheProcessMeasures__c
+                        };
+                    });
+                    
+                    // Convert strategy resources to the expected format
+                    const personnelData = {};
+                    const budgetData = {};
+                    
+                    resources.forEach(resource => {
+                        const strategyName = resource.Strategy_Name__c || 'Default';
+                        
+                        if (resource.RecordType?.Name === 'Personnel Information' || resource.RecordTypeName__c === 'Personnel Information') {
+                            if (!personnelData[strategyName]) {
+                                personnelData[strategyName] = [];
+                            }
+                            personnelData[strategyName].push({
+                                Id: resource.Id,
+                                Name__c: resource.PersonnelName__c,
+                                Title__c: resource.PersonnelPosition__c,
+                                Email__c: resource.PersonnelEmail__c,
+                                Phone__c: resource.PersonnelPhone__c,
+                                Role__c: resource.PersonnelRole__c,
+                                FTE__c: resource.PersonnelLevelOfEffort__c,
+                                TotalChargedToAward__c: resource.PersonnelTotalChargedToAward__c,
+                                AnnualSalary__c: resource.PersonnelKeyStaffAnnualSalary__c
+                            });
+                        } else if (resource.RecordType?.Name === 'Budget Information' || resource.RecordTypeName__c === 'Budget Information') {
+                            if (!budgetData[strategyName]) {
+                                budgetData[strategyName] = [];
+                            }
+                            budgetData[strategyName].push({
+                                Id: resource.Id,
+                                Description__c: resource.BudgetItem__c,
+                                Amount__c: resource.BudgetTotalChargedToAward__c,
+                                Category__c: resource.BudgetPurpose__c,
+                                Vendor__c: resource.BudgetVendor__c,
+                                Justification__c: resource.BudgetCalculation__c
+                            });
+                        }
+                    });
+                    
+                    // Create partner data structure
+                    const partnerData = {
+                        partnerIndex: index,
+                        abatementStrategies: {
+                            Id: strategy.Id,
+                            PartnerName__c: strategy.PartnerName__c,
+                            GeographicAreaPopulationPoverty__c: strategy.GeographicAreaPopulationPoverty__c,
+                            Outline_Existing_Efforts_and_New_Expansi__c: strategy.Outline_Existing_Efforts_and_New_Expansi__c,
+                            Describe_Current_Budget_and_Funding_Sour__c: strategy.Describe_Current_Budget_and_Funding_Sour__c,
+                            coreStrategies: strategy.CoreStrategies__c ? strategy.CoreStrategies__c.split(';') : [],
+                            abatementStrategies: strategy.Core_Abatement_Strategies__c ? strategy.Core_Abatement_Strategies__c.split(';') : [],
+                            CoreStrategies__c: strategy.CoreStrategies__c,
+                            Core_Abatement_Strategies__c: strategy.Core_Abatement_Strategies__c
+                        },
+                        strategyLineResources: strategyLineResources,
+                        abatementExtra: {
+                            personnelData: personnelData,
+                            budgetData: budgetData
+                        }
+                    };
+                    
+                    this.partners.push(partnerData);
+                    this.currentPartnerIndex = index + 1;
+                });
+                
+                console.log('Partners data processed:', this.partners);
+                console.log('Current partner index:', this.currentPartnerIndex);
+                
+                // If there are partners, set the first one as the current technical proposal data
+                if (this.partners.length > 0) {
+                    const firstPartner = this.partners[0];
+                    this.technicalProposalData = {
+                        PartnerName__c: firstPartner.abatementStrategies.PartnerName__c,
+                        GeographicAreaPopulationPoverty__c: firstPartner.abatementStrategies.GeographicAreaPopulationPoverty__c,
+                        Outline_Existing_Efforts_and_New_Expansi__c: firstPartner.abatementStrategies.Outline_Existing_Efforts_and_New_Expansi__c,
+                        Describe_Current_Budget_and_Funding_Sour__c: firstPartner.abatementStrategies.Describe_Current_Budget_and_Funding_Sour__c
+                    };
+                    
+                    // Set the first partner's abatement strategies as current data
+                    this.abatementStrategiesData = {
+                        Id: firstPartner.abatementStrategies.Id,
+                        coreStrategies: firstPartner.abatementStrategies.coreStrategies,
+                        abatementStrategies: firstPartner.abatementStrategies.abatementStrategies,
+                        CoreStrategies__c: firstPartner.abatementStrategies.CoreStrategies__c,
+                        Core_Abatement_Strategies__c: firstPartner.abatementStrategies.Core_Abatement_Strategies__c
+                    };
+                    
+                    this.strategyLineResourcesData = firstPartner.strategyLineResources;
+                    this.abatementExtraData = firstPartner.abatementExtra;
+                    
+                    console.log('Technical proposal data set:', this.technicalProposalData);
+                    console.log('Abatement strategies data set:', this.abatementStrategiesData);
+                    console.log('Strategy line resources data set:', this.strategyLineResourcesData);
+                    console.log('Abatement extra data set:', this.abatementExtraData);
+                }
+                
+                this.showToast('Success', `Loaded ${this.partners.length} partner(s) with their strategies and resources`, 'success');
+            } else {
+                console.log('No existing abatement strategies found for this application');
+                this.showToast('Info', 'No existing partners found. You can add new partners.', 'info');
+            }
+            
+        } catch (error) {
+            console.error('Error loading existing partners data:', error);
+            this.showToast('Warning', 'Could not load existing partners data: ' + (error.body ? error.body.message : error.message), 'warning');
+        }
     }
 
     // Save organization data
@@ -1049,7 +1239,10 @@ export default class GpsApplication extends NavigationMixin(LightningElement) {
     get showSpinner() { return this.isLoading && !this.hasError; }
 
     // Show content when data is loaded and no errors
-    get showContent() { return this.isDataLoaded && !this.hasError; }
+    get showContent() { 
+        console.log('showContent check - isDataLoaded:', this.isDataLoaded, 'hasError:', this.hasError);
+        return this.isDataLoaded && !this.hasError; 
+    }
 
     get showSaveAndPreviewButton() { return this.currentStep === 4; }
 
