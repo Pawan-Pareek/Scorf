@@ -1,0 +1,84 @@
+/* Organization Information Component Styles */
+
+/* File upload section styling */
+.file-upload-section {
+    border: 1px solid #d8dde6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+/* File list styling */
+.file-list-container {
+    margin-top: 1rem;
+}
+
+.file-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    border-bottom: 1px solid #e5e5e5;
+    background-color: white;
+    border-radius: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.file-list-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.file-name {
+    flex: 1;
+    margin-right: 0.5rem;
+    color: #16325c;
+    font-weight: 500;
+}
+
+.delete-button {
+    color: #c23934;
+}
+
+.delete-button:hover {
+    background-color: #f4f6f9;
+}
+
+/* File upload component styling */
+lightning-file-upload {
+    margin-bottom: 1rem;
+}
+
+/* Success message styling */
+.upload-success {
+    color: #04844b;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+/* Error message styling */
+.upload-error {
+    color: #c23934;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+/* Warning message styling */
+.upload-warning {
+    color: #ffb75d;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .file-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .file-name {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+} 

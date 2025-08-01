@@ -437,6 +437,56 @@
     </template>
 </div>
 
+<!-- Consent Checkbox Section -->
+<div class="consent-section">
+    <div class="slds-form-element">
+        <div class="slds-form-element__control">
+            <div class="slds-checkbox">
+                <input type="checkbox" id="consent-checkbox" checked disabled />
+                <label class="slds-checkbox__label" for="consent-checkbox">
+                    <span class="slds-checkbox_faux"></span>
+                    <span class="slds-form-element__label consent-label">
+                        By submitting this form, I confirm that I have read and understood the provided information, and I consent to the processing of my data in accordance with the stated terms.
+                    </span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Uploaded Documents Section -->
+<div class="info-section">
+    <div class="section-header-modal" onclick={toggleUploadedDocuments} style="cursor: pointer;">
+        <lightning-icon 
+            icon-name={documentsIconName} 
+            size="small" 
+            class="section-icon-modal">
+        </lightning-icon>
+        <h3 class="section-title-modal">Uploaded Documents</h3>
+    </div>
+    
+    <template if:true={isDocumentsExpanded}>
+        <div class="documents-container">
+            <template for:each={uploadedDocuments} for:item="document">
+                <div key={document.id} class="document-item">
+                    <div class="document-info">
+                        <span class="document-label">FileName - </span>
+                        <span class="document-name">{document.displayName}</span>
+                    </div>
+                    <lightning-button 
+                        label="Download" 
+                        variant="brand" 
+                        size="small"
+                        onclick={handleDocumentDownload}
+                        data-id={document.id}
+                        class="download-btn">
+                    </lightning-button>
+                </div>
+            </template>
+        </div>
+    </template>
+</div>
+
             </div>
         </div>
     </div>

@@ -454,6 +454,7 @@ get processedCoreStrategies() {
                 persistedData: this._strategyLineResourcesData && this._strategyLineResourcesData[option.value]
                     ? { ...this._strategyLineResourcesData[option.value] }
                     : {},
+                // Show personnel and budget data only when selected, but preserve data in memory
                 personnelRows: isSelected ? (this.personnelData[option.value] || []) : [],
                 budgetRows: isSelected ? (this.budgetData[option.value] || []) : []
             };
@@ -479,6 +480,8 @@ get processedCoreStrategies() {
             this.selectedAbatementStrategies.includes(option.value)
         ).length;
     }
+
+
 
     handleCoreStrategyToggle(event) {
         const strategyValue = event.currentTarget.dataset.strategy;
@@ -534,15 +537,8 @@ get processedCoreStrategies() {
             }
         }
 
-        // Clear strategy line resources data for strategies that are no longer selected
-        const updatedStrategyLineResources = { ...this._strategyLineResourcesData };
-        Object.keys(updatedStrategyLineResources).forEach(strategyKey => {
-            if (!this.selectedAbatementStrategies.includes(strategyKey)) {
-                delete updatedStrategyLineResources[strategyKey];
-                console.log('Cleared strategy line resources for deselected strategy:', strategyKey);
-            }
-        });
-        this._strategyLineResourcesData = updatedStrategyLineResources;
+        // REMOVED: Data clearing logic - data will only be cleared by handleClearAbatementOption
+        // This prevents data from being cleared when user collapses the strategy
 
         this.updateComponentData();
         this.emitAbatementDataChange(); // Notify parent of all changes
@@ -835,19 +831,15 @@ get processedCoreStrategies() {
 
     // Emit a single datachange event upward with all abatement data
     emitAbatementDataChange() {
-        // Filter strategy line resources to only include selected ones
-        const filteredStrategyLineResources = {};
-        this.selectedAbatementStrategies.forEach(strategyKey => {
-            if (this._strategyLineResourcesData[strategyKey]) {
-                filteredStrategyLineResources[strategyKey] = this._strategyLineResourcesData[strategyKey];
-            }
-        });
+        // Send ALL strategy line resources data, not just selected ones
+        // This ensures data is preserved even when strategies are collapsed
+        const allStrategyLineResources = { ...this._strategyLineResourcesData };
 
-        // Send filtered data to parent
+        // Send all data to parent
         const abatementData = {
             ...this.componentData,
             Id: this.existingRecordId, // Ensure ID is included
-            strategyLineResources: filteredStrategyLineResources
+            strategyLineResources: allStrategyLineResources
         };
         const personnelData = { ...this.personnelData };
         const budgetData = { ...this.budgetData };
@@ -855,7 +847,7 @@ get processedCoreStrategies() {
         // Log the data being sent to the parent
         console.log('Emitting abatementData to parent with ID:', this.existingRecordId);
         console.log('Selected strategies:', this.selectedAbatementStrategies);
-        console.log('Filtered strategy line resources:', Object.keys(filteredStrategyLineResources));
+        console.log('All strategy line resources:', Object.keys(allStrategyLineResources));
         console.log('Emitting abatementData to parent:', JSON.stringify(abatementData));
         console.log('Emitting personnelData to parent:', JSON.stringify(personnelData));
         console.log('Emitting budgetData to parent:', JSON.stringify(budgetData));

@@ -356,6 +356,52 @@
     letter-spacing: 0.5px;
 }
 
+.consent-section {
+    margin: 1rem 0;
+    padding: 1rem;
+    background-color: #f3f3f3;
+    border-radius: 4px;
+}
+
+.consent-label {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: #333;
+}
+
+.documents-container {
+    padding: 1rem 0;
+}
+
+.document-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: #f8f8f8;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.document-info {
+    display: flex;
+    align-items: center;
+}
+
+.document-label {
+    font-weight: 500;
+    color: #333;
+}
+
+.document-name {
+    color: #0176d3;
+    margin-left: 0.25rem;
+}
+
+.download-btn {
+    min-width: 100px;
+}
+
 @media (max-width: 768px) {
     .info-row {
         grid-template-columns: 1fr;

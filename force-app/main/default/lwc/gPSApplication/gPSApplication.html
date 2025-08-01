@@ -7,16 +7,13 @@
         <div class="overlap-card">
             <lightning-card class="application-container">
                 <div class="slds-p-around_medium">
-                    
+
                     <!-- Error State -->
                     <template if:true={hasError}>
                         <div class="slds-notify slds-notify_alert slds-theme_error slds-m-bottom_medium">
                             <h2 class="slds-text-heading_small">Error Loading Application</h2>
                             <p>{errorMessage}</p>
-                            <lightning-button 
-                                variant="neutral" 
-                                label="Retry" 
-                                onclick={retryLoad}
+                            <lightning-button variant="neutral" label="Retry" onclick={retryLoad}
                                 class="slds-m-top_small">
                             </lightning-button>
                         </div>
@@ -25,7 +22,8 @@
                     <!-- Loading State -->
                     <template if:true={showSpinner}>
                         <div class="slds-align_absolute-center slds-m-vertical_large">
-                            <lightning-spinner alternative-text="Loading application..." size="large"></lightning-spinner>
+                            <lightning-spinner alternative-text="Loading application..."
+                                size="large"></lightning-spinner>
                             <p class="slds-m-top_small slds-text-align_center">Loading application form...</p>
                         </div>
                     </template>
@@ -46,101 +44,69 @@
 
                         <!-- Step 1: Organization Information -->
                         <template if:true={isStep1}>
-                            <c-organization-information 
-                                data-step="1"
-                                application-data={step1Data}
-                                picklist-values={picklistValues}
-                                record-id={recordId}
-                                ondatachange={handleDataChange}>
+                            <c-organization-information data-step="1" application-data={step1Data}
+                                picklist-values={picklistValues} record-id={recordId} ondatachange={handleDataChange}
+                                onshowtoast={handleShowToast}>
                             </c-organization-information>
                         </template>
 
                         <!-- Step 2: Technical Proposal -->
                         <template if:true={isStep2}>
-                            <c-technical-proposal 
-                                data-step="2"
-                                application-data={step2Data}
-                                picklist-values={picklistValues}
-                                record-id={recordId}
-                                ondatachange={handleDataChange}>
+                            <c-technical-proposal data-step="2" application-data={step2Data}
+                                picklist-values={picklistValues} record-id={recordId} ondatachange={handleDataChange}>
                             </c-technical-proposal>
                         </template>
 
                         <!-- Step 3: Abatement Strategies -->
                         <template if:true={isStep3}>
-                            <c-abatement-strategies 
-                                data-step="3"
-                                application-data={step3Data}
-                                picklist-values={picklistValues}
-                                record-id={recordId}
+                            <c-abatement-strategies data-step="3" application-data={step3Data}
+                                picklist-values={picklistValues} record-id={recordId}
                                 strategy-line-resources-data={strategyLineResourcesData}
                                 onstrategylineresourceschange={handleStrategyLineResourcesChange}
-                                onstrategyclear={handleStrategyClear}
-                                ondatachange={handleDataChange}>
+                                onstrategyclear={handleStrategyClear} ondatachange={handleDataChange}>
                             </c-abatement-strategies>
                         </template>
 
                         <!-- Step 4: Budget Information -->
                         <template if:true={isStep4}>
-                            <c-budget-information 
-                                data-step="4"
-                                application-data={step4Data}
-                                picklist-values={picklistValues}
-                                record-id={recordId}
-                                ondatachange={handleDataChange}>
+                            <c-budget-information data-step="4" application-data={step4Data}
+                                picklist-values={picklistValues} record-id={recordId} ondatachange={handleDataChange}>
                             </c-budget-information>
                         </template>
 
                         <!-- Navigation Buttons -->
                         <div class="slds-m-top_large slds-text-align_center">
                             <template if:false={isFirstStep}>
-                                <lightning-button 
-                                    variant="neutral" 
-                                    label="Previous" 
-                                    onclick={handlePrevious}
-                                    class="slds-m-right_small"
-                                    disabled={isLoading}>
+                                <lightning-button variant="neutral" label="Previous" onclick={handlePrevious}
+                                    class="slds-m-right_small" disabled={isLoading}>
                                 </lightning-button>
                             </template>
 
                             <template if:false={isLastStep}>
-                                <lightning-button 
-                                    variant="brand" 
-                                    label="Next" 
-                                    onclick={handleNext}
+                                <lightning-button variant="brand" label="Next" onclick={handleNext}
                                     disabled={isLoading}>
                                 </lightning-button>
                             </template>
 
                             <!-- Save and Exit button, visible on steps 1 and 3 -->
-    <template if:true={showSaveAndExitButton}>
-        <lightning-button 
-            variant="neutral" 
-            label="Save and Exit" 
-            onclick={handleSaveAndExit}
-            class="slds-m-left_x-small"
-            disabled={isLoading}>
-        </lightning-button>
-    </template>
+                            <template if:true={showSaveAndExitButton}>
+                                <lightning-button variant="neutral" label="Save and Exit" onclick={handleSaveAndExit}
+                                    class="slds-m-left_x-small" disabled={isLoading}>
+                                </lightning-button>
+                            </template>
 
 
 
                             <!-- Add this button next to the existing Save button, but only show on step 4 -->
-<template if:true={showSaveAndPreviewButton}>
-    <lightning-button 
-        variant="brand" 
-        label="Save and Preview" 
-        onclick={handleSaveAndPreview}
-        class="slds-m-left_x-small">
-    </lightning-button>
-</template>
+                            <template if:true={showSaveAndPreviewButton}>
+                                <lightning-button variant="brand" label="Save and Preview"
+                                    onclick={handleSaveAndPreview} class="slds-m-left_x-small">
+                                </lightning-button>
+                            </template>
 
                             <!-- Add Partner button, only visible in step 3 -->
                             <template if:true={isStep3}>
-                                <lightning-button 
-                                    variant="neutral" 
-                                    label="Add Partner" 
-                                    onclick={handleAddPartner}
+                                <lightning-button variant="neutral" label="Add Partner" onclick={handleAddPartner}
                                     class="slds-m-top_small">
                                 </lightning-button>
                             </template>
@@ -152,473 +118,585 @@
     </div>
 
     <!-- Preview Modal -->
-<template if:true={showPreviewModal}>
-    <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" class="slds-modal slds-fade-in-open">
-        <div class="slds-modal__container" style="max-width: 80%; width: 80%;">
-            <header class="slds-modal__header">
-                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={handleCloseModal}>
-                    <lightning-icon icon-name="utility:close" alternative-text="close" size="small"></lightning-icon>
-                    <span class="slds-assistive-text">Close</span>
-                </button>
-                <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Application Preview</h2>
-            </header>
-            <div class="slds-modal__content slds-p-around_medium">
-                
-                <!-- Political Subdivision Information Section -->
-                <div class="slds-accordion">
-                    <section class="slds-accordion__section slds-is-open">
-                        <div class="slds-accordion__summary">
-                            <h3 class="slds-accordion__summary-heading">
-                                <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
-                                    <lightning-icon icon-name="standard:account" size="small" class="slds-m-right_small"></lightning-icon>
-                                    Political Subdivision Information
-                                </span>
-                            </h3>
-                        </div>
-                        <div class="slds-accordion__content">
-                            <div class="slds-grid slds-wrap slds-p-around_medium">
-                                <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
-                                    <p><strong>Indicate whether this request is for funds from the Guaranteed Political Subdivision Fund (GPS for/on behalf of participating political subdivisions only) or Discretionary Subfund (DSF)? :</strong> {formattedPreviewData.requestType}</p>
-                                    <p><strong>Name of Individual Completing the Application :</strong> {formattedPreviewData.nameOfPerson}</p>
-                                    <p><strong>Title of Individual Completing the Application :</strong> {formattedPreviewData.titleOfPerson}</p>
-                                    <p><strong>Political Subdivision Name :</strong> {formattedPreviewData.subdivisionName}</p>
-                                    <p><strong>Political Subdivision Contact Number :</strong> {formattedPreviewData.subdivisionContact}</p>
-                                    <p><strong>Political Subdivision Email :</strong> {formattedPreviewData.subdivisionEmail}</p>
-                                    <p><strong>SCEIS Vendor Number :</strong> {formattedPreviewData.sceisVendor}</p>
-                                    <p><strong>Entity Type :</strong> {formattedPreviewData.entityType}</p>
-                                </div>
-                                <div class="slds-col slds-size_1-of-2">
-                                    <p><strong>Does The Requesting Entity Approve Line-item Severability Throughout The Application? :</strong> {formattedPreviewData.entityApprove}</p>
-                                    <p><strong>Are You Collaborating With Other GPS? :</strong> {formattedPreviewData.collaborating}</p>
-                                    <p><strong>Was the requesting Entity a litigating subdivision? :</strong> {formattedPreviewData.litigating}</p>
-                                    <p><strong>Is the requesting Entity a South Carolina Bellwether Plaintiff? :</strong> {formattedPreviewData.bellwether}</p>
-                                    <p><strong>Does the requesting Entity, or any of its board members or employees, have any personal, financial, or other relationship with any Member of the SC Opioid Recovery Fund Board that may reasonably be viewed as a conflict of interest for that Member? :</strong> {formattedPreviewData.conflict}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
+    <template if:true={showPreviewModal}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+            class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container" style="max-width: 80%; width: 80%;">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        title="Close" onclick={handleCloseModal}>
+                        <lightning-icon icon-name="utility:close" alternative-text="close"
+                            size="small"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Application Preview</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
 
-                <!-- Payment Remit To Section -->
-                <div class="slds-accordion slds-m-top_medium">
-                    <section class="slds-accordion__section slds-is-open">
-                        <div class="slds-accordion__summary">
-                            <h3 class="slds-accordion__summary-heading">
-                                <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
-                                    <lightning-icon icon-name="standard:address" size="small" class="slds-m-right_small"></lightning-icon>
-                                    Payment Remit To (As per SCEIS)
-                                </span>
-                            </h3>
-                        </div>
-                        <div class="slds-accordion__content">
-                            <div class="slds-grid slds-wrap slds-p-around_medium">
-                                <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
-                                    <p><strong>Address Line 1 :</strong> {formattedPreviewData.paymentAddressLine1}</p>
-                                    <p><strong>Address Line 2 :</strong> {formattedPreviewData.paymentAddressLine2}</p>
-                                </div>
-                                <div class="slds-col slds-size_1-of-2">
-                                    <p><strong>City :</strong> {formattedPreviewData.paymentCity}</p>
-                                    <p><strong>State :</strong> {formattedPreviewData.paymentState}</p>
-                                    <p><strong>Zip :</strong> {formattedPreviewData.paymentZip}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                <!-- Political Subdivision Address Section -->
-                <div class="slds-accordion slds-m-top_medium">
-                    <section class="slds-accordion__section slds-is-open">
-                        <div class="slds-accordion__summary">
-                            <h3 class="slds-accordion__summary-heading">
-                                <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
-                                    <lightning-icon icon-name="standard:location" size="small" class="slds-m-right_small"></lightning-icon>
-                                    Political Subdivision Address
-                                </span>
-                            </h3>
-                        </div>
-                        <div class="slds-accordion__content">
-                            <div class="slds-grid slds-wrap slds-p-around_medium">
-                                <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
-                                    <p><strong>Address Line 1 :</strong> {formattedPreviewData.subdivisionAddressLine1}</p>
-                                    <p><strong>Address Line 2 :</strong> {formattedPreviewData.subdivisionAddressLine2}</p>
-                                </div>
-                                <div class="slds-col slds-size_1-of-2">
-                                    <p><strong>City :</strong> {formattedPreviewData.subdivisionCity}</p>
-                                    <p><strong>State :</strong> {formattedPreviewData.subdivisionState}</p>
-                                    <p><strong>Zip :</strong> {formattedPreviewData.subdivisionZip}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                <!-- Application Point of Contact Section -->
-                <div class="slds-accordion slds-m-top_medium">
-                    <section class="slds-accordion__section slds-is-open">
-                        <div class="slds-accordion__summary">
-                            <h3 class="slds-accordion__summary-heading">
-                                <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
-                                    <lightning-icon icon-name="standard:contact" size="small" class="slds-m-right_small"></lightning-icon>
-                                    Application Point of Contact
-                                </span>
-                            </h3>
-                        </div>
-                        <div class="slds-accordion__content">
-                            <div class="slds-grid slds-wrap slds-p-around_medium">
-                                <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
-                                    <h4 class="slds-text-heading_small slds-m-bottom_small">Program Manager</h4>
-                                    <p><strong>Name :</strong> {formattedPreviewData.programManagerName}</p>
-                                    <p><strong>Email :</strong> {formattedPreviewData.programManagerEmail}</p>
-                                    <p><strong>Phone Number :</strong> {formattedPreviewData.programManagerPhone}</p>
-                                </div>
-                                <div class="slds-col slds-size_1-of-2">
-                                    <h4 class="slds-text-heading_small slds-m-bottom_small">Fiscal Manager</h4>
-                                    <p><strong>Name :</strong> {formattedPreviewData.fiscalManagerName}</p>
-                                    <p><strong>Email :</strong> {formattedPreviewData.fiscalManagerEmail}</p>
-                                    <p><strong>Phone Number :</strong> {formattedPreviewData.fiscalManagerPhone}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                <!-- Overall Budget Information Section -->
-                <div class="slds-accordion slds-m-top_medium">
-                    <section class="slds-accordion__section slds-is-open">
-                        <div class="slds-accordion__summary">
-                            <h3 class="slds-accordion__summary-heading">
-                                <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
-                                    <lightning-icon icon-name="standard:currency" size="small" class="slds-m-right_small"></lightning-icon>
-                                    Overall Budget Information
-                                </span>
-                            </h3>
-                        </div>
-                        <div class="slds-accordion__content">
-                            <div class="slds-grid slds-wrap slds-p-around_medium">
-                                <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
-                                    <p><strong>Total Project Budget :</strong> {formattedPreviewData.totalProjectBudget}</p>
-                                    <p><strong>Minus Estimated Carry Forward Amount :</strong> {formattedPreviewData.minusEstimatedCarryForward}</p>
-                                </div>
-                                <div class="slds-col slds-size_1-of-2">
-                                    <p><strong>Minus Estimated Interest Earned :</strong> {formattedPreviewData.minusEstimatedInterestEarned}</p>
-                                    <p><strong>Total Amount Requested :</strong> {formattedPreviewData.totalAmountRequested}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                    <!-- Partner Table Section -->
-<div class="slds-accordion slds-m-top_medium">
-    <section class="slds-accordion__section slds-is-open">
-        <div class="slds-accordion__summary">
-            <h3 class="slds-accordion__summary-heading">
-                <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
-                    <lightning-icon icon-name="standard:partner_fund" size="small" class="slds-m-right_small"></lightning-icon>
-                    Partner Table
-                </span>
-            </h3>
-        </div>
-        <div class="slds-accordion__content">
-            <div class="slds-p-around_medium">
-                <template if:true={partnerTableData}>
-                    <template if:true={partnerTableData.length}>
-                        <table class="slds-table slds-table_cell-buffer slds-table_bordered">
-                            <thead>
-                                <tr class="slds-line-height_reset">
-                                    <th class="" scope="col">
-                                        <div class="slds-truncate" title="Partner Name">Partner Name</div>
-                                    </th>
-                                    <th class="" scope="col">
-                                        <div class="slds-truncate" title="Actions">Actions</div>
-                                    </th>
-                                    <th class="" scope="col">
-                                        <div class="slds-truncate" title="Edit">Edit</div>
-                                    </th>
-                                    <th class="" scope="col">
-                                        <div class="slds-truncate" title="Delete">Delete</div>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template for:each={partnerTableData} for:item="partner">
-                                    <tr key={partner.id} class="slds-hint-parent">
-                                        <td data-label="Partner Name">
-                                            <div class="slds-truncate" title={partner.name}>{partner.name}</div>
-                                        </td>
-                                        <td data-label="Actions">
-                                            <button class="slds-button slds-button_brand" 
-                                                    data-index={partner.index} 
-                                                    onclick={handleViewPartner}>
-                                                <lightning-icon icon-name="utility:preview" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                                                View
-                                            </button>
-                                        </td>
-                                        <td data-label="Edit">
-                                            <button class="slds-button slds-button_brand" 
-                                                    data-index={partner.index} 
-                                                    onclick={handleEditPartner}>
-                                                <lightning-icon icon-name="utility:edit" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                                                Edit
-                                            </button>
-                                        </td>
-                                        <td data-label="Delete">
-                                            <button class="slds-button slds-button_destructive" 
-                                                    data-index={partner.index} 
-                                                    onclick={handleDeletePartner}
-                                                    disabled={isOnlyOnePartner}>
-                                                <lightning-icon icon-name="utility:delete" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                                                Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </template>
-                    <template if:false={partnerTableData.length}>
-                        <div class="slds-text-align_center slds-p-around_medium">
-                            <p class="slds-text-color_weak">No partners added yet. Go to Step 2 and 3 to add partners.</p>
-                        </div>
-                    </template>
-                </template>
-            </div>
-        </div>
-
-                <!-- Budget Information Section -->
-                <div class="slds-accordion slds-m-top_medium">
-                    <section class="slds-accordion__section slds-is-open">
-                        <div class="slds-accordion__summary">
-                            <h3 class="slds-accordion__summary-heading">
-                                <span class="slds-accordion__summary-content" style="background-color: #d3d3d3; color: black; padding: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
-                                    <span style="display: flex; align-items: center;">
-                                        <lightning-icon icon-name="standard:currency" size="small" class="slds-m-right_small"></lightning-icon>
-                                        Budget Information
-                                    </span>
-                                    <lightning-icon icon-name="utility:chevrondown" size="small"></lightning-icon>
-                                </span>
-                            </h3>
-                        </div>
-                        <div class="slds-accordion__content">
-                            <div class="slds-p-around_medium">
-                                <!-- Checkbox and Consent Text -->
-                                <div class="slds-form-element slds-m-bottom_medium">
-                                    <div class="slds-form-element__control">
-                                        <lightning-input 
-                                            type="checkbox" 
-                                            name="consentCheckbox" 
-                                            label="By submitting this form, I confirm that I have read and understood the provided information, and I consent to the processing of my data in accordance with the stated terms."
-                                            checked={consentChecked}
-                                            onchange={handleConsentChange}>
-                                        </lightning-input>
-                                    </div>
-                                </div>
-                                
-                                <!-- Action Buttons -->
-                                <div class="slds-grid slds-grid_align-center slds-m-top_medium">
-                                    <div class="slds-col slds-size_1-of-2 slds-p-right_x-small">
-                                        <lightning-button 
-                                            variant="brand" 
-                                            label="Edit" 
-                                            icon-name="utility:edit"
-                                            onclick={handleEditBudget}
-                                            class="slds-button_full">
-                                        </lightning-button>
-                                    </div>
-                                    <div class="slds-col slds-size_1-of-2 slds-p-left_x-small">
-                                        <lightning-button 
-                                            variant="brand" 
-                                            label="Submit" 
-                                            icon-name="utility:save"
-                                            onclick={handleSubmitBudget}
-                                            disabled={isSubmitDisabled}
-                                            class="slds-button_full">
-                                        </lightning-button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-        <!-- Partner View Modal -->
-<template if:true={showPartnerViewModal}>
-    <section role="dialog" tabindex="-1" aria-labelledby="partner-modal-heading" aria-modal="true" class="slds-modal slds-fade-in-open">
-        <div class="slds-modal__container" style="max-width: 80%; width: 80%;">
-            <header class="slds-modal__header">
-                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={handleClosePartnerModal}>
-                    <lightning-icon icon-name="utility:close" alternative-text="close" size="small"></lightning-icon>
-                    <span class="slds-assistive-text">Close</span>
-                </button>
-                <h2 id="partner-modal-heading" class="slds-modal__title slds-hyphenate">Partner Details</h2>
-            </header>
-            <div class="slds-modal__content slds-p-around_medium">
-                <template if:true={selectedPartnerData.abatementStrategies}>
-                    <!-- Technical Proposal Section -->
+                    <!-- Political Subdivision Information Section -->
                     <div class="slds-accordion">
                         <section class="slds-accordion__section slds-is-open">
                             <div class="slds-accordion__summary">
                                 <h3 class="slds-accordion__summary-heading">
-                                    <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem;">
-                                        Technical Proposal
+                                    <span class="slds-accordion__summary-content"
+                                        style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
+                                        <lightning-icon icon-name="standard:account" size="small"
+                                            class="slds-m-right_small"></lightning-icon>
+                                        Political Subdivision Information
                                     </span>
                                 </h3>
                             </div>
-                            <div class="slds-accordion__content slds-p-around_medium">
-                                <p><strong>Partner Name:</strong> {selectedPartnerData.abatementStrategies.PartnerName__c}</p>
-                                <p><strong>Geographic Area:</strong> {selectedPartnerData.abatementStrategies.GeographicAreaPopulationPoverty__c}</p>
-                                <p><strong>Existing Efforts:</strong> {selectedPartnerData.abatementStrategies.Outline_Existing_Efforts_and_New_Expansi__c}</p>
-                                <p><strong>Budget Description:</strong> {selectedPartnerData.abatementStrategies.Describe_Current_Budget_and_Funding_Sour__c}</p>
+                            <div class="slds-accordion__content">
+                                <div class="slds-grid slds-wrap slds-p-around_medium">
+                                    <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+                                        <p><strong>Indicate whether this request is for funds from the Guaranteed
+                                                Political Subdivision Fund (GPS for/on behalf of participating political
+                                                subdivisions only) or Discretionary Subfund (DSF)? :</strong>
+                                            {formattedPreviewData.requestType}</p>
+                                        <p><strong>Name of Individual Completing the Application :</strong>
+                                            {formattedPreviewData.nameOfPerson}</p>
+                                        <p><strong>Title of Individual Completing the Application :</strong>
+                                            {formattedPreviewData.titleOfPerson}</p>
+                                        <p><strong>Political Subdivision Name :</strong>
+                                            {formattedPreviewData.subdivisionName}</p>
+                                        <p><strong>Political Subdivision Contact Number :</strong>
+                                            {formattedPreviewData.subdivisionContact}</p>
+                                        <p><strong>Political Subdivision Email :</strong>
+                                            {formattedPreviewData.subdivisionEmail}</p>
+                                        <p><strong>SCEIS Vendor Number :</strong> {formattedPreviewData.sceisVendor}</p>
+                                        <p><strong>Entity Type :</strong> {formattedPreviewData.entityType}</p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <p><strong>Does The Requesting Entity Approve Line-item Severability Throughout
+                                                The Application? :</strong> {formattedPreviewData.entityApprove}</p>
+                                        <p><strong>Are You Collaborating With Other GPS? :</strong>
+                                            {formattedPreviewData.collaborating}</p>
+                                        <p><strong>Was the requesting Entity a litigating subdivision? :</strong>
+                                            {formattedPreviewData.litigating}</p>
+                                        <p><strong>Is the requesting Entity a South Carolina Bellwether Plaintiff?
+                                                :</strong> {formattedPreviewData.bellwether}</p>
+                                        <p><strong>Does the requesting Entity, or any of its board members or employees,
+                                                have any personal, financial, or other relationship with any Member of
+                                                the SC Opioid Recovery Fund Board that may reasonably be viewed as a
+                                                conflict of interest for that Member? :</strong>
+                                            {formattedPreviewData.conflict}</p>
+                                    </div>
+                                </div>
                             </div>
                         </section>
                     </div>
-                    
-                    <!-- Abatement Strategies Section -->
+
+                    <!-- Payment Remit To Section -->
                     <div class="slds-accordion slds-m-top_medium">
                         <section class="slds-accordion__section slds-is-open">
                             <div class="slds-accordion__summary">
                                 <h3 class="slds-accordion__summary-heading">
-                                    <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem;">
-                                        Abatement Strategies
+                                    <span class="slds-accordion__summary-content"
+                                        style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
+                                        <lightning-icon icon-name="standard:address" size="small"
+                                            class="slds-m-right_small"></lightning-icon>
+                                        Payment Remit To (As per SCEIS)
                                     </span>
                                 </h3>
                             </div>
-                            <div class="slds-accordion__content slds-p-around_medium">
-                                <p><strong>Core Strategies:</strong> {selectedPartnerData.abatementStrategies.CoreStrategies__c}</p>
-                                <p><strong>Abatement Strategies:</strong> {selectedPartnerData.abatementStrategies.Core_Abatement_Strategies__c}</p>
+                            <div class="slds-accordion__content">
+                                <div class="slds-grid slds-wrap slds-p-around_medium">
+                                    <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+                                        <p><strong>Address Line 1 :</strong> {formattedPreviewData.paymentAddressLine1}
+                                        </p>
+                                        <p><strong>Address Line 2 :</strong> {formattedPreviewData.paymentAddressLine2}
+                                        </p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <p><strong>City :</strong> {formattedPreviewData.paymentCity}</p>
+                                        <p><strong>State :</strong> {formattedPreviewData.paymentState}</p>
+                                        <p><strong>Zip :</strong> {formattedPreviewData.paymentZip}</p>
+                                    </div>
+                                </div>
                             </div>
                         </section>
                     </div>
 
-                    <!-- Strategy Line Resources Section -->
-                    <template if:true={selectedPartnerData.strategyLineResources}>
-                        <div class="slds-accordion slds-m-top_medium">
-                            <section class="slds-accordion__section slds-is-open">
-                                <div class="slds-accordion__summary">
-                                    <h3 class="slds-accordion__summary-heading">
-                                        <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem;">
-                                            Strategy Line Resources
-                                        </span>
-                                    </h3>
+                    <!-- Political Subdivision Address Section -->
+                    <div class="slds-accordion slds-m-top_medium">
+                        <section class="slds-accordion__section slds-is-open">
+                            <div class="slds-accordion__summary">
+                                <h3 class="slds-accordion__summary-heading">
+                                    <span class="slds-accordion__summary-content"
+                                        style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
+                                        <lightning-icon icon-name="standard:location" size="small"
+                                            class="slds-m-right_small"></lightning-icon>
+                                        Political Subdivision Address
+                                    </span>
+                                </h3>
+                            </div>
+                            <div class="slds-accordion__content">
+                                <div class="slds-grid slds-wrap slds-p-around_medium">
+                                    <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+                                        <p><strong>Address Line 1 :</strong>
+                                            {formattedPreviewData.subdivisionAddressLine1}</p>
+                                        <p><strong>Address Line 2 :</strong>
+                                            {formattedPreviewData.subdivisionAddressLine2}</p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <p><strong>City :</strong> {formattedPreviewData.subdivisionCity}</p>
+                                        <p><strong>State :</strong> {formattedPreviewData.subdivisionState}</p>
+                                        <p><strong>Zip :</strong> {formattedPreviewData.subdivisionZip}</p>
+                                    </div>
                                 </div>
-                                <div class="slds-accordion__content slds-p-around_medium">
-                                    <template for:each={formattedStrategyLineResourcesList} for:item="strategy">
-                                        <div key={strategy.key} class="slds-box slds-m-bottom_medium">
-                                            <h4 class="slds-text-heading_small slds-m-bottom_small">{strategy.strategyName}</h4>
-                                            <div class="slds-grid slds-wrap">
-                                                <div class="slds-col slds-size_1-of-2">
-                                                    <p><strong>Budget Amount:</strong> {strategy.formattedBudgetAmount}</p>
-                                                    <p><strong>Initial or Continuation:</strong> {strategy.formattedInitialContinuation}</p>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Application Point of Contact Section -->
+                    <div class="slds-accordion slds-m-top_medium">
+                        <section class="slds-accordion__section slds-is-open">
+                            <div class="slds-accordion__summary">
+                                <h3 class="slds-accordion__summary-heading">
+                                    <span class="slds-accordion__summary-content"
+                                        style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
+                                        <lightning-icon icon-name="standard:contact" size="small"
+                                            class="slds-m-right_small"></lightning-icon>
+                                        Application Point of Contact
+                                    </span>
+                                </h3>
+                            </div>
+                            <div class="slds-accordion__content">
+                                <div class="slds-grid slds-wrap slds-p-around_medium">
+                                    <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+                                        <h4 class="slds-text-heading_small slds-m-bottom_small">Program Manager</h4>
+                                        <p><strong>Name :</strong> {formattedPreviewData.programManagerName}</p>
+                                        <p><strong>Email :</strong> {formattedPreviewData.programManagerEmail}</p>
+                                        <p><strong>Phone Number :</strong> {formattedPreviewData.programManagerPhone}
+                                        </p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <h4 class="slds-text-heading_small slds-m-bottom_small">Fiscal Manager</h4>
+                                        <p><strong>Name :</strong> {formattedPreviewData.fiscalManagerName}</p>
+                                        <p><strong>Email :</strong> {formattedPreviewData.fiscalManagerEmail}</p>
+                                        <p><strong>Phone Number :</strong> {formattedPreviewData.fiscalManagerPhone}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Overall Budget Information Section -->
+                    <div class="slds-accordion slds-m-top_medium">
+                        <section class="slds-accordion__section slds-is-open">
+                            <div class="slds-accordion__summary">
+                                <h3 class="slds-accordion__summary-heading">
+                                    <span class="slds-accordion__summary-content"
+                                        style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
+                                        <lightning-icon icon-name="standard:currency" size="small"
+                                            class="slds-m-right_small"></lightning-icon>
+                                        Overall Budget Information
+                                    </span>
+                                </h3>
+                            </div>
+                            <div class="slds-accordion__content">
+                                <div class="slds-grid slds-wrap slds-p-around_medium">
+                                    <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+                                        <p><strong>Total Project Budget :</strong>
+                                            {formattedPreviewData.totalProjectBudget}</p>
+                                        <p><strong>Minus Estimated Carry Forward Amount :</strong>
+                                            {formattedPreviewData.minusEstimatedCarryForward}</p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <p><strong>Minus Estimated Interest Earned :</strong>
+                                            {formattedPreviewData.minusEstimatedInterestEarned}</p>
+                                        <p><strong>Total Amount Requested :</strong>
+                                            {formattedPreviewData.totalAmountRequested}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Partner Table Section -->
+                    <div class="slds-accordion slds-m-top_medium">
+                        <section class="slds-accordion__section slds-is-open">
+                            <div class="slds-accordion__summary">
+                                <h3 class="slds-accordion__summary-heading">
+                                    <span class="slds-accordion__summary-content"
+                                        style="background-color: #1B3A57; color: white; padding: 0.75rem; display: flex; align-items: center;">
+                                        <lightning-icon icon-name="standard:partner_fund" size="small"
+                                            class="slds-m-right_small"></lightning-icon>
+                                        Partner Table
+                                    </span>
+                                </h3>
+                            </div>
+                            <div class="slds-accordion__content">
+                                <div class="slds-p-around_medium">
+                                    <template if:true={partnerTableData}>
+                                        <template if:true={partnerTableData.length}>
+                                            <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                                <thead>
+                                                    <tr class="slds-line-height_reset">
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Partner Name">Partner Name
+                                                            </div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Actions">Actions</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Edit">Edit</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Delete">Delete</div>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <template for:each={partnerTableData} for:item="partner">
+                                                        <tr key={partner.id} class="slds-hint-parent">
+                                                            <td data-label="Partner Name">
+                                                                <div class="slds-truncate" title={partner.name}>
+                                                                    {partner.name}</div>
+                                                            </td>
+                                                            <td data-label="Actions">
+                                                                <button class="slds-button slds-button_brand"
+                                                                    data-index={partner.index}
+                                                                    onclick={handleViewPartner}>
+                                                                    <lightning-icon icon-name="utility:preview"
+                                                                        size="x-small"
+                                                                        class="slds-m-right_x-small"></lightning-icon>
+                                                                    View
+                                                                </button>
+                                                            </td>
+                                                            <td data-label="Edit">
+                                                                <button class="slds-button slds-button_brand"
+                                                                    data-index={partner.index}
+                                                                    onclick={handleEditPartner}>
+                                                                    <lightning-icon icon-name="utility:edit"
+                                                                        size="x-small"
+                                                                        class="slds-m-right_x-small"></lightning-icon>
+                                                                    Edit
+                                                                </button>
+                                                            </td>
+                                                            <td data-label="Delete">
+                                                                <button class="slds-button slds-button_destructive"
+                                                                    data-index={partner.index}
+                                                                    onclick={handleDeletePartner}
+                                                                    disabled={isOnlyOnePartner}>
+                                                                    <lightning-icon icon-name="utility:delete"
+                                                                        size="x-small"
+                                                                        class="slds-m-right_x-small"></lightning-icon>
+                                                                    Delete
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </template>
+                                        <template if:false={partnerTableData.length}>
+                                            <div class="slds-text-align_center slds-p-around_medium">
+                                                <p class="slds-text-color_weak">No partners added yet. Go to Step 2 and
+                                                    3 to add partners.</p>
+                                            </div>
+                                        </template>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Budget Information Section -->
+                            <div class="slds-accordion slds-m-top_medium">
+                                <section class="slds-accordion__section slds-is-open">
+                                    <div class="slds-accordion__summary">
+                                        <h3 class="slds-accordion__summary-heading">
+                                            <span class="slds-accordion__summary-content"
+                                                style="background-color: #d3d3d3; color: black; padding: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+                                                <span style="display: flex; align-items: center;">
+                                                    <lightning-icon icon-name="standard:currency" size="small"
+                                                        class="slds-m-right_small"></lightning-icon>
+                                                    Budget Information
+                                                </span>
+                                                <lightning-icon icon-name="utility:chevrondown"
+                                                    size="small"></lightning-icon>
+                                            </span>
+                                        </h3>
+                                    </div>
+                                    <div class="slds-accordion__content">
+                                        <div class="slds-p-around_medium">
+                                            <!-- Checkbox and Consent Text -->
+                                            <div class="slds-form-element slds-m-bottom_medium">
+                                                <div class="slds-form-element__control">
+                                                    <lightning-input type="checkbox" name="consentCheckbox"
+                                                        label="By submitting this form, I confirm that I have read and understood the provided information, and I consent to the processing of my data in accordance with the stated terms."
+                                                        checked={consentChecked} onchange={handleConsentChange}>
+                                                    </lightning-input>
                                                 </div>
-                                                <div class="slds-col slds-size_1-of-2">
-                                                    <p><strong>Budget Narrative:</strong> {strategy.formattedBudgetNarrative}</p>
-                                                    <p><strong>Implementation Plan:</strong> {strategy.formattedImplementationPlan}</p>
+                                            </div>
+
+                                            <!-- Action Buttons -->
+                                            <div class="slds-grid slds-grid_align-center slds-m-top_medium">
+                                                <div class="slds-col slds-size_1-of-2 slds-p-right_x-small">
+                                                    <lightning-button variant="brand" label="Edit"
+                                                        icon-name="utility:edit" onclick={handleEditBudget}
+                                                        class="slds-button_full">
+                                                    </lightning-button>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-p-left_x-small">
+                                                    <lightning-button variant="brand" label="Submit"
+                                                        icon-name="utility:save" onclick={handleSubmitBudget}
+                                                        disabled={isSubmitDisabled} class="slds-button_full">
+                                                    </lightning-button>
                                                 </div>
                                             </div>
                                         </div>
-                                    </template>
-                                </div>
-                            </section>
-                        </div>
-                    </template>
+                                    </div>
+                                </section>
+                            </div>
 
-                    <!-- Personnel Information Section -->
-                    <template if:true={selectedPartnerData.abatementExtra.personnelData}>
-                        <div class="slds-accordion slds-m-top_medium">
-                            <section class="slds-accordion__section slds-is-open">
-                                <div class="slds-accordion__summary">
-                                    <h3 class="slds-accordion__summary-heading">
-                                        <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem;">
-                                            Personnel Information
-                                        </span>
-                                    </h3>
-                                </div>
-                                <div class="slds-accordion__content slds-p-around_medium">
-                                    <template for:each={formattedPersonnelDataList} for:item="personnel">
-                                        <div key={personnel.key} class="slds-box slds-m-bottom_medium">
-                                            <h4 class="slds-text-heading_small slds-m-bottom_small">{personnel.strategyName}</h4>
-                                            <template for:each={personnel.data} for:item="person" for:index="index">
-                                                <div key={person.key} class="slds-m-bottom_small">
-                                                    <h5 class="slds-text-heading_small">Person {index}</h5>
-                                                    <div class="slds-grid slds-wrap">
-                                                        <div class="slds-col slds-size_1-of-2">
-                                                            <p><strong>Name:</strong> {person.formattedName}</p>
-                                                            <p><strong>Title:</strong> {person.formattedTitle}</p>
-                                                            <p><strong>Email:</strong> {person.formattedEmail}</p>
+                            <!-- Partner View Modal -->
+                            <template if:true={showPartnerViewModal}>
+                                <section role="dialog" tabindex="-1" aria-labelledby="partner-modal-heading"
+                                    aria-modal="true" class="slds-modal slds-fade-in-open">
+                                    <div class="slds-modal__container" style="max-width: 80%; width: 80%;">
+                                        <header class="slds-modal__header">
+                                            <button
+                                                class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                                                title="Close" onclick={handleClosePartnerModal}>
+                                                <lightning-icon icon-name="utility:close" alternative-text="close"
+                                                    size="small"></lightning-icon>
+                                                <span class="slds-assistive-text">Close</span>
+                                            </button>
+                                            <h2 id="partner-modal-heading" class="slds-modal__title slds-hyphenate">
+                                                Partner Details</h2>
+                                        </header>
+                                        <div class="slds-modal__content slds-p-around_medium">
+                                            <template if:true={selectedPartnerData.abatementStrategies}>
+                                                <!-- Technical Proposal Section -->
+                                                <div class="slds-accordion">
+                                                    <section class="slds-accordion__section slds-is-open">
+                                                        <div class="slds-accordion__summary">
+                                                            <h3 class="slds-accordion__summary-heading">
+                                                                <span class="slds-accordion__summary-content"
+                                                                    style="background-color: #1B3A57; color: white; padding: 0.75rem;">
+                                                                    Technical Proposal
+                                                                </span>
+                                                            </h3>
                                                         </div>
-                                                        <div class="slds-col slds-size_1-of-2">
-                                                            <p><strong>Phone:</strong> {person.formattedPhone}</p>
-                                                            <p><strong>Role:</strong> {person.formattedRole}</p>
-                                                            <p><strong>FTE:</strong> {person.formattedFTE}</p>
+                                                        <div class="slds-accordion__content slds-p-around_medium">
+                                                            <p><strong>Partner Name:</strong>
+                                                                {selectedPartnerData.abatementStrategies.PartnerName__c}
+                                                            </p>
+                                                            <p><strong>Geographic Area:</strong>
+                                                                {selectedPartnerData.abatementStrategies.GeographicAreaPopulationPoverty__c}
+                                                            </p>
+                                                            <p><strong>Existing Efforts:</strong>
+                                                                {selectedPartnerData.abatementStrategies.Outline_Existing_Efforts_and_New_Expansi__c}
+                                                            </p>
+                                                            <p><strong>Budget Description:</strong>
+                                                                {selectedPartnerData.abatementStrategies.Describe_Current_Budget_and_Funding_Sour__c}
+                                                            </p>
                                                         </div>
-                                                    </div>
+                                                    </section>
                                                 </div>
+
+                                                <!-- Abatement Strategies Section -->
+                                                <div class="slds-accordion slds-m-top_medium">
+                                                    <section class="slds-accordion__section slds-is-open">
+                                                        <div class="slds-accordion__summary">
+                                                            <h3 class="slds-accordion__summary-heading">
+                                                                <span class="slds-accordion__summary-content"
+                                                                    style="background-color: #1B3A57; color: white; padding: 0.75rem;">
+                                                                    Abatement Strategies
+                                                                </span>
+                                                            </h3>
+                                                        </div>
+                                                        <div class="slds-accordion__content slds-p-around_medium">
+                                                            <p><strong>Core Strategies:</strong>
+                                                                {selectedPartnerData.abatementStrategies.CoreStrategies__c}
+                                                            </p>
+                                                            <p><strong>Abatement Strategies:</strong>
+                                                                {selectedPartnerData.abatementStrategies.Core_Abatement_Strategies__c}
+                                                            </p>
+                                                        </div>
+                                                    </section>
+                                                </div>
+
+                                                <!-- Strategy Line Resources Section -->
+                                                <template if:true={selectedPartnerData.strategyLineResources}>
+                                                    <div class="slds-accordion slds-m-top_medium">
+                                                        <section class="slds-accordion__section slds-is-open">
+                                                            <div class="slds-accordion__summary">
+                                                                <h3 class="slds-accordion__summary-heading">
+                                                                    <span class="slds-accordion__summary-content"
+                                                                        style="background-color: #1B3A57; color: white; padding: 0.75rem;">
+                                                                        Strategy Line Resources
+                                                                    </span>
+                                                                </h3>
+                                                            </div>
+                                                            <div class="slds-accordion__content slds-p-around_medium">
+                                                                <template for:each={formattedStrategyLineResourcesList}
+                                                                    for:item="strategy">
+                                                                    <div key={strategy.key}
+                                                                        class="slds-box slds-m-bottom_medium">
+                                                                        <h4
+                                                                            class="slds-text-heading_small slds-m-bottom_small">
+                                                                            {strategy.strategyName}</h4>
+                                                                        <div class="slds-grid slds-wrap">
+                                                                            <div class="slds-col slds-size_1-of-2">
+                                                                                <p><strong>Budget Amount:</strong>
+                                                                                    {strategy.formattedBudgetAmount}</p>
+                                                                                <p><strong>Initial or
+                                                                                        Continuation:</strong>
+                                                                                    {strategy.formattedInitialContinuation}
+                                                                                </p>
+                                                                            </div>
+                                                                            <div class="slds-col slds-size_1-of-2">
+                                                                                <p><strong>Budget Narrative:</strong>
+                                                                                    {strategy.formattedBudgetNarrative}
+                                                                                </p>
+                                                                                <p><strong>Implementation Plan:</strong>
+                                                                                    {strategy.formattedImplementationPlan}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </section>
+                                                    </div>
+                                                </template>
+
+                                                <!-- Personnel Information Section -->
+                                                <template if:true={selectedPartnerData.abatementExtra.personnelData}>
+                                                    <div class="slds-accordion slds-m-top_medium">
+                                                        <section class="slds-accordion__section slds-is-open">
+                                                            <div class="slds-accordion__summary">
+                                                                <h3 class="slds-accordion__summary-heading">
+                                                                    <span class="slds-accordion__summary-content"
+                                                                        style="background-color: #1B3A57; color: white; padding: 0.75rem;">
+                                                                        Personnel Information
+                                                                    </span>
+                                                                </h3>
+                                                            </div>
+                                                            <div class="slds-accordion__content slds-p-around_medium">
+                                                                <template for:each={formattedPersonnelDataList}
+                                                                    for:item="personnel">
+                                                                    <div key={personnel.key}
+                                                                        class="slds-box slds-m-bottom_medium">
+                                                                        <h4
+                                                                            class="slds-text-heading_small slds-m-bottom_small">
+                                                                            {personnel.strategyName}</h4>
+                                                                        <template for:each={personnel.data}
+                                                                            for:item="person" for:index="index">
+                                                                            <div key={person.key}
+                                                                                class="slds-m-bottom_small">
+                                                                                <h5 class="slds-text-heading_small">
+                                                                                    Person {index}</h5>
+                                                                                <div class="slds-grid slds-wrap">
+                                                                                    <div
+                                                                                        class="slds-col slds-size_1-of-2">
+                                                                                        <p><strong>Name:</strong>
+                                                                                            {person.formattedName}</p>
+                                                                                        <p><strong>Title:</strong>
+                                                                                            {person.formattedTitle}</p>
+                                                                                        <p><strong>Email:</strong>
+                                                                                            {person.formattedEmail}</p>
+                                                                                    </div>
+                                                                                    <div
+                                                                                        class="slds-col slds-size_1-of-2">
+                                                                                        <p><strong>Phone:</strong>
+                                                                                            {person.formattedPhone}</p>
+                                                                                        <p><strong>Role:</strong>
+                                                                                            {person.formattedRole}</p>
+                                                                                        <p><strong>FTE:</strong>
+                                                                                            {person.formattedFTE}</p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </template>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </section>
+                                                    </div>
+                                                </template>
+
+                                                <!-- Budget Information Section -->
+                                                <template if:true={selectedPartnerData.abatementExtra.budgetData}>
+                                                    <div class="slds-accordion slds-m-top_medium">
+                                                        <section class="slds-accordion__section slds-is-open">
+                                                            <div class="slds-accordion__summary">
+                                                                <h3 class="slds-accordion__summary-heading">
+                                                                    <span class="slds-accordion__summary-content"
+                                                                        style="background-color: #1B3A57; color: white; padding: 0.75rem;">
+                                                                        Budget Information
+                                                                    </span>
+                                                                </h3>
+                                                            </div>
+                                                            <div class="slds-accordion__content slds-p-around_medium">
+                                                                <template for:each={formattedBudgetDataList}
+                                                                    for:item="budget">
+                                                                    <div key={budget.key}
+                                                                        class="slds-box slds-m-bottom_medium">
+                                                                        <h4
+                                                                            class="slds-text-heading_small slds-m-bottom_small">
+                                                                            {budget.strategyName}</h4>
+                                                                        <template for:each={budget.data}
+                                                                            for:item="budgetItem" for:index="index">
+                                                                            <div key={budgetItem.key}
+                                                                                class="slds-m-bottom_small">
+                                                                                <h5 class="slds-text-heading_small">
+                                                                                    Budget Item {index}</h5>
+                                                                                <div class="slds-grid slds-wrap">
+                                                                                    <div
+                                                                                        class="slds-col slds-size_1-of-2">
+                                                                                        <p><strong>Description:</strong>
+                                                                                            {budgetItem.formattedDescription}
+                                                                                        </p>
+                                                                                        <p><strong>Amount:</strong>
+                                                                                            {budgetItem.formattedAmount}
+                                                                                        </p>
+                                                                                        <p><strong>Category:</strong>
+                                                                                            {budgetItem.formattedCategory}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                    <div
+                                                                                        class="slds-col slds-size_1-of-2">
+                                                                                        <p><strong>Vendor:</strong>
+                                                                                            {budgetItem.formattedVendor}
+                                                                                        </p>
+                                                                                        <p><strong>Justification:</strong>
+                                                                                            {budgetItem.formattedJustification}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </template>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </section>
+                                                    </div>
+                                                </template>
                                             </template>
                                         </div>
-                                    </template>
-                                </div>
-                            </section>
-                        </div>
-                    </template>
+                                        <footer class="slds-modal__footer">
+                                            <button class="slds-button slds-button_neutral"
+                                                onclick={handleClosePartnerModal}>Close</button>
+                                        </footer>
+                                    </div>
+                                </section>
+                                <div class="slds-backdrop slds-backdrop_open"></div>
+                            </template>
+                        </section>
+                    </div>
 
-                    <!-- Budget Information Section -->
-                    <template if:true={selectedPartnerData.abatementExtra.budgetData}>
-                        <div class="slds-accordion slds-m-top_medium">
-                            <section class="slds-accordion__section slds-is-open">
-                                <div class="slds-accordion__summary">
-                                    <h3 class="slds-accordion__summary-heading">
-                                        <span class="slds-accordion__summary-content" style="background-color: #1B3A57; color: white; padding: 0.75rem;">
-                                            Budget Information
-                                        </span>
-                                    </h3>
-                                </div>
-                                <div class="slds-accordion__content slds-p-around_medium">
-                                    <template for:each={formattedBudgetDataList} for:item="budget">
-                                        <div key={budget.key} class="slds-box slds-m-bottom_medium">
-                                            <h4 class="slds-text-heading_small slds-m-bottom_small">{budget.strategyName}</h4>
-                                            <template for:each={budget.data} for:item="budgetItem" for:index="index">
-                                                <div key={budgetItem.key} class="slds-m-bottom_small">
-                                                    <h5 class="slds-text-heading_small">Budget Item {index}</h5>
-                                                    <div class="slds-grid slds-wrap">
-                                                        <div class="slds-col slds-size_1-of-2">
-                                                            <p><strong>Description:</strong> {budgetItem.formattedDescription}</p>
-                                                            <p><strong>Amount:</strong> {budgetItem.formattedAmount}</p>
-                                                            <p><strong>Category:</strong> {budgetItem.formattedCategory}</p>
-                                                        </div>
-                                                        <div class="slds-col slds-size_1-of-2">
-                                                            <p><strong>Vendor:</strong> {budgetItem.formattedVendor}</p>
-                                                            <p><strong>Justification:</strong> {budgetItem.formattedJustification}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </template>
-                                </div>
-                            </section>
-                        </div>
-                    </template>
-                </template>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick={handleCloseModal}>Close</button>
+                </footer>
             </div>
-            <footer class="slds-modal__footer">
-                <button class="slds-button slds-button_neutral" onclick={handleClosePartnerModal}>Close</button>
-            </footer>
-        </div>
-    </section>
-    <div class="slds-backdrop slds-backdrop_open"></div>
-</template>    </section>
-        </div>
-
-            </div>
-            <footer class="slds-modal__footer">
-                <button class="slds-button slds-button_neutral" onclick={handleCloseModal}>Close</button>
-            </footer>
-        </div>
-    </section>
-    <div class="slds-backdrop slds-backdrop_open"></div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
 
 
 
-</template></template>
-
+    </template>
+</template>

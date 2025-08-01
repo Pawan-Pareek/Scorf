@@ -132,15 +132,17 @@ public with sharing class ProjectComponentController {
     @AuraEnabled(cacheable=true)
     public static List<AbatementStrategyData> getAbatementStrategies(Id applicationId) {
         try {
+            System.debug('getAbatementStrategies START - Application ID: ' + applicationId);
+            
             List<Abatement_Strategies__c> strategies = [
     SELECT Id, PartnerName__c, GeographicAreaPopulationPoverty__c, 
            Outline_Existing_Efforts_and_New_Expansi__c, Describe_Current_Budget_and_Funding_Sour__c,
            CoreStrategies__c, Core_Abatement_Strategies__c,
-           (SELECT Id, IsYourStrategyInitialContinuation__c, ImplementationPlanForTheStrategy__c,
+           (SELECT Id, Name__c,IsYourStrategyInitialContinuation__c, ImplementationPlanForTheStrategy__c,
                    ProvideTheProcessMeasures__c, ProvideTheOutcomeMeasures__c,
                    BudgetAmountForThePurchase__c, BudgetNarrative__c
             FROM Strategy_Line_Items__r),
-           (SELECT Id, PersonnelName__c, PersonnelPosition__c, PersonnelTotalChargedToAward__c,
+           (SELECT Id,Strategy_Name__c,RecordType.Name, PersonnelName__c, PersonnelPosition__c, PersonnelTotalChargedToAward__c,
                    PersonnelLevelOfEffort__c, PersonnelKeyStaffAnnualSalary__c,
                    BudgetItem__c, BudgetPurpose__c, BudgetTotalChargedToAward__c, BudgetCalculation__c
             FROM Strategy_Resources__r)
@@ -149,18 +151,32 @@ public with sharing class ProjectComponentController {
     ORDER BY CreatedDate
 ];
             
+            System.debug('Found ' + strategies.size() + ' strategies');
+            
             List<AbatementStrategyData> strategyDataList = new List<AbatementStrategyData>();
             
             for (Abatement_Strategies__c strategy : strategies) {
-    AbatementStrategyData data = new AbatementStrategyData();
-    data.strategy = strategy;
-    data.lineItems = strategy.Strategy_Line_Items__r;
-    data.resources = strategy.Strategy_Resources__r;
-    strategyDataList.add(data);
-}
+                System.debug('Strategy ID: ' + strategy.Id + ', Partner Name: ' + strategy.PartnerName__c);
+                System.debug('Strategy Line Items Count: ' + (strategy.Strategy_Line_Items__r != null ? strategy.Strategy_Line_Items__r.size() : 0));
+                System.debug('Strategy Resources Count: ' + (strategy.Strategy_Resources__r != null ? strategy.Strategy_Resources__r.size() : 0));
+                
+                if (strategy.Strategy_Resources__r != null && strategy.Strategy_Resources__r.size() > 0) {
+                    for (Strategy_Resources__c resource : strategy.Strategy_Resources__r) {
+                        System.debug('Resource ID: ' + resource.Id + ', Personnel Name: ' + resource.PersonnelName__c);
+                    }
+                }
+                
+                AbatementStrategyData data = new AbatementStrategyData();
+                data.strategy = strategy;
+                data.lineItems = strategy.Strategy_Line_Items__r;
+                data.resources = strategy.Strategy_Resources__r;
+                strategyDataList.add(data);
+            }
             
+            System.debug('getAbatementStrategies END - Returning ' + strategyDataList.size() + ' strategy data objects');
             return strategyDataList;
         } catch (Exception e) {
+            System.debug('Error in getAbatementStrategies: ' + e.getMessage());
             throw new AuraHandledException('Error retrieving abatement strategies: ' + e.getMessage());
         }
     }
@@ -175,5 +191,51 @@ public with sharing class ProjectComponentController {
         this.lineItems = new List<Strategy_Line_Items__c>();
         this.resources = new List<Strategy_Resources__c>();
     }
+}
+
+@AuraEnabled(cacheable=true)
+public static List<DocumentData> getUploadedDocuments(Id applicationId) {
+    try {
+        List<ContentDocumentLink> documentLinks = [
+            SELECT ContentDocumentId, ContentDocument.Title, ContentDocument.FileExtension,
+                   ContentDocument.ContentSize, ContentDocument.CreatedDate
+            FROM ContentDocumentLink 
+            WHERE LinkedEntityId = :applicationId
+            ORDER BY ContentDocument.CreatedDate DESC
+        ];
+        
+        List<DocumentData> documentDataList = new List<DocumentData>();
+        
+        for (ContentDocumentLink link : documentLinks) {
+            DocumentData doc = new DocumentData();
+            doc.id = link.ContentDocumentId;
+            doc.name = link.ContentDocument.Title;
+            doc.fileExtension = link.ContentDocument.FileExtension;
+            doc.size = link.ContentDocument.ContentSize;
+            doc.createdDate = link.ContentDocument.CreatedDate;
+            documentDataList.add(doc);
+        }
+        
+        return documentDataList;
+    } catch (Exception e) {
+        throw new AuraHandledException('Error retrieving uploaded documents: ' + e.getMessage());
+    }
+}
+
+@AuraEnabled
+public static String getDocumentDownloadUrl(Id documentId) {
+    try {
+        return '/sfc/servlet.shepherd/document/download/' + documentId;
+    } catch (Exception e) {
+        throw new AuraHandledException('Error getting document download URL: ' + e.getMessage());
+    }
+}
+
+public class DocumentData {
+    @AuraEnabled public Id id { get; set; }
+    @AuraEnabled public String name { get; set; }
+    @AuraEnabled public String fileExtension { get; set; }
+    @AuraEnabled public Long size { get; set; }
+    @AuraEnabled public DateTime createdDate { get; set; }
 }
 }

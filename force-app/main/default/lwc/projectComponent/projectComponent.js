@@ -5,8 +5,13 @@ import getProjectData from '@salesforce/apex/ProjectComponentController.getProje
 import getApplicationDetails from '@salesforce/apex/ProjectComponentController.getApplicationDetails';
 import getPartnerData from '@salesforce/apex/ProjectComponentController.getPartnerData';
 import getAbatementStrategies from '@salesforce/apex/ProjectComponentController.getAbatementStrategies';
+import getUploadedDocuments from '@salesforce/apex/ProjectComponentController.getUploadedDocuments';
+import getDocumentDownloadUrl from '@salesforce/apex/ProjectComponentController.getDocumentDownloadUrl';
 
 export default class ProjectComponent extends NavigationMixin(LightningElement) {
+
+    @track isDocumentsExpanded = false;
+@track uploadedDocuments = [];
 
     @track abatementStrategies = [];
     @track expandedStrategies = new Set();
@@ -87,6 +92,8 @@ export default class ProjectComponent extends NavigationMixin(LightningElement) 
 
     async handleView(event) {
         const recordId = event.target.dataset.id;
+
+        const documentsInfo = await this.loadUploadedDocuments(recordId);
         try {
             const appDetails = await getApplicationDetails({ applicationId: recordId });
             const partnerInfo = await this.loadPartnerData(recordId);
@@ -100,6 +107,8 @@ export default class ProjectComponent extends NavigationMixin(LightningElement) 
         } catch (error) {
             this.showToast('Error', 'Error loading application details: ' + (error.body ? error.body.message : error.message), 'error');
         }
+
+        this.uploadedDocuments = documentsInfo;
     }
 
     closeModal() {
@@ -107,6 +116,7 @@ export default class ProjectComponent extends NavigationMixin(LightningElement) 
         this.selectedApplication = {};
         this.partnerData = [];
         this.abatementStrategies = [];
+        this.uploadedDocuments = [];
     }
 
     handleModalBackdropClick(event) {
@@ -207,5 +217,36 @@ export default class ProjectComponent extends NavigationMixin(LightningElement) 
 
     get getTechnicalProposalIcon() {
     return this.isTechnicalProposalExpanded ? 'utility:chevrondown' : 'utility:chevronright';
+}
+
+toggleUploadedDocuments() {
+    this.isDocumentsExpanded = !this.isDocumentsExpanded;
+}
+
+get documentsIconName() {
+    return this.isDocumentsExpanded ? 'utility:chevrondown' : 'utility:chevronright';
+}
+
+async handleDocumentDownload(event) {
+    const documentId = event.target.dataset.id;
+    try {
+        const downloadUrl = await getDocumentDownloadUrl({ documentId: documentId });
+        window.open(downloadUrl, '_blank');
+    } catch (error) {
+        this.showToast('Error', 'Error downloading document: ' + (error.body ? error.body.message : error.message), 'error');
+    }
+}
+
+async loadUploadedDocuments(applicationId) {
+    try {
+        const data = await getUploadedDocuments({ applicationId: applicationId });
+        return data.map(doc => ({
+            ...doc,
+            displayName: doc.fileExtension ? `${doc.name}.${doc.fileExtension}` : doc.name
+        }));
+    } catch (error) {
+        this.showToast('Error', 'Error loading documents: ' + (error.body ? error.body.message : error.message), 'error');
+        return [];
+    }
 }
 }

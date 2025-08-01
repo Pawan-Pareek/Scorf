@@ -461,6 +461,18 @@ get currentPageReference() {
         }, 100);
     }
 
+    // Notify child components when record is created (for file linking)
+    notifyChildComponentsOfRecordCreation() {
+        console.log('Notifying child components of record creation...');
+        setTimeout(() => {
+            // Notify organization information component to set recordId
+            const orgComponent = this.template.querySelector('c-organization-information[data-step="1"]');
+            if (orgComponent && typeof orgComponent.setRecordId === 'function') {
+                orgComponent.setRecordId(this.recordId);
+            }
+        }, 100);
+    }
+
     // Handle data change from child components
     handleDataChange(event) {
         const { stepData, stepType } = event.detail;
@@ -1151,7 +1163,14 @@ get currentPageReference() {
         
         return saveApplication({ application: combinedApplicationData })
             .then(result => {
+                const oldRecordId = this.recordId;
                 this.recordId = result.Id; // Update recordId for subsequent saves
+                
+                // If this is a new record creation, notify child components to link pending files
+                if (!oldRecordId && this.recordId) {
+                    console.log('New record created, notifying child components to link pending files');
+                    this.notifyChildComponentsOfRecordCreation();
+                }
             })
             .catch(error => {
                 throw error;
@@ -1191,6 +1210,12 @@ get currentPageReference() {
             // Fallback for portals where ShowToastEvent might not work
             console.log(`${title}: ${message}`);
         }
+    }
+
+    // Handle toast events from child components
+    handleShowToast(event) {
+        const { title, message, variant } = event.detail;
+        this.showToast(title, message, variant);
     }
 
     // Getters for template rendering

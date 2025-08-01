@@ -111,6 +111,169 @@ public static Funding_Application__c saveApplication(Funding_Application__c appl
         System.debug('deleteFile END');
     }
 
+    @AuraEnabled
+    public static Map<String, Object> ensureContentDocumentLinks(List<Id> contentDocumentIds, Id recordId) {
+        System.debug('ensureContentDocumentLinks START');
+        Map<String, Object> result = new Map<String, Object>();
+        
+        try {
+            if (contentDocumentIds == null || contentDocumentIds.isEmpty()) {
+                result.put('success', false);
+                result.put('error', 'No content document IDs provided');
+                return result;
+            }
+
+            if (recordId == null) {
+                result.put('success', false);
+                result.put('error', 'Record ID is required to link files');
+                return result;
+            }
+
+            // Check if ContentDocumentLink records already exist
+            List<ContentDocumentLink> existingLinks = [
+                SELECT Id, ContentDocumentId, LinkedEntityId 
+                FROM ContentDocumentLink 
+                WHERE ContentDocumentId IN :contentDocumentIds 
+                AND LinkedEntityId = :recordId
+            ];
+
+            Set<Id> existingContentDocumentIds = new Set<Id>();
+            for (ContentDocumentLink link : existingLinks) {
+                existingContentDocumentIds.add(link.ContentDocumentId);
+            }
+
+            // Create ContentDocumentLink records for files that don't have links
+            List<ContentDocumentLink> linksToCreate = new List<ContentDocumentLink>();
+            for (Id contentDocumentId : contentDocumentIds) {
+                if (!existingContentDocumentIds.contains(contentDocumentId)) {
+                    ContentDocumentLink link = new ContentDocumentLink();
+                    link.ContentDocumentId = contentDocumentId;
+                    link.LinkedEntityId = recordId;
+                    link.ShareType = 'V'; // Viewer access
+                    link.Visibility = 'AllUsers'; // Visible to all users
+                    linksToCreate.add(link);
+                }
+            }
+
+            if (!linksToCreate.isEmpty()) {
+                insert linksToCreate;
+                System.debug('Created ' + linksToCreate.size() + ' ContentDocumentLink records');
+            }
+
+            result.put('success', true);
+            result.put('message', 'Files successfully linked to record');
+            result.put('linksCreated', linksToCreate.size());
+            
+        } catch (Exception e) {
+            System.debug('Error ensuring ContentDocumentLinks: ' + e.getMessage());
+            result.put('success', false);
+            result.put('error', e.getMessage());
+        }
+        
+        System.debug('ensureContentDocumentLinks END');
+        return result;
+    }
+
+    @AuraEnabled(cacheable=true)
+    public static Map<String, Object> getContentDocuments(Id recordId) {
+        System.debug('getContentDocuments START');
+        Map<String, Object> result = new Map<String, Object>();
+        
+        try {
+            if (recordId == null) {
+                result.put('success', false);
+                result.put('error', 'Record ID is required');
+                return result;
+            }
+
+            // Query ContentDocumentLink records to get files linked to this record
+            List<ContentDocumentLink> links = [
+                SELECT Id, ContentDocumentId, ContentDocument.Title, ContentDocument.FileType, 
+                       ContentDocument.ContentSize, ContentDocument.CreatedDate
+                FROM ContentDocumentLink 
+                WHERE LinkedEntityId = :recordId
+                ORDER BY ContentDocument.CreatedDate DESC
+            ];
+
+            List<Map<String, Object>> files = new List<Map<String, Object>>();
+            for (ContentDocumentLink link : links) {
+                Map<String, Object> file = new Map<String, Object>();
+                file.put('documentId', link.ContentDocumentId);
+                file.put('name', link.ContentDocument.Title);
+                file.put('type', link.ContentDocument.FileType);
+                file.put('size', link.ContentDocument.ContentSize);
+                file.put('createdDate', link.ContentDocument.CreatedDate);
+                files.add(file);
+            }
+
+            result.put('success', true);
+            result.put('files', files);
+            result.put('count', files.size());
+            
+        } catch (Exception e) {
+            System.debug('Error getting ContentDocuments: ' + e.getMessage());
+            result.put('success', false);
+            result.put('error', e.getMessage());
+        }
+        
+        System.debug('getContentDocuments END');
+        return result;
+    }
+
+    @AuraEnabled
+    public static Map<String, Object> cleanupOrphanedFiles(List<Id> contentDocumentIds) {
+        System.debug('cleanupOrphanedFiles START');
+        Map<String, Object> result = new Map<String, Object>();
+        
+        try {
+            if (contentDocumentIds == null || contentDocumentIds.isEmpty()) {
+                result.put('success', false);
+                result.put('error', 'No content document IDs provided');
+                return result;
+            }
+
+            // First, get all ContentDocumentLink records for the provided content document IDs
+            List<ContentDocumentLink> existingLinks = [
+                SELECT ContentDocumentId 
+                FROM ContentDocumentLink 
+                WHERE ContentDocumentId IN :contentDocumentIds
+            ];
+
+            // Create a set of content document IDs that have links
+            Set<Id> linkedContentDocumentIds = new Set<Id>();
+            for (ContentDocumentLink link : existingLinks) {
+                linkedContentDocumentIds.add(link.ContentDocumentId);
+            }
+
+            // Find files that are not linked to any record
+            List<ContentDocument> orphanedFiles = [
+                SELECT Id, Title 
+                FROM ContentDocument 
+                WHERE Id IN :contentDocumentIds 
+                AND Id NOT IN :linkedContentDocumentIds
+            ];
+
+            if (!orphanedFiles.isEmpty()) {
+                delete orphanedFiles;
+                System.debug('Deleted ' + orphanedFiles.size() + ' orphaned files');
+                result.put('deletedCount', orphanedFiles.size());
+            } else {
+                result.put('deletedCount', 0);
+            }
+
+            result.put('success', true);
+            result.put('message', 'Orphaned files cleanup completed');
+            
+        } catch (Exception e) {
+            System.debug('Error cleaning up orphaned files: ' + e.getMessage());
+            result.put('success', false);
+            result.put('error', e.getMessage());
+        }
+        
+        System.debug('cleanupOrphanedFiles END');
+        return result;
+    }
+
 
     // Technical Proposal Methods
      @AuraEnabled(cacheable=true)

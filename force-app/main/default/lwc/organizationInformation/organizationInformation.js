@@ -2,6 +2,8 @@
 // This should be applied to all child components (organizationInformation, technicalProposal, etc.)
 
 import { LightningElement, api, track } from 'lwc';
+import ensureContentDocumentLinks from '@salesforce/apex/GPSApplicationController.ensureContentDocumentLinks';
+import getContentDocuments from '@salesforce/apex/GPSApplicationController.getContentDocuments';
 
 export default class OrganizationInformation extends LightningElement {
     @api recordId;
@@ -9,6 +11,7 @@ export default class OrganizationInformation extends LightningElement {
     @track formData = {};
     @track isInitialized = false;
     @track showCountyField = false; // Add this line
+    @track pendingFiles = []; // Store files for later linking when record is created
 
     // Private property to store the received application data
     _applicationData = {};
@@ -24,6 +27,20 @@ export default class OrganizationInformation extends LightningElement {
             
             // Update form fields after data is set
             this.updateFormFields();
+        }
+    }
+
+    // API method to set recordId (called when record is created)
+    @api
+    setRecordId(recordId) {
+        console.log('Setting recordId:', recordId);
+        this.recordId = recordId;
+        
+        // Link any pending files when recordId is set
+        if (this.pendingFiles && this.pendingFiles.length > 0) {
+            console.log('Linking pending files to new record:', this.pendingFiles);
+            this.ensureFileLinks(this.pendingFiles);
+            this.pendingFiles = []; // Clear pending files after linking
         }
     }
 
@@ -95,11 +112,99 @@ export default class OrganizationInformation extends LightningElement {
             const uploadedFiles = event.detail.files;
             console.log('Files uploaded:', uploadedFiles);
             
-            // Update form data with uploaded files
-            this.formData.uploadedFiles = uploadedFiles;
-            this.notifyParent();
+            if (uploadedFiles && uploadedFiles.length > 0) {
+                // Validate file upload
+                const validationResult = this.validateFileUpload(uploadedFiles);
+                if (!validationResult.isValid) {
+                    this.showToast('Error', validationResult.error, 'error');
+                    return;
+                }
+
+                // Store uploaded files in form data for later linking
+                this.formData.uploadedFiles = uploadedFiles;
+                
+                // If recordId exists, link files immediately
+                if (this.recordId) {
+                    this.ensureFileLinks(uploadedFiles);
+                } else {
+                    // Store files for later linking when record is created
+                    this.pendingFiles = uploadedFiles;
+                    console.log('Files stored for later linking when record is created');
+                }
+                
+                this.notifyParent();
+                
+                // Show success message
+                this.showToast('Success', `${uploadedFiles.length} file(s) uploaded successfully`, 'success');
+            }
         } catch (error) {
             console.error('Error handling file upload:', error);
+            this.showToast('Error', 'Failed to upload files: ' + error.message, 'error');
+        }
+    }
+
+    // Validate file upload
+    validateFileUpload(files) {
+        const maxFileSize = 5242880; // 5MB
+        const maxFiles = 10;
+        const allowedTypes = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'jpg', 'jpeg', 'png', 'gif'];
+
+        if (files.length > maxFiles) {
+            return {
+                isValid: false,
+                error: `Maximum ${maxFiles} files allowed per upload`
+            };
+        }
+
+        for (let file of files) {
+            // Check file size
+            if (file.size > maxFileSize) {
+                return {
+                    isValid: false,
+                    error: `File "${file.name}" exceeds maximum size of 5MB`
+                };
+            }
+
+            // Check file type
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            if (!allowedTypes.includes(fileExtension)) {
+                return {
+                    isValid: false,
+                    error: `File type "${fileExtension}" is not allowed`
+                };
+            }
+        }
+
+        return { isValid: true };
+    }
+
+    // Ensure files are properly linked to the record
+    async ensureFileLinks(uploadedFiles) {
+        try {
+            if (!this.recordId) {
+                console.warn('No recordId available for file linking');
+                return;
+            }
+
+            const fileIds = uploadedFiles.map(file => file.documentId);
+            
+            if (fileIds.length > 0) {
+                const result = await ensureContentDocumentLinks({
+                    contentDocumentIds: fileIds,
+                    recordId: this.recordId
+                });
+                
+                if (result.success) {
+                    console.log('Files successfully linked to record:', result.message);
+                    this.showToast('Success', `${result.linksCreated} file(s) linked to record successfully`, 'success');
+                } else {
+                    console.error('Failed to link files:', result.error);
+                    this.showToast('Warning', 'Files uploaded but may not be visible in Notes & Attachments: ' + result.error, 'warning');
+                }
+            }
+        } catch (error) {
+            console.error('Error ensuring file links:', error);
+            this.showToast('Error', 'Failed to link files to record: ' + error.message, 'error');
         }
     }
 
@@ -112,12 +217,51 @@ export default class OrganizationInformation extends LightningElement {
             // Remove file from uploaded files list
             if (this.formData.uploadedFiles) {
                 this.formData.uploadedFiles = this.formData.uploadedFiles.filter(
-                    file => file.id !== fileId
+                    file => file.documentId !== fileId
                 );
                 this.notifyParent();
+                
+                // Show success message
+                this.showToast('Success', 'File deleted successfully', 'success');
             }
         } catch (error) {
             console.error('Error deleting file:', error);
+            this.showToast('Error', 'Failed to delete file: ' + error.message, 'error');
+        }
+    }
+
+    // Load existing files for the record
+    async loadExistingFiles() {
+        try {
+            if (!this.recordId) {
+                return;
+            }
+
+            const result = await getContentDocuments({ recordId: this.recordId });
+            
+            if (result.success && result.files) {
+                this.formData.uploadedFiles = result.files;
+                console.log('Loaded existing files:', result.files);
+            }
+        } catch (error) {
+            console.error('Error loading existing files:', error);
+        }
+    }
+
+    // Show toast notifications
+    showToast(title, message, variant) {
+        try {
+            const event = new CustomEvent('showtoast', {
+                detail: {
+                    title: title,
+                    message: message,
+                    variant: variant
+                }
+            });
+            this.dispatchEvent(event);
+        } catch (error) {
+            // Fallback for portals where ShowToastEvent might not work
+            console.log(`${title}: ${message}`);
         }
     }
 
@@ -232,11 +376,24 @@ notifyParent() {
         if (!this.formData || Object.keys(this.formData).length === 0) {
             this.formData = {};
         }
+        
+        // Load existing files if recordId is available
+        if (this.recordId) {
+            this.loadExistingFiles();
+        }
     }
 
+    // Watch for recordId changes
     renderedCallback() {
         if (this.isInitialized && this.formData && Object.keys(this.formData).length > 0) {
             this.updateFormFields();
+        }
+        
+        // Check if recordId was set and we have pending files
+        if (this.recordId && this.pendingFiles && this.pendingFiles.length > 0) {
+            console.log('RecordId available, linking pending files');
+            this.ensureFileLinks(this.pendingFiles);
+            this.pendingFiles = [];
         }
     }
 
@@ -303,5 +460,20 @@ notifyParent() {
     // Getter for uploaded files
     get uploadedFiles() {
         return this.formData?.uploadedFiles || [];
+    }
+
+    // Getter for pending files
+    get pendingFilesCount() {
+        return this.pendingFiles ? this.pendingFiles.length : 0;
+    }
+
+    // Getter for accepted file formats
+    get acceptedFormats() {
+        return ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.jpg', '.jpeg', '.png', '.gif'];
+    }
+
+    // Getter for maximum file size (5MB)
+    get maxFileSize() {
+        return 5242880; // 5MB in bytes
     }
 }

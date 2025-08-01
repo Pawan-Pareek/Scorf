@@ -103,23 +103,57 @@
                     <!-- Upload file fields -->
                     <div class="slds-col slds-size_1-of-2">
                         <lightning-card>
-                            <lightning-file-upload label="Upload File" record-id={recordId}
-                                onuploadfinished={handleUploadFinished} multiple>
-                            </lightning-file-upload>
+                            <div class="slds-p-around_medium">
+                                <lightning-file-upload 
+                                    label="Upload File" 
+                                    name="fileUpload"
+                                    record-id={recordId}
+                                    onuploadfinished={handleUploadFinished} 
+                                    multiple
+                                    accept={acceptedFormats}
+                                    max-file-size={maxFileSize}>
+                                </lightning-file-upload>
 
-                            <template if:true={uploadedFiles.length}>
-                                <ul class="file-list">
-                                    <template for:each={uploadedFiles} for:item="file">
-                                        <li key={file.id} class="file-item">
-                                            <span class="file-name">{file.name}</span>
-                                            <lightning-button-icon class="delete-button" icon-name="utility:delete"
-                                                alternative-text="Delete" title="Delete File" onclick={handleDelete}
-                                                data-id={file.id}>
-                                            </lightning-button-icon>
-                                        </li>
-                                    </template>
-                                </ul>
-                            </template>
+                                <!-- Show message when no recordId is available -->
+                                <template if:false={recordId}>
+                                    <div class="slds-notify slds-notify_alert slds-theme_info slds-m-top_small">
+                                        <span class="slds-assistive-text">info</span>
+                                        <h2>Files will be linked to the record after saving the application.</h2>
+                                    </div>
+                                </template>
+
+                                <template if:true={uploadedFiles.length}>
+                                    <div class="slds-m-top_medium">
+                                        <h4 class="slds-text-heading_small slds-m-bottom_small">Uploaded Files:</h4>
+                                        <ul class="slds-list_dotted">
+                                            <template for:each={uploadedFiles} for:item="file">
+                                                <li key={file.documentId} class="slds-item">
+                                                    <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                                                        <span class="slds-truncate slds-p-right_small">{file.name}</span>
+                                                        <lightning-button-icon 
+                                                            icon-name="utility:delete"
+                                                            alternative-text="Delete" 
+                                                            title="Delete File" 
+                                                            onclick={handleDelete}
+                                                            data-id={file.documentId}
+                                                            variant="bare"
+                                                            class="slds-m-left_x-small">
+                                                        </lightning-button-icon>
+                                                    </div>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                </template>
+
+                                <!-- Show pending files message -->
+                                <template if:true={pendingFilesCount}>
+                                    <div class="slds-notify slds-notify_alert slds-theme_warning slds-m-top_small">
+                                        <span class="slds-assistive-text">warning</span>
+                                        <h2>{pendingFilesCount} file(s) will be linked when the application is saved.</h2>
+                                    </div>
+                                </template>
+                            </div>
                         </lightning-card>
                     </div>
 
